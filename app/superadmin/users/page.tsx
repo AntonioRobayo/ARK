@@ -5,15 +5,16 @@ export default async function SuperAdminUsersPage() {
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  const [{ data: profiles }, { data: { users: authUsers } }] = await Promise.all([
-    supabase
-      .from('user_profile')
-      .select('id, first_name, last_name, is_platform_admin, tenant_id, tenants(name, slug)')
-      .order('is_platform_admin', { ascending: false }),
-    adminClient.auth.admin.listUsers({ perPage: 200 }),
-  ])
+  const { data: profiles } = await supabase
+    .from('user_profile')
+    .select('id, first_name, last_name, is_platform_admin, tenant_id, tenants(name, slug)')
+    .order('is_platform_admin', { ascending: false })
 
-  const emailMap = Object.fromEntries(authUsers.map(u => [u.id, u.email]))
+  const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 200 })
+  const authUsers = usersData?.users ?? []
+  const emailMap: Record<string, string> = Object.fromEntries(
+    authUsers.map(u => [u.id, u.email ?? ''])
+  )
 
   return (
     <div>
@@ -40,27 +41,35 @@ export default async function SuperAdminUsersPage() {
                 <tr key={p.id} className="hover:bg-gray-50 transition-colors" style={{ borderBottom: '1px solid #F9FAFB' }}>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                        style={{ backgroundColor: p.is_platform_admin ? '#FF7316' : '#6B7280' }}>
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                        style={{ backgroundColor: p.is_platform_admin ? '#FF7316' : '#6B7280' }}
+                      >
                         {(p.first_name?.[0] ?? email[0] ?? '?').toUpperCase()}
                       </div>
                       <span className="font-medium text-gray-900">{fullName}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-500 text-xs">{email}</td>
+                  <td className="px-5 py-3.5 text-gray-500 text-xs">{email || '—'}</td>
                   <td className="px-5 py-3.5">
                     {tenant
                       ? <span className="text-gray-700 text-sm">{tenant.name}</span>
-                      : <span className="text-gray-300 text-xs">Sin taller</span>}
+                      : <span className="text-gray-300 text-xs">Sin taller</span>
+                    }
                   </td>
                   <td className="px-5 py-3.5">
                     {p.is_platform_admin
-                      ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: '#FFF0E6', color: '#FF7316' }}>
+                      ? (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                          style={{ backgroundColor: '#FFF0E6', color: '#FF7316' }}
+                        >
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                           </svg>
                           Superadmin
                         </span>
+                      )
                       : <span className="text-xs font-medium text-gray-500">Admin</span>
                     }
                   </td>
