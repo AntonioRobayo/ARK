@@ -2,6 +2,13 @@
 
 import { useState } from 'react'
 
+const LOCALE = 'es-CO'
+
+export function FormattedNumber({ value, prefix, suffix }: { value: number; prefix?: string; suffix?: string }) {
+  const formatted = value.toLocaleString(LOCALE, { maximumFractionDigits: 0 })
+  return <>{prefix}{formatted}{suffix}</>
+}
+
 interface NumericInputProps {
   name: string
   defaultValue?: number
@@ -13,7 +20,7 @@ interface NumericInputProps {
 }
 
 export function NumericInput({ name, defaultValue, min, max, required, className, placeholder }: NumericInputProps) {
-  const format = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 0 })
+  const format = (n: number) => n.toLocaleString(LOCALE, { maximumFractionDigits: 0 })
 
   const [raw, setRaw] = useState(defaultValue != null ? String(defaultValue) : '')
   const [display, setDisplay] = useState(defaultValue != null ? format(defaultValue) : '')

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { FormattedNumber } from '@/components/numeric-input'
 
 export default async function LicensesPage() {
   const supabase = await createClient()
@@ -48,9 +49,8 @@ export default async function LicensesPage() {
 
             <div className="text-2xl font-bold text-gray-900 mb-1">
               {plan.price_monthly > 0
-                ? `$${Number(plan.price_monthly).toLocaleString('es-CO')}`
+                ? <><FormattedNumber value={Number(plan.price_monthly)} prefix="$" /><span className="text-sm font-normal text-gray-400 ml-1">/ mes</span></>
                 : <span className="text-gray-400">Sin precio</span>}
-              {plan.price_monthly > 0 && <span className="text-sm font-normal text-gray-400 ml-1">/ mes</span>}
             </div>
 
             <div className="mt-4 space-y-2">
