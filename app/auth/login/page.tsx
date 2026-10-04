@@ -16,6 +16,13 @@ export default async function LoginPage({
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {decodeURIComponent(error)}
+          {(error.includes('expirado') || error.includes('expired') || error.includes('inv')) && (
+            <div className="mt-2 pt-2 border-t border-red-200">
+              <a href="/auth/reset-password" className="font-medium underline">
+                Solicitar nuevo enlace →
+              </a>
+            </div>
+          )}
         </div>
       )}
 
