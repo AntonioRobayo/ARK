@@ -15,35 +15,51 @@ export default async function WorkOrderDetailPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: ot } = await supabase
-    .from('work_order')
-    .select(`
-      *,
-      customer:customer_id(id, first_name, last_name, phone, email),
-      vehicle:vehicle_id(id, plate, brand, model, year, engine_cc, color, current_mileage),
-      technician:technician_id(id, first_name, last_name),
-      branch:branch_id(name)
-    `)
-    .eq('id', id)
-    .single()
+  const [
+    { data: ot },
+    { data: statusLog },
+    { data: quotations },
+    { data: invoices },
+  ] = await Promise.all([
+    supabase
+      .from('work_order')
+      .select(`
+        *,
+        customer:customer_id(id, first_name, last_name, phone, email),
+        vehicle:vehicle_id(id, plate, brand, model, year, engine_cc, color, current_mileage),
+        technician:technician_id(id, first_name, last_name),
+        branch:branch_id(name)
+      `)
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('work_order_status_log')
+      .select('id, from_status, to_status, reason, created_at')
+      .eq('work_order_id', id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('quotation')
+      .select(`
+        id, number, status, total, subtotal, tax_amount, discount_amount,
+        quotation_item(id, description, quantity, unit_price, subtotal, item_type, tax_rate_snapshot, discount_pct)
+      `)
+      .eq('work_order_id', id)
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('invoice')
+      .select('id, number, status, total, paid_amount')
+      .eq('work_order_id', id)
+      .order('created_at', { ascending: false }),
+  ])
 
   if (!ot) notFound()
 
-  const { data: statusLog } = await supabase
-    .from('work_order_status_log')
-    .select('id, from_status, to_status, reason, created_at, changed_by')
-    .eq('work_order_id', id)
-    .order('created_at', { ascending: false })
-
-  const { data: tasks } = await supabase
-    .from('work_order_task')
-    .select('id, description, quantity, unit_price, total_price, task_type, is_completed')
-    .eq('work_order_id', id)
-    .order('created_at', { ascending: true })
-
   const transitions = STATUS_TRANSITIONS[ot.status as WorkOrderStatus] ?? []
-
-  const totalServices = (tasks ?? []).reduce((sum: number, t: any) => sum + (t.total_price ?? 0), 0)
+  const activeQuotation = (quotations ?? [])[0] ?? null
+  const items = activeQuotation?.quotation_item ?? []
+  const totalServices = items.reduce((s: number, i: any) => s + (i.subtotal ?? 0), 0)
+  const activeInvoice = (invoices ?? [])[0] ?? null
 
   return (
     <div className="max-w-5xl">
@@ -106,7 +122,7 @@ export default async function WorkOrderDetailPage({
                 {ot.reception_mileage && <p>Km recepción: {ot.reception_mileage.toLocaleString()}</p>}
               </div>
               <Link href={`/vehicles/${ot.vehicle?.id}`} className="text-xs text-slate-500 hover:underline mt-2 inline-block">
-                Ver historial del vehículo →
+                Ver historial →
               </Link>
             </div>
 
@@ -116,7 +132,7 @@ export default async function WorkOrderDetailPage({
               {ot.customer?.phone && <p className="text-sm text-gray-500 mt-0.5">{ot.customer.phone}</p>}
               {ot.customer?.email && <p className="text-xs text-gray-400">{ot.customer.email}</p>}
               <Link href={`/customers/${ot.customer?.id}`} className="text-xs text-slate-500 hover:underline mt-2 inline-block">
-                Ver perfil del cliente →
+                Ver perfil →
               </Link>
             </div>
           </div>
@@ -164,47 +180,158 @@ export default async function WorkOrderDetailPage({
             )}
           </div>
 
-          {/* Servicios / tareas */}
+          {/* Cotización / Servicios */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Servicios y repuestos</p>
-              <button className="text-xs text-slate-600 hover:text-slate-800 font-medium">+ Agregar</button>
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Cotización / Servicios</p>
+                {activeQuotation && (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    COT-{activeQuotation.number} ·{' '}
+                    <span className={`font-medium ${
+                      activeQuotation.status === 'approved' ? 'text-emerald-600' :
+                      activeQuotation.status === 'draft' ? 'text-amber-600' : 'text-gray-500'
+                    }`}>
+                      {activeQuotation.status === 'approved' ? 'Aprobada' :
+                       activeQuotation.status === 'draft' ? 'Borrador' :
+                       activeQuotation.status === 'sent' ? 'Enviada' : activeQuotation.status}
+                    </span>
+                  </p>
+                )}
+              </div>
+              <Link
+                href={`/work-orders/${id}/quotation`}
+                className="text-xs text-slate-600 hover:text-slate-800 font-medium border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                {activeQuotation ? 'Gestionar cotización' : '+ Crear cotización'}
+              </Link>
             </div>
 
-            {!tasks || tasks.length === 0 ? (
-              <p className="text-sm text-gray-400 py-4 text-center">Aún no hay servicios registrados</p>
+            {items.length === 0 ? (
+              <p className="text-sm text-gray-400 py-4 text-center">Aún no hay servicios en la cotización</p>
             ) : (
               <>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-xs text-gray-400 border-b border-gray-100">
                       <th className="text-left pb-2 font-medium">Descripción</th>
+                      <th className="text-left pb-2 font-medium">Tipo</th>
                       <th className="text-right pb-2 font-medium">Cant.</th>
-                      <th className="text-right pb-2 font-medium">Precio</th>
-                      <th className="text-right pb-2 font-medium">Total</th>
+                      <th className="text-right pb-2 font-medium">P. Unit.</th>
+                      <th className="text-right pb-2 font-medium">Subtotal</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {tasks.map((t: any) => (
-                      <tr key={t.id} className="border-b border-gray-50">
-                        <td className="py-2 text-gray-700">{t.description}</td>
-                        <td className="py-2 text-right text-gray-500">{t.quantity}</td>
-                        <td className="py-2 text-right text-gray-500">${(t.unit_price ?? 0).toLocaleString()}</td>
-                        <td className="py-2 text-right font-medium text-gray-800">${(t.total_price ?? 0).toLocaleString()}</td>
+                    {items.map((item: any) => (
+                      <tr key={item.id} className="border-b border-gray-50">
+                        <td className="py-2 text-gray-700">{item.description}</td>
+                        <td className="py-2">
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                            item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'
+                          }`}>
+                            {item.item_type === 'service' ? 'Servicio' : 'Repuesto'}
+                          </span>
+                        </td>
+                        <td className="py-2 text-right text-gray-500">{item.quantity}</td>
+                        <td className="py-2 text-right text-gray-500">${(item.unit_price ?? 0).toLocaleString('es-CO')}</td>
+                        <td className="py-2 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <div className="flex justify-end pt-3 border-t border-gray-100 mt-1">
-                  <span className="text-sm font-bold text-gray-900">Total: ${totalServices.toLocaleString()}</span>
+                <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-1">
+                  <div className="text-xs text-gray-400">
+                    {activeQuotation?.tax_amount ? `IVA: $${activeQuotation.tax_amount.toLocaleString('es-CO')}` : ''}
+                    {activeQuotation?.discount_amount ? ` · Descuento: $${activeQuotation.discount_amount.toLocaleString('es-CO')}` : ''}
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">
+                    Total: ${(activeQuotation?.total ?? totalServices).toLocaleString('es-CO')}
+                  </span>
                 </div>
               </>
             )}
           </div>
+
+          {/* Factura */}
+          {activeInvoice && (
+            <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Factura</p>
+                <Link href={`/billing/${activeInvoice.id}`} className="text-xs text-slate-600 hover:underline font-medium">
+                  Ver factura →
+                </Link>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-mono font-bold text-gray-800">FAC-{activeInvoice.number}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    activeInvoice.status === 'paid' ? 'bg-emerald-50 text-emerald-600' :
+                    activeInvoice.status === 'partially_paid' ? 'bg-amber-50 text-amber-600' :
+                    'bg-gray-50 text-gray-500'
+                  }`}>
+                    {activeInvoice.status === 'paid' ? 'Pagada' :
+                     activeInvoice.status === 'partially_paid' ? 'Parcialmente pagada' :
+                     activeInvoice.status === 'issued' ? 'Emitida' : activeInvoice.status}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-gray-800">${(activeInvoice.total ?? 0).toLocaleString('es-CO')}</p>
+                  {activeInvoice.paid_amount > 0 && (
+                    <p className="text-xs text-gray-400">Pagado: ${(activeInvoice.paid_amount).toLocaleString('es-CO')}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Crear factura si hay cotización aprobada y no hay factura */}
+          {activeQuotation?.status === 'approved' && !activeInvoice && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-emerald-800">Cotización aprobada</p>
+                <p className="text-xs text-emerald-600 mt-0.5">Puedes generar la factura ahora</p>
+              </div>
+              <Link
+                href={`/billing/new?work_order_id=${id}`}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                Crear factura
+              </Link>
+            </div>
+          )}
         </div>
 
-        {/* Columna derecha (1/3) — Timeline */}
+        {/* Columna derecha (1/3) — Timeline + acciones */}
         <div className="space-y-5">
+
+          {/* Acciones rápidas de la OT */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Acciones</p>
+            <div className="space-y-2">
+              <Link href={`/work-orders/${id}/quotation`}
+                className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                <span>📋</span> {activeQuotation ? 'Ver / editar cotización' : 'Crear cotización'}
+              </Link>
+              {activeQuotation?.status === 'approved' && !activeInvoice && (
+                <Link href={`/billing/new?work_order_id=${id}`}
+                  className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                  <span>🧾</span> Generar factura
+                </Link>
+              )}
+              {activeInvoice && activeInvoice.status !== 'paid' && (
+                <Link href={`/billing/${activeInvoice.id}`}
+                  className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                  <span>💳</span> Registrar pago
+                </Link>
+              )}
+              <Link href={`/appointments/new?customer_id=${ot.customer_id}&vehicle_id=${ot.vehicle_id}`}
+                className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                <span>📅</span> Agendar próxima cita
+              </Link>
+            </div>
+          </div>
+
+          {/* Timeline */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-4">Historial de estados</p>
 

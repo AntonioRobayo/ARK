@@ -57,7 +57,7 @@ export default async function LoginPage({
 
         <button
           type="submit"
-          className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors"
+          className="w-full ark-btn-primary font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors"
         >
           Entrar
         </button>
