@@ -76,10 +76,12 @@ export default async function SuperAdminPage() {
                 <td className="px-5 py-3.5 font-semibold text-gray-900">{t.name}</td>
                 <td className="px-5 py-3.5 text-gray-400 font-mono text-xs">{t.slug}</td>
                 <td className="px-5 py-3.5">
-                  {t.license_plan
-                    ? <PlanBadge name={(t.license_plan as { name: string; slug: string }).name} slug={(t.license_plan as { name: string; slug: string }).slug} />
-                    : <PlanBadge name={t.plan ?? '—'} slug={t.plan ?? ''} />
-                  }
+                  {(() => {
+                    const lp = t.license_plan as unknown as { name: string; slug: string } | null
+                    return lp
+                      ? <PlanBadge name={lp.name} slug={lp.slug} />
+                      : <PlanBadge name={t.plan ?? '—'} slug={t.plan ?? ''} />
+                  })()}
                 </td>
                 <td className="px-5 py-3.5"><ExpiryBadge expiresAt={t.plan_expires_at} /></td>
                 <td className="px-5 py-3.5">
