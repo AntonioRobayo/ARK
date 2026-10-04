@@ -17,7 +17,6 @@ export default async function SuperAdminLayout({ children }: { children: React.R
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FF7316' }}>
@@ -30,10 +29,8 @@ export default async function SuperAdminLayout({ children }: { children: React.R
             DA Workshop Platform
           </span>
         </div>
-
         <SuperAdminTabs />
       </div>
-
       {children}
     </div>
   )
