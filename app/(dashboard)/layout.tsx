@@ -19,26 +19,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Sidebar ARK */}
       <aside className="w-60 flex flex-col shrink-0" style={{ backgroundColor: '#1F2937' }}>
         {/* Logo */}
-        <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="flex items-center gap-2.5 mb-3">
-            {/* ARK A symbol */}
-            <div className="relative w-8 h-8 shrink-0">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <polygon points="16,3 30,29 2,29" fill="none" stroke="#FF7316" strokeWidth="2.5" strokeLinejoin="round"/>
-                <line x1="7.5" y1="22" x2="24.5" y2="22" stroke="#FF7316" strokeWidth="2.5" strokeLinecap="round"/>
-                <polygon points="16,3 30,29 2,29" fill="url(#g)" opacity="0.12"/>
-                <defs>
-                  <linearGradient id="g" x1="16" y1="3" x2="16" y2="29" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#FF7316"/>
-                    <stop offset="1" stopColor="#EA580C"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <div>
-              <p className="font-bold text-white" style={{ fontSize: '18px', letterSpacing: '0.1em' }}>ARK</p>
-              <p style={{ color: '#FF7316', fontSize: '8px', marginTop: '-2px', letterSpacing: '0.15em' }} className="font-semibold uppercase">Workshop</p>
-            </div>
+        <div className="px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <div
+            className="rounded-lg px-3 py-2 mb-3"
+            style={{ backgroundColor: 'rgba(255,255,255,0.97)' }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-ark.png"
+              alt="ARK"
+              style={{ height: '28px', width: 'auto', display: 'block' }}
+            />
           </div>
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
             {profile?.first_name} {profile?.last_name}

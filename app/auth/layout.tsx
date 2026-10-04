@@ -8,21 +8,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       }}
     >
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          {/* ARK Logo */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <svg width="40" height="40" viewBox="0 0 32 32" fill="none">
-              <polygon points="16,3 30,29 2,29" fill="none" stroke="#FF7316" strokeWidth="2.5" strokeLinejoin="round"/>
-              <line x1="7.5" y1="22" x2="24.5" y2="22" stroke="#FF7316" strokeWidth="2.5" strokeLinecap="round"/>
-            </svg>
-            <div className="text-left">
-              <p className="font-bold text-white text-2xl" style={{ letterSpacing: '0.12em' }}>ARK</p>
-              <p style={{ color: '#FF7316', fontSize: '9px', letterSpacing: '0.2em', marginTop: '-3px' }} className="font-semibold uppercase">Workshop</p>
-            </div>
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <div
+            className="rounded-2xl px-8 py-4"
+            style={{ backgroundColor: 'rgba(255,255,255,0.97)' }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-ark-slogan.png"
+              alt="ARK — Todo tu taller. En un solo lugar."
+              style={{ height: '64px', width: 'auto', display: 'block' }}
+            />
           </div>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Todo tu taller. En un solo lugar.
-          </p>
         </div>
         {children}
       </div>
