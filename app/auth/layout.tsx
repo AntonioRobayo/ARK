@@ -24,6 +24,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
         {children}
       </div>
+
+      {/* DA branding footer */}
+      <div className="mt-8 flex flex-col items-center gap-2">
+        <p className="text-xs tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          A product by
+        </p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-da.png"
+          alt="Developing Assets Consulting Firm"
+          style={{ height: '36px', width: 'auto', opacity: 0.55, filter: 'brightness(0) invert(1)' }}
+        />
+      </div>
     </div>
   )
 }
