@@ -37,7 +37,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <img
             src="/logo-da.png"
             alt="Developing Assets Consulting Firm"
-            style={{ height: '24px', width: 'auto', display: 'block' }}
+            style={{ height: '48px', width: 'auto', display: 'block' }}
           />
         </div>
       </div>
