@@ -90,6 +90,7 @@ export interface UserProfile {
   phone: string | null
   avatar_url: string | null
   role_id: string | null
+  role: 'superadmin' | null
   is_active: boolean
   created_at: string
   updated_at: string

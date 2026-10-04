@@ -25,6 +25,12 @@ const sections = [
     description: 'Puntos de caja para registro de pagos',
     icon: '🏧',
   },
+  {
+    href: '/auth/update-password?from=settings',
+    title: 'Cambiar contraseña',
+    description: 'Actualiza la contraseña de tu cuenta',
+    icon: '🔑',
+  },
 ]
 
 export default function SettingsPage() {

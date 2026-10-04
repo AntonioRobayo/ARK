@@ -33,30 +33,57 @@ const NAV = [
   },
 ]
 
-export function NavLinks() {
+const SUPERADMIN_ITEM = {
+  href: '/superadmin',
+  label: 'Superadmin',
+  icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+}
+
+export function NavLinks({ isSuperadmin, onNavClick }: { isSuperadmin?: boolean; onNavClick?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-      {NAV.map(item => {
-        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
-            style={isActive ? {
-              backgroundColor: '#FF7316',
-              color: '#fff',
-            } : {
-              color: 'rgba(255,255,255,0.55)',
-            }}
-          >
-            <span className="shrink-0">{item.icon}</span>
-            <span className="font-medium">{item.label}</span>
-          </Link>
-        )
-      })}
+    <nav className="flex-1 px-3 py-3 overflow-y-auto">
+      <div className="space-y-0.5">
+        {NAV.map(item => {
+          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavClick}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+              style={isActive ? { backgroundColor: '#FF7316', color: '#fff' } : { color: 'rgba(255,255,255,0.55)' }}
+            >
+              <span className="shrink-0">{item.icon}</span>
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          )
+        })}
+      </div>
+
+      {isSuperadmin && (
+        <>
+          <div className="my-3 mx-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
+          <p className="px-3 mb-1 text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            Plataforma
+          </p>
+          {(() => {
+            const isActive = pathname === SUPERADMIN_ITEM.href || pathname.startsWith(SUPERADMIN_ITEM.href)
+            return (
+              <Link
+                href={SUPERADMIN_ITEM.href}
+                onClick={onNavClick}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+                style={isActive ? { backgroundColor: '#FF7316', color: '#fff' } : { color: 'rgba(255,255,255,0.55)' }}
+              >
+                <span className="shrink-0">{SUPERADMIN_ITEM.icon}</span>
+                <span className="font-medium">{SUPERADMIN_ITEM.label}</span>
+              </Link>
+            )
+          })()}
+        </>
+      )}
     </nav>
   )
 }

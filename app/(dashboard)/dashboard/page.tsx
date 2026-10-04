@@ -74,9 +74,9 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Últimas OTs */}
-        <div className="col-span-2 bg-white border border-gray-200 rounded-xl p-4">
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-gray-700">Últimas órdenes de trabajo</p>
             <Link href="/work-orders" className="text-xs text-slate-500 hover:underline">Ver todas →</Link>
@@ -108,7 +108,7 @@ export default async function DashboardPage() {
         <div className="space-y-3">
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <p className="text-sm font-semibold text-gray-700 mb-3">Acciones rápidas</p>
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
               {[
                 { href: '/work-orders/new',  label: 'Nueva OT',         icon: '📋' },
                 { href: '/customers/new',    label: 'Nuevo cliente',    icon: '👤' },
@@ -117,9 +117,9 @@ export default async function DashboardPage() {
                 { href: '/inventory/new',    label: 'Nuevo ítem',       icon: '📦' },
               ].map(a => (
                 <Link key={a.href} href={a.href}
-                  className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-100 hover:border-slate-300 hover:bg-gray-50 transition-all text-sm text-gray-700">
-                  <span>{a.icon}</span>
-                  {a.label}
+                  className="flex items-center gap-2 p-3 rounded-lg border border-gray-100 hover:border-slate-300 hover:bg-gray-50 transition-all text-sm text-gray-700">
+                  <span className="text-lg leading-none">{a.icon}</span>
+                  <span className="font-medium">{a.label}</span>
                 </Link>
               ))}
             </div>

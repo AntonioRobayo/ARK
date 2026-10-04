@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { SuperAdminTabs } from './tabs'
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -15,28 +16,25 @@ export default async function SuperAdminLayout({ children }: { children: React.R
   if (!profile?.is_platform_admin) redirect('/dashboard')
 
   return (
-    <div className="flex min-h-screen bg-gray-950">
-      <aside className="w-56 bg-black flex flex-col shrink-0">
-        <div className="p-5 border-b border-gray-800">
-          <p className="text-white font-bold text-sm uppercase tracking-widest">Superadmin</p>
-          <p className="text-gray-500 text-xs mt-0.5">DA Workshop Platform</p>
+    <div>
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FF7316' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Superadmin</h1>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FFF0E6', color: '#FF7316' }}>
+            DA Workshop Platform
+          </span>
         </div>
-        <nav className="flex-1 p-3 space-y-0.5">
-          {[
-            { href: '/superadmin', label: 'Tenants' },
-            { href: '/superadmin/tenants/new', label: 'Nuevo taller' },
-          ].map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="flex items-center px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-900 hover:text-white transition-colors"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </aside>
-      <main className="flex-1 p-8">{children}</main>
+
+        <SuperAdminTabs />
+      </div>
+
+      {children}
     </div>
   )
 }

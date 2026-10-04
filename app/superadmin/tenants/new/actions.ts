@@ -18,17 +18,24 @@ export async function createTenantAndInvite(formData: FormData) {
   const adminClient = createAdminClient()
 
   const workshopName  = formData.get('workshop_name') as string
-  const plan          = formData.get('plan') as string
+  const planId        = formData.get('plan_id') as string
   const countryCode   = (formData.get('country_code') as string) || 'CO'
   const currencyCode  = (formData.get('currency_code') as string) || 'COP'
   const timezone      = (formData.get('timezone') as string) || 'America/Bogota'
   const adminEmail    = formData.get('admin_email') as string
 
+  // Obtener el slug del plan seleccionado
+  const { data: planData } = await supabase
+    .from('license_plan')
+    .select('slug')
+    .eq('id', planId)
+    .single()
+
   // 1. Crear el tenant en la BD
   const { data: tenantData, error: tenantError } = await supabase.rpc('superadmin_create_tenant', {
     p_tenant_name:   workshopName,
     p_tenant_slug:   toSlug(workshopName),
-    p_plan:          plan,
+    p_plan:          planData?.slug ?? 'starter',
     p_country_code:  countryCode,
     p_currency_code: currencyCode,
     p_timezone:      timezone,
