@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { NumericInput } from '@/components/numeric-input'
 import { createLicensePlan } from '../actions'
 
 export default async function NewLicensePlanPage({
@@ -7,6 +8,7 @@ export default async function NewLicensePlanPage({
   searchParams: Promise<{ error?: string }>
 }) {
   const { error } = await searchParams
+  const cls = 'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent'
 
   return (
     <div className="max-w-lg">
@@ -29,13 +31,11 @@ export default async function NewLicensePlanPage({
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre del plan *</label>
-            <input name="name" type="text" required placeholder="ej. Professional"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <input name="name" type="text" required placeholder="ej. Professional" className={cls} />
           </div>
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción</label>
-            <input name="description" type="text" placeholder="Para talleres en crecimiento"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <input name="description" type="text" placeholder="Para talleres en crecimiento" className={cls} />
           </div>
         </div>
 
@@ -48,16 +48,14 @@ export default async function NewLicensePlanPage({
               Máx. sedes *
               <span className="ml-1 font-normal text-gray-400">(999 = ilimitadas)</span>
             </label>
-            <input name="max_branches" type="number" min="1" max="999" required defaultValue="1"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <NumericInput name="max_branches" defaultValue={1} min={1} max={999} required className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Máx. usuarios *
               <span className="ml-1 font-normal text-gray-400">(999 = ilimitados)</span>
             </label>
-            <input name="max_users" type="number" min="1" max="999" required defaultValue="5"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <NumericInput name="max_users" defaultValue={5} min={1} max={999} required className={cls} />
           </div>
         </div>
 
@@ -67,13 +65,11 @@ export default async function NewLicensePlanPage({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Precio mensual *</label>
-            <input name="price_monthly" type="number" min="0" step="1000" required defaultValue="0"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <NumericInput name="price_monthly" defaultValue={0} min={0} required className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Moneda</label>
-            <select name="currency"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent">
+            <select name="currency" className={cls}>
               <option value="COP">COP</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -81,8 +77,7 @@ export default async function NewLicensePlanPage({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Orden en lista</label>
-            <input name="sort_order" type="number" min="1" defaultValue="10"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <NumericInput name="sort_order" defaultValue={10} min={1} className={cls} />
           </div>
         </div>
 

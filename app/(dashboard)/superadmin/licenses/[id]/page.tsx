@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { NumericInput } from '@/components/numeric-input'
 import { updateLicensePlan } from '../actions'
 
 export default async function EditLicensePlanPage({
@@ -23,6 +24,7 @@ export default async function EditLicensePlanPage({
   if (!plan) redirect('/superadmin/licenses')
 
   const updateWithId = updateLicensePlan.bind(null, id)
+  const cls = 'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent'
 
   return (
     <div className="max-w-lg">
@@ -44,13 +46,11 @@ export default async function EditLicensePlanPage({
       <form action={updateWithId} className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre del plan *</label>
-          <input name="name" type="text" required defaultValue={plan.name}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+          <input name="name" type="text" required defaultValue={plan.name} className={cls} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción</label>
-          <input name="description" type="text" defaultValue={plan.description ?? ''}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+          <input name="description" type="text" defaultValue={plan.description ?? ''} className={cls} />
         </div>
 
         <hr className="border-gray-100" />
@@ -62,16 +62,14 @@ export default async function EditLicensePlanPage({
               Máx. sedes *
               <span className="ml-1 font-normal text-gray-400">(999 = ilimitadas)</span>
             </label>
-            <input name="max_branches" type="number" min="1" max="999" required defaultValue={plan.max_branches}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <NumericInput name="max_branches" defaultValue={plan.max_branches} min={1} max={999} required className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Máx. usuarios *
               <span className="ml-1 font-normal text-gray-400">(999 = ilimitados)</span>
             </label>
-            <input name="max_users" type="number" min="1" max="999" required defaultValue={plan.max_users}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <NumericInput name="max_users" defaultValue={plan.max_users} min={1} max={999} required className={cls} />
           </div>
         </div>
 
@@ -81,13 +79,11 @@ export default async function EditLicensePlanPage({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Precio mensual *</label>
-            <input name="price_monthly" type="number" min="0" step="1000" required defaultValue={Number(plan.price_monthly)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <NumericInput name="price_monthly" defaultValue={Number(plan.price_monthly)} min={0} required className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Moneda</label>
-            <select name="currency" defaultValue={plan.currency}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent">
+            <select name="currency" defaultValue={plan.currency} className={cls}>
               <option value="COP">COP</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -95,8 +91,7 @@ export default async function EditLicensePlanPage({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Orden en lista</label>
-            <input name="sort_order" type="number" min="1" defaultValue={plan.sort_order}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+            <NumericInput name="sort_order" defaultValue={plan.sort_order} min={1} className={cls} />
           </div>
           <div className="flex items-end pb-0.5">
             <label className="flex items-center gap-2 cursor-pointer">
