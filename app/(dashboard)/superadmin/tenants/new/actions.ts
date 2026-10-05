@@ -47,6 +47,9 @@ export async function createTenantAndInvite(formData: FormData) {
 
   const tenantId = (tenantData as { tenant_id: string }).tenant_id
 
+  // Actualizar plan_id (el RPC solo setea el slug)
+  await adminClient.from('tenants').update({ plan_id: planId }).eq('id', tenantId)
+
   // 2. Invitar al admin por email usando service role
   // El link de invitación redirige a /onboarding?tenant_id=...
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(adminEmail, {

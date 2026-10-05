@@ -1,10 +1,10 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 
 export async function createLicensePlan(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const payload = {
     name:           formData.get('name') as string,
@@ -24,7 +24,7 @@ export async function createLicensePlan(formData: FormData) {
 }
 
 export async function updateLicensePlan(id: string, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const payload = {
     name:           formData.get('name') as string,
