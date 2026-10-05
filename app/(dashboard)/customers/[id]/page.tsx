@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { STATUS_LABEL, STATUS_COLOR } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
+import { getTranslations } from 'next-intl/server'
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,10 +17,12 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
   if (!customer) notFound()
 
+  const t = await getTranslations('customers')
+
   return (
     <div className="max-w-4xl">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/customers" className="text-gray-400 hover:text-gray-600 text-sm">← Clientes</Link>
+        <Link href="/customers" className="text-gray-400 hover:text-gray-600 text-sm">{t('detail.back')}</Link>
         <h1 className="text-2xl font-bold text-gray-900">{customer.first_name} {customer.last_name}</h1>
       </div>
 
@@ -27,27 +30,27 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         {/* Info */}
         <div className="col-span-1 space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Información</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('detail.info')}</p>
             <dl className="space-y-2 text-sm">
               {customer.id_number && (
                 <div><dt className="text-gray-400 text-xs">{customer.id_type}</dt><dd className="font-medium text-gray-800">{customer.id_number}</dd></div>
               )}
               {customer.phone && (
-                <div><dt className="text-gray-400 text-xs">Teléfono</dt><dd className="font-medium text-gray-800">{customer.phone}</dd></div>
+                <div><dt className="text-gray-400 text-xs">{t('detail.phone')}</dt><dd className="font-medium text-gray-800">{customer.phone}</dd></div>
               )}
               {customer.email && (
-                <div><dt className="text-gray-400 text-xs">Email</dt><dd className="text-gray-600 text-xs">{customer.email}</dd></div>
+                <div><dt className="text-gray-400 text-xs">{t('detail.email')}</dt><dd className="text-gray-600 text-xs">{customer.email}</dd></div>
               )}
               {customer.address && (
-                <div><dt className="text-gray-400 text-xs">Dirección</dt><dd className="text-gray-600 text-xs">{customer.address}</dd></div>
+                <div><dt className="text-gray-400 text-xs">{t('detail.address')}</dt><dd className="text-gray-600 text-xs">{customer.address}</dd></div>
               )}
               {customer.is_credit_enabled && (
-                <div><dt className="text-gray-400 text-xs">Crédito</dt><dd><span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Habilitado</span></dd></div>
+                <div><dt className="text-gray-400 text-xs">{t('detail.credit')}</dt><dd><span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">{t('detail.creditEnabled')}</span></dd></div>
               )}
             </dl>
             {customer.notes && (
               <div className="mt-3 pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-400">Notas</p>
+                <p className="text-xs text-gray-400">{t('detail.notes')}</p>
                 <p className="text-xs text-gray-600 mt-1">{customer.notes}</p>
               </div>
             )}
@@ -55,7 +58,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
           <Link href={`/work-orders/new?q=${encodeURIComponent(customer.first_name)}`}
             className="block w-full text-center bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
-            + Nueva OT para este cliente
+            {t('detail.newOT')}
           </Link>
         </div>
 
@@ -63,11 +66,11 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         <div className="col-span-2 space-y-5">
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Vehículos</p>
-              <Link href={`/vehicles/new?customer_id=${id}`} className="text-xs text-slate-600 hover:text-slate-800 font-medium">+ Registrar</Link>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{t('detail.vehicles')}</p>
+              <Link href={`/vehicles/new?customer_id=${id}`} className="text-xs text-slate-600 hover:text-slate-800 font-medium">{t('detail.registerVehicle')}</Link>
             </div>
             {!vehicles || vehicles.length === 0 ? (
-              <p className="text-sm text-gray-400 py-3 text-center">Sin vehículos registrados</p>
+              <p className="text-sm text-gray-400 py-3 text-center">{t('detail.noVehicles')}</p>
             ) : (
               <div className="space-y-2">
                 {vehicles.map((v: any) => (
@@ -85,9 +88,9 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </div>
 
           <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Últimas órdenes de trabajo</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('detail.latestOrders')}</p>
             {!orders || orders.length === 0 ? (
-              <p className="text-sm text-gray-400 py-3 text-center">Sin órdenes de trabajo</p>
+              <p className="text-sm text-gray-400 py-3 text-center">{t('detail.noOrders')}</p>
             ) : (
               <table className="w-full text-sm">
                 <tbody>

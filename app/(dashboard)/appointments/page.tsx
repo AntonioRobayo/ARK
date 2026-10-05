@@ -1,15 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { updateAppointmentStatus, convertToWorkOrder } from './actions'
+import { getTranslations } from 'next-intl/server'
 
-const APPT_STATUS: Record<string, { label: string; cls: string }> = {
-  scheduled:   { label: 'Agendada',   cls: 'bg-blue-50 text-blue-600' },
-  confirmed:   { label: 'Confirmada', cls: 'bg-emerald-50 text-emerald-600' },
-  arrived:     { label: 'Llegó',      cls: 'bg-amber-50 text-amber-600' },
-  in_progress: { label: 'En proceso', cls: 'bg-purple-50 text-purple-600' },
-  completed:   { label: 'Completada', cls: 'bg-gray-50 text-gray-500' },
-  cancelled:   { label: 'Cancelada',  cls: 'bg-red-50 text-red-400' },
-  no_show:     { label: 'No asistió', cls: 'bg-red-50 text-red-500' },
+const APPT_STATUS_CLS: Record<string, string> = {
+  scheduled:   'bg-blue-50 text-blue-600',
+  confirmed:   'bg-emerald-50 text-emerald-600',
+  arrived:     'bg-amber-50 text-amber-600',
+  in_progress: 'bg-purple-50 text-purple-600',
+  completed:   'bg-gray-50 text-gray-500',
+  cancelled:   'bg-red-50 text-red-400',
+  no_show:     'bg-red-50 text-red-500',
 }
 
 export default async function AppointmentsPage({
@@ -41,32 +42,42 @@ export default async function AppointmentsPage({
 
   const { data: appointments } = await query.limit(50)
 
+  const t = await getTranslations('appointments')
+  const APPT_STATUS: Record<string, { label: string; cls: string }> = {
+    scheduled:   { label: t('status.scheduled'),  cls: APPT_STATUS_CLS.scheduled },
+    confirmed:   { label: t('status.confirmed'),  cls: APPT_STATUS_CLS.confirmed },
+    arrived:     { label: t('status.arrived'),    cls: APPT_STATUS_CLS.arrived },
+    in_progress: { label: t('status.inProgress'), cls: APPT_STATUS_CLS.in_progress },
+    completed:   { label: t('status.completed'),  cls: APPT_STATUS_CLS.completed },
+    cancelled:   { label: t('status.cancelled'),  cls: APPT_STATUS_CLS.cancelled },
+    no_show:     { label: t('status.noShow'),     cls: APPT_STATUS_CLS.no_show },
+  }
   const tabs = [
-    { id: 'today',    label: 'Hoy' },
-    { id: 'upcoming', label: 'Próximas' },
-    { id: 'past',     label: 'Pasadas' },
-    { id: 'all',      label: 'Todas' },
+    { id: 'today',    label: t('tabs.today') },
+    { id: 'upcoming', label: t('tabs.upcoming') },
+    { id: 'past',     label: t('tabs.past') },
+    { id: 'all',      label: t('tabs.all') },
   ]
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Agenda</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{appointments?.length ?? 0} citas</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{t('count', { n: appointments?.length ?? 0 })}</p>
         </div>
         <Link href="/appointments/new" className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          + Nueva cita
+          {t('newBtn')}
         </Link>
       </div>
 
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
-        {tabs.map(t => (
-          <Link key={t.id} href={`/appointments?tab=${t.id}`}
+        {tabs.map(tabItem => (
+          <Link key={tabItem.id} href={`/appointments?tab=${tabItem.id}`}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              tab === t.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              tab === tabItem.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}>
-            {t.label}
+            {tabItem.label}
           </Link>
         ))}
       </div>
@@ -74,9 +85,9 @@ export default async function AppointmentsPage({
       {!appointments || appointments.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-3">📅</p>
-          <p className="font-medium text-gray-500">Sin citas en esta vista</p>
+          <p className="font-medium text-gray-500">{t('empty')}</p>
           <Link href="/appointments/new" className="text-slate-600 text-sm hover:underline mt-2 inline-block">
-            Agendar cita →
+            {t('createFirst')}
           </Link>
         </div>
       ) : (
@@ -98,7 +109,7 @@ export default async function AppointmentsPage({
                     <p className="text-xs text-gray-400">
                       {scheduledDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    <p className="text-xs text-gray-300">{appt.duration_minutes} min</p>
+                    <p className="text-xs text-gray-300">{t('duration', { n: appt.duration_minutes })}</p>
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -128,7 +139,7 @@ export default async function AppointmentsPage({
                       <input type="hidden" name="id" value={appt.id} />
                       <input type="hidden" name="status" value="confirmed" />
                       <button type="submit" className="text-xs border border-slate-200 text-slate-600 hover:bg-slate-50 px-2.5 py-1 rounded-lg transition-colors">
-                        Confirmar
+                        {t('confirm')}
                       </button>
                     </form>
                   )}
@@ -136,7 +147,7 @@ export default async function AppointmentsPage({
                     <form action={convertToWorkOrder}>
                       <input type="hidden" name="appointment_id" value={appt.id} />
                       <button type="submit" className="text-xs bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1 rounded-lg transition-colors">
-                        → Crear OT
+                        {t('createOT')}
                       </button>
                     </form>
                   )}
@@ -145,7 +156,7 @@ export default async function AppointmentsPage({
                       <input type="hidden" name="id" value={appt.id} />
                       <input type="hidden" name="status" value="cancelled" />
                       <button type="submit" className="text-xs border border-red-200 text-red-500 hover:bg-red-50 px-2.5 py-1 rounded-lg transition-colors">
-                        Cancelar
+                        {t('cancel')}
                       </button>
                     </form>
                   )}

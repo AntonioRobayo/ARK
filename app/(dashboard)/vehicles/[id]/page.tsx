@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { STATUS_LABEL, STATUS_COLOR } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
+import { getTranslations } from 'next-intl/server'
 
 export default async function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -22,11 +23,13 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
 
   if (!vehicle) notFound()
 
+  const t = await getTranslations('vehicles')
+
   return (
     <div className="max-w-4xl">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/vehicles" className="text-gray-400 hover:text-gray-600 text-sm">← Vehículos</Link>
-        <h1 className="text-2xl font-bold text-gray-900 font-mono">{vehicle.plate ?? '(sin placa)'}</h1>
+        <Link href="/vehicles" className="text-gray-400 hover:text-gray-600 text-sm">{t('detail.back')}</Link>
+        <h1 className="text-2xl font-bold text-gray-900 font-mono">{vehicle.plate ?? t('detail.noPlate')}</h1>
         <span className="text-gray-400 text-lg font-normal">{vehicle.brand} {vehicle.model} {vehicle.year}</span>
       </div>
 
@@ -34,18 +37,18 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
         {/* Info */}
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Vehículo</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('detail.vehicleSection')}</p>
             <dl className="space-y-2 text-sm">
-              <div><dt className="text-xs text-gray-400">Tipo</dt><dd className="font-medium text-gray-700 capitalize">{vehicle.vehicle_type}</dd></div>
-              <div><dt className="text-xs text-gray-400">Marca / Modelo</dt><dd className="font-medium text-gray-700">{vehicle.brand} {vehicle.model}</dd></div>
-              <div><dt className="text-xs text-gray-400">Año</dt><dd className="font-medium text-gray-700">{vehicle.year ?? '—'}</dd></div>
-              {vehicle.color && <div><dt className="text-xs text-gray-400">Color</dt><dd className="font-medium text-gray-700">{vehicle.color}</dd></div>}
-              {vehicle.engine_cc && <div><dt className="text-xs text-gray-400">Motor</dt><dd className="font-medium text-gray-700">{vehicle.engine_cc} cc</dd></div>}
-              {vehicle.current_mileage && <div><dt className="text-xs text-gray-400">Kilometraje</dt><dd className="font-medium text-gray-700">{vehicle.current_mileage.toLocaleString()} km</dd></div>}
+              <div><dt className="text-xs text-gray-400">{t('detail.type')}</dt><dd className="font-medium text-gray-700 capitalize">{vehicle.vehicle_type}</dd></div>
+              <div><dt className="text-xs text-gray-400">{t('detail.brandModel')}</dt><dd className="font-medium text-gray-700">{vehicle.brand} {vehicle.model}</dd></div>
+              <div><dt className="text-xs text-gray-400">{t('detail.year')}</dt><dd className="font-medium text-gray-700">{vehicle.year ?? '—'}</dd></div>
+              {vehicle.color && <div><dt className="text-xs text-gray-400">{t('detail.color')}</dt><dd className="font-medium text-gray-700">{vehicle.color}</dd></div>}
+              {vehicle.engine_cc && <div><dt className="text-xs text-gray-400">{t('detail.engine')}</dt><dd className="font-medium text-gray-700">{vehicle.engine_cc} cc</dd></div>}
+              {vehicle.current_mileage && <div><dt className="text-xs text-gray-400">{t('detail.mileage')}</dt><dd className="font-medium text-gray-700">{vehicle.current_mileage.toLocaleString()} km</dd></div>}
             </dl>
             {vehicle.notes && (
               <div className="mt-3 pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-400">Notas</p>
+                <p className="text-xs text-gray-400">{t('detail.notes')}</p>
                 <p className="text-xs text-gray-600 mt-1">{vehicle.notes}</p>
               </div>
             )}
@@ -53,7 +56,7 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
 
           {vehicle.customer && (
             <div className="bg-white border border-gray-200 rounded-xl p-4">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Propietario</p>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('detail.owner')}</p>
               <Link href={`/customers/${vehicle.customer.id}`} className="font-semibold text-gray-900 hover:text-slate-600 block">
                 {vehicle.customer.first_name} {vehicle.customer.last_name}
               </Link>
@@ -65,7 +68,7 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
             href={`/work-orders/new?customer_id=${vehicle.customer_id}&vehicle_id=${id}`}
             className="block w-full text-center bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
           >
-            + Nueva OT para este vehículo
+            {t('detail.newOT')}
           </Link>
         </div>
 
@@ -73,19 +76,19 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
         <div className="col-span-2">
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">
-              Historial de órdenes de trabajo ({orders?.length ?? 0})
+              {t('detail.historyTitle', { n: orders?.length ?? 0 })}
             </p>
             {!orders || orders.length === 0 ? (
-              <p className="text-sm text-gray-400 py-6 text-center">Sin historial de trabajo</p>
+              <p className="text-sm text-gray-400 py-6 text-center">{t('detail.noHistory')}</p>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-xs text-gray-400 border-b border-gray-100">
-                    <th className="text-left pb-2 font-medium">OT</th>
-                    <th className="text-left pb-2 font-medium">Estado</th>
-                    <th className="text-left pb-2 font-medium">Técnico</th>
-                    <th className="text-left pb-2 font-medium">Km entrada</th>
-                    <th className="text-left pb-2 font-medium">Fecha</th>
+                    <th className="text-left pb-2 font-medium">{t('detail.table.ot')}</th>
+                    <th className="text-left pb-2 font-medium">{t('detail.table.status')}</th>
+                    <th className="text-left pb-2 font-medium">{t('detail.table.technician')}</th>
+                    <th className="text-left pb-2 font-medium">{t('detail.table.kmEntry')}</th>
+                    <th className="text-left pb-2 font-medium">{t('detail.table.date')}</th>
                   </tr>
                 </thead>
                 <tbody>

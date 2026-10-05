@@ -2,15 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
-const SUPERADMIN_NAV = [
-  { href: '/superadmin',          label: 'Talleres'  },
-  { href: '/superadmin/licenses', label: 'Licencias' },
-  { href: '/superadmin/users',    label: 'Usuarios'  },
-]
+import { useTranslations } from 'next-intl'
 
 export function SuperAdminTabs() {
   const pathname = usePathname()
+  const t = useTranslations('superadmin')
+
+  const SUPERADMIN_NAV = [
+    { href: '/superadmin',          label: t('tabs.workshops') },
+    { href: '/superadmin/licenses', label: t('tabs.licenses') },
+    { href: '/superadmin/users',    label: t('tabs.users') },
+  ]
 
   return (
     <div className="flex gap-1 p-1 rounded-xl bg-white border border-gray-200 w-fit">

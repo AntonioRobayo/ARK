@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { NavLinks } from './nav-links'
 import { logout } from '@/app/auth/login/actions'
+import { useTranslations } from 'next-intl'
 
 interface SidebarProps {
   firstName?: string | null
@@ -13,6 +14,7 @@ interface SidebarProps {
 }
 
 function UserInfo({ firstName, lastName, email, isSuperadmin }: SidebarProps) {
+  const t = useTranslations('sidebar')
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || email || 'Usuario'
   const initials = firstName ? firstName[0].toUpperCase() : (email?.[0]?.toUpperCase() ?? 'U')
 
@@ -27,14 +29,14 @@ function UserInfo({ firstName, lastName, email, isSuperadmin }: SidebarProps) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>{displayName}</p>
         {isSuperadmin && (
-          <span className="text-xs font-semibold" style={{ color: '#FF7316' }}>Superadmin</span>
+          <span className="text-xs font-semibold" style={{ color: '#FF7316' }}>{t('superadminBadge')}</span>
         )}
       </div>
       <Link
         href="/settings"
         className="shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
         style={{ color: 'rgba(255,255,255,0.3)' }}
-        aria-label="Configuración"
+        aria-label={t('settingsLink')}
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3"/>
@@ -46,6 +48,7 @@ function UserInfo({ firstName, lastName, email, isSuperadmin }: SidebarProps) {
 }
 
 function LogoutButton() {
+  const t = useTranslations('sidebar')
   return (
     <div className="px-3 pb-3">
       <form action={logout}>
@@ -59,7 +62,7 @@ function LogoutButton() {
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          Cerrar sesión
+          {t('logout')}
         </button>
       </form>
     </div>
@@ -68,6 +71,7 @@ function LogoutButton() {
 
 export function Sidebar({ firstName, lastName, email, isSuperadmin }: SidebarProps) {
   const [open, setOpen] = useState(false)
+  const t = useTranslations('sidebar')
 
   const navContent = (
     <>
@@ -100,7 +104,7 @@ export function Sidebar({ firstName, lastName, email, isSuperadmin }: SidebarPro
           onClick={() => setOpen(true)}
           className="p-2 rounded-lg"
           style={{ color: 'rgba(255,255,255,0.7)' }}
-          aria-label="Abrir menú"
+          aria-label={t('openMenu')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="3" y1="6" x2="21" y2="6"/>
@@ -139,7 +143,7 @@ export function Sidebar({ firstName, lastName, email, isSuperadmin }: SidebarPro
             onClick={() => setOpen(false)}
             className="p-2 rounded-lg"
             style={{ color: 'rgba(255,255,255,0.5)' }}
-            aria-label="Cerrar menú"
+            aria-label={t('closeMenu')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18"/>

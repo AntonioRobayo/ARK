@@ -2,12 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { STATUS_LABEL, STATUS_COLOR, PRIORITY_COLOR, PRIORITY_LABEL } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
+import { getTranslations } from 'next-intl/server'
 
-const STATUS_GROUPS = [
-  { key: 'active',   label: 'Activas',    statuses: ['draft','received','in_diagnosis','quotation_sent','awaiting_authorization','authorized','in_execution'] },
-  { key: 'blocked',  label: 'Bloqueadas', statuses: ['blocked_parts','blocked_technician','blocked_customer'] },
-  { key: 'ready',    label: 'Por entregar', statuses: ['quality_control','ready_for_delivery','delivered_with_balance'] },
-  { key: 'closed',   label: 'Cerradas',   statuses: ['closed','cancelled','warranty'] },
+const STATUS_GROUP_DEFS = [
+  { key: 'active',  tKey: 'tabs.active',    statuses: ['draft','received','in_diagnosis','quotation_sent','awaiting_authorization','authorized','in_execution'] },
+  { key: 'blocked', tKey: 'tabs.blocked',   statuses: ['blocked_parts','blocked_technician','blocked_customer'] },
+  { key: 'ready',   tKey: 'tabs.toDeliver', statuses: ['quality_control','ready_for_delivery','delivered_with_balance'] },
+  { key: 'closed',  tKey: 'tabs.closed',    statuses: ['closed','cancelled','warranty'] },
 ]
 
 export default async function WorkOrdersPage({
@@ -17,7 +18,9 @@ export default async function WorkOrdersPage({
 }) {
   const { group = 'active', q } = await searchParams
   const supabase = await createClient()
+  const t = await getTranslations('workOrders')
 
+  const STATUS_GROUPS = STATUS_GROUP_DEFS.map(g => ({ ...g, label: t(g.tKey as Parameters<typeof t>[0]) }))
   const activeGroup = STATUS_GROUPS.find(g => g.key === group) ?? STATUS_GROUPS[0]
 
   // Conteos por grupo para las tabs
@@ -53,14 +56,14 @@ export default async function WorkOrdersPage({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Órdenes de Trabajo</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{(allOrders ?? []).length} órdenes en total</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{t('count', { n: (allOrders ?? []).length })}</p>
         </div>
         <Link
           href="/work-orders/new"
           className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
-          + Nueva OT
+          {t('newBtn')}
         </Link>
       </div>
 
@@ -92,9 +95,9 @@ export default async function WorkOrdersPage({
       {!orders || orders.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-3">📋</p>
-          <p className="font-medium text-gray-500">No hay órdenes en esta categoría</p>
+          <p className="font-medium text-gray-500">{t('empty')}</p>
           <Link href="/work-orders/new" className="text-slate-600 text-sm hover:underline mt-2 inline-block">
-            Crear primera OT →
+            {t('createFirst')}
           </Link>
         </div>
       ) : (
@@ -102,13 +105,13 @@ export default async function WorkOrdersPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 font-medium text-gray-500">OT</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Estado</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Vehículo</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Cliente</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Técnico</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Prioridad</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Fecha</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.ot')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.status')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.vehicle')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.customer')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.technician')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.priority')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.date')}</th>
               </tr>
             </thead>
             <tbody>
@@ -135,7 +138,7 @@ export default async function WorkOrdersPage({
                   <td className="px-4 py-3 text-gray-600">
                     {ot.technician
                       ? `${ot.technician.first_name} ${ot.technician.last_name ?? ''}`
-                      : <span className="text-gray-300">Sin asignar</span>}
+                      : <span className="text-gray-300">{t('unassigned')}</span>}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_COLOR[ot.priority ?? 'normal']}`}>

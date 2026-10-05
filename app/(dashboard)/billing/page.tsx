@@ -1,13 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
-const INVOICE_STATUS: Record<string, { label: string; cls: string }> = {
-  draft:           { label: 'Borrador',            cls: 'bg-gray-50 text-gray-500' },
-  issued:          { label: 'Emitida',              cls: 'bg-blue-50 text-blue-600' },
-  partially_paid:  { label: 'Pago parcial',         cls: 'bg-amber-50 text-amber-600' },
-  paid:            { label: 'Pagada',               cls: 'bg-emerald-50 text-emerald-600' },
-  cancelled:       { label: 'Cancelada',            cls: 'bg-red-50 text-red-500' },
-  void:            { label: 'Anulada',              cls: 'bg-red-50 text-red-400' },
+const INVOICE_STATUS_CLS: Record<string, string> = {
+  draft:           'bg-gray-50 text-gray-500',
+  issued:          'bg-blue-50 text-blue-600',
+  partially_paid:  'bg-amber-50 text-amber-600',
+  paid:            'bg-emerald-50 text-emerald-600',
+  cancelled:       'bg-red-50 text-red-500',
+  void:            'bg-red-50 text-red-400',
 }
 
 export default async function BillingPage({
@@ -33,29 +34,39 @@ export default async function BillingPage({
 
   const { data: invoices } = await query.limit(50)
 
+  const t = await getTranslations('billing')
+  const INVOICE_STATUS: Record<string, { label: string; cls: string }> = {
+    draft:          { label: t('status.draft'),      cls: INVOICE_STATUS_CLS.draft },
+    issued:         { label: t('status.issued'),     cls: INVOICE_STATUS_CLS.issued },
+    partially_paid: { label: t('status.partial'),    cls: INVOICE_STATUS_CLS.partially_paid },
+    paid:           { label: t('status.paid'),       cls: INVOICE_STATUS_CLS.paid },
+    cancelled:      { label: t('status.cancelled'),  cls: INVOICE_STATUS_CLS.cancelled },
+    void:           { label: t('status.voided'),     cls: INVOICE_STATUS_CLS.void },
+  }
+
   const tabs = [
-    { id: 'open',      label: 'Abiertas' },
-    { id: 'paid',      label: 'Pagadas' },
-    { id: 'cancelled', label: 'Canceladas' },
-    { id: 'all',       label: 'Todas' },
+    { id: 'open',      label: t('tabs.open') },
+    { id: 'paid',      label: t('tabs.paid') },
+    { id: 'cancelled', label: t('tabs.cancelled') },
+    { id: 'all',       label: t('tabs.all') },
   ]
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Facturación</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{invoices?.length ?? 0} registros</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{t('count', { n: invoices?.length ?? 0 })}</p>
         </div>
       </div>
 
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
-        {tabs.map(t => (
-          <Link key={t.id} href={`/billing?tab=${t.id}`}
+        {tabs.map(tabItem => (
+          <Link key={tabItem.id} href={`/billing?tab=${tabItem.id}`}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              tab === t.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              tab === tabItem.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}>
-            {t.label}
+            {tabItem.label}
           </Link>
         ))}
       </div>
@@ -63,22 +74,22 @@ export default async function BillingPage({
       {!invoices || invoices.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-3">🧾</p>
-          <p className="font-medium text-gray-500">No hay facturas en esta categoría</p>
-          <p className="text-sm mt-1">Las facturas se crean desde una OT con cotización aprobada</p>
+          <p className="font-medium text-gray-500">{t('empty')}</p>
+          <p className="text-sm mt-1">{t('emptyHint')}</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Factura</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">OT</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Cliente</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Estado</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-500">Total</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-500">Pagado</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-500">Saldo</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-500">Fecha</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.invoice')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.ot')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.customer')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.status')}</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-500">{t('table.total')}</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-500">{t('table.paid')}</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-500">{t('table.balance')}</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-500">{t('table.date')}</th>
               </tr>
             </thead>
             <tbody>

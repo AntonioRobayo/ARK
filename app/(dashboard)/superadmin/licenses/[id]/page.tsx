@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { NumericInput } from '@/components/numeric-input'
 import { updateLicensePlan } from '../actions'
+import { getTranslations } from 'next-intl/server'
 
 export default async function EditLicensePlanPage({
   params,
@@ -24,6 +25,7 @@ export default async function EditLicensePlanPage({
   if (!plan) redirect('/superadmin/licenses')
 
   const updateWithId = updateLicensePlan.bind(null, id)
+  const t = await getTranslations('superadmin')
   const cls = 'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent'
 
   return (
@@ -34,7 +36,7 @@ export default async function EditLicensePlanPage({
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </Link>
-        <h2 className="text-lg font-semibold text-gray-900">Editar plan — {plan.name}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('licenses.editTitle', { name: plan.name })}</h2>
       </div>
 
       {error && (
@@ -45,44 +47,44 @@ export default async function EditLicensePlanPage({
 
       <form action={updateWithId} className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre del plan *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.name')}</label>
           <input name="name" type="text" required defaultValue={plan.name} className={cls} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.description')}</label>
           <input name="description" type="text" defaultValue={plan.description ?? ''} className={cls} />
         </div>
 
         <hr className="border-gray-100" />
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Límites del plan</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('licenses.new.limitsSection')}</p>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Máx. sedes *
-              <span className="ml-1 font-normal text-gray-400">(999 = ilimitadas)</span>
+              {t('licenses.new.maxBranches')}
+              <span className="ml-1 font-normal text-gray-400">{t('licenses.new.maxBranchesHint')}</span>
             </label>
             <NumericInput name="max_branches" defaultValue={plan.max_branches} min={1} max={999} required className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Máx. usuarios *
-              <span className="ml-1 font-normal text-gray-400">(999 = ilimitados)</span>
+              {t('licenses.new.maxUsers')}
+              <span className="ml-1 font-normal text-gray-400">{t('licenses.new.maxUsersHint')}</span>
             </label>
             <NumericInput name="max_users" defaultValue={plan.max_users} min={1} max={999} required className={cls} />
           </div>
         </div>
 
         <hr className="border-gray-100" />
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Precio</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('licenses.new.priceSection')}</p>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Precio mensual *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.priceMonthly')}</label>
             <NumericInput name="price_monthly" defaultValue={Number(plan.price_monthly)} min={0} required className={cls} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Moneda</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.currency')}</label>
             <select name="currency" defaultValue={plan.currency} className={cls}>
               <option value="COP">COP</option>
               <option value="USD">USD</option>
@@ -90,7 +92,7 @@ export default async function EditLicensePlanPage({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Orden en lista</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.sortOrder')}</label>
             <NumericInput name="sort_order" defaultValue={plan.sort_order} min={1} className={cls} />
           </div>
           <div className="flex items-end pb-0.5">
@@ -98,7 +100,7 @@ export default async function EditLicensePlanPage({
               <input type="hidden" name="is_active" value="false" />
               <input type="checkbox" name="is_active" value="true" defaultChecked={plan.is_active}
                 className="w-4 h-4 rounded accent-orange-500" />
-              <span className="text-sm font-medium text-gray-700">Plan activo</span>
+              <span className="text-sm font-medium text-gray-700">{t('licenses.activePlan')}</span>
             </label>
           </div>
         </div>
@@ -106,7 +108,7 @@ export default async function EditLicensePlanPage({
         <button type="submit"
           className="w-full font-semibold py-2.5 px-4 rounded-lg text-sm text-white transition-colors"
           style={{ backgroundColor: '#FF7316' }}>
-          Guardar cambios
+          {t('licenses.save')}
         </button>
       </form>
     </div>

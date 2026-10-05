@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createInvoice } from './actions'
+import { getTranslations } from 'next-intl/server'
 
 export default async function NewInvoicePage({
   searchParams,
@@ -27,12 +28,13 @@ export default async function NewInvoicePage({
   if (!ot) notFound()
 
   const quotation = (quotations ?? [])[0] ?? null
+  const t = await getTranslations('billing')
 
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
-        <Link href={`/work-orders/${work_order_id}`} className="text-gray-400 hover:text-gray-600 text-sm">← OT-{(ot as any).number}</Link>
-        <h1 className="text-2xl font-bold text-gray-900">Crear factura</h1>
+        <Link href={`/work-orders/${work_order_id}`} className="text-gray-400 hover:text-gray-600 text-sm">{t('new.back', { n: (ot as any).number })}</Link>
+        <h1 className="text-2xl font-bold text-gray-900">{t('new.title')}</h1>
       </div>
 
       <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm">
@@ -45,11 +47,11 @@ export default async function NewInvoicePage({
 
       {!quotation ? (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-          <p className="text-amber-800 font-medium">No hay cotización aprobada</p>
-          <p className="text-amber-600 text-sm mt-1">Primero aprueba la cotización de la OT</p>
+          <p className="text-amber-800 font-medium">{t('new.noQuotation')}</p>
+          <p className="text-amber-600 text-sm mt-1">{t('new.noQuotationHint')}</p>
           <Link href={`/work-orders/${work_order_id}/quotation`}
             className="mt-3 inline-block text-slate-700 border border-slate-300 rounded-lg px-4 py-2 text-sm hover:bg-slate-50 transition-colors">
-            Ir a cotización
+            {t('new.goToQuotation')}
           </Link>
         </div>
       ) : (
@@ -60,15 +62,15 @@ export default async function NewInvoicePage({
           {/* Resumen de ítems */}
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-              <p className="text-xs font-medium text-gray-500 uppercase">Ítems de la cotización COT-{quotation.number}</p>
+              <p className="text-xs font-medium text-gray-500 uppercase">{t('new.itemsTitle', { n: quotation.number })}</p>
             </div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50">
-                  <th className="text-left px-4 py-2 text-xs text-gray-400">Descripción</th>
-                  <th className="text-right px-4 py-2 text-xs text-gray-400">Cant.</th>
-                  <th className="text-right px-4 py-2 text-xs text-gray-400">Precio</th>
-                  <th className="text-right px-4 py-2 text-xs text-gray-400">Subtotal</th>
+                  <th className="text-left px-4 py-2 text-xs text-gray-400">{t('new.table.description')}</th>
+                  <th className="text-right px-4 py-2 text-xs text-gray-400">{t('new.table.qty')}</th>
+                  <th className="text-right px-4 py-2 text-xs text-gray-400">{t('new.table.price')}</th>
+                  <th className="text-right px-4 py-2 text-xs text-gray-400">{t('new.table.subtotal')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,32 +87,32 @@ export default async function NewInvoicePage({
             <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-8 text-sm">
               {quotation.tax_amount > 0 && (
                 <>
-                  <span className="text-gray-500">IVA: ${(quotation.tax_amount).toLocaleString('es-CO')}</span>
-                  <span className="text-gray-500">Subtotal: ${(quotation.subtotal).toLocaleString('es-CO')}</span>
+                  <span className="text-gray-500">{t('new.tax')}: ${(quotation.tax_amount).toLocaleString('es-CO')}</span>
+                  <span className="text-gray-500">{t('new.subtotal')}: ${(quotation.subtotal).toLocaleString('es-CO')}</span>
                 </>
               )}
-              <span className="font-bold text-gray-900">Total: ${(quotation.total).toLocaleString('es-CO')}</span>
+              <span className="font-bold text-gray-900">{t('new.total', { amount: (quotation.total).toLocaleString('es-CO') })}</span>
             </div>
           </div>
 
           {/* Fecha de vencimiento */}
           <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Fecha de vencimiento (opcional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.dueDate')}</label>
               <input name="due_at" type="date"
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Notas</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.notes')}</label>
               <textarea name="notes" rows={2}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
-                placeholder="Términos, condiciones..." />
+                placeholder={t('new.notesPlaceholder')} />
             </div>
           </div>
 
           <button type="submit"
             className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-lg text-sm transition-colors">
-            Emitir factura por ${(quotation.total).toLocaleString('es-CO')}
+            {t('new.submit', { amount: (quotation.total).toLocaleString('es-CO') })}
           </button>
         </form>
       )}

@@ -2,9 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { STATUS_COLOR, STATUS_LABEL } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
+import { getTranslations } from 'next-intl/server'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  const t = await getTranslations('dashboard')
 
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
@@ -40,7 +42,7 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
         <p className="text-sm text-gray-500 mt-0.5">
           {now.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
@@ -49,28 +51,28 @@ export default async function DashboardPage() {
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-4 mb-6 lg:grid-cols-4">
         <Link href="/work-orders?group=active" className="bg-white border border-gray-200 rounded-xl p-4 hover:border-slate-300 transition-colors">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">OTs activas</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">{t('activeOTs')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{active}</p>
-          {blocked > 0 && <p className="text-xs text-red-500 mt-1">{blocked} bloqueadas</p>}
+          {blocked > 0 && <p className="text-xs text-red-500 mt-1">{t('blocked', { n: blocked })}</p>}
         </Link>
         <Link href="/work-orders?group=ready" className="bg-white border border-gray-200 rounded-xl p-4 hover:border-slate-300 transition-colors">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Por entregar</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">{t('toDeliver')}</p>
           <p className="text-3xl font-bold text-emerald-600 mt-1">{ready}</p>
-          {ready > 0 && <p className="text-xs text-emerald-500 mt-1">Listas para cliente</p>}
+          {ready > 0 && <p className="text-xs text-emerald-500 mt-1">{t('readyForClient')}</p>}
         </Link>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Ingresos del mes</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">{t('monthRevenue')}</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             ${monthRev.toLocaleString('es-CO')}
           </p>
-          <p className="text-xs text-gray-400 mt-1">{(revenueData ?? []).length} facturas pagadas</p>
+          <p className="text-xs text-gray-400 mt-1">{t('paidInvoices', { n: (revenueData ?? []).length })}</p>
         </div>
         <Link href="/billing" className="bg-white border border-gray-200 rounded-xl p-4 hover:border-slate-300 transition-colors">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Saldo pendiente</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">{t('pendingBalance')}</p>
           <p className="text-2xl font-bold text-amber-600 mt-1">
             ${pendingBalance.toLocaleString('es-CO')}
           </p>
-          <p className="text-xs text-gray-400 mt-1">{(pendingInvoices ?? []).length} facturas abiertas</p>
+          <p className="text-xs text-gray-400 mt-1">{t('openInvoices', { n: (pendingInvoices ?? []).length })}</p>
         </Link>
       </div>
 
@@ -78,11 +80,11 @@ export default async function DashboardPage() {
         {/* Últimas OTs */}
         <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-700">Últimas órdenes de trabajo</p>
-            <Link href="/work-orders" className="text-xs text-slate-500 hover:underline">Ver todas →</Link>
+            <p className="text-sm font-semibold text-gray-700">{t('latestWorkOrders')}</p>
+            <Link href="/work-orders" className="text-xs text-slate-500 hover:underline">{t('viewAll')}</Link>
           </div>
           {!recentOTs || recentOTs.length === 0 ? (
-            <p className="text-sm text-gray-400 py-6 text-center">Sin órdenes aún</p>
+            <p className="text-sm text-gray-400 py-6 text-center">{t('noOrders')}</p>
           ) : (
             <div className="space-y-2">
               {recentOTs.map((ot: any) => (
@@ -107,14 +109,14 @@ export default async function DashboardPage() {
         {/* Quick actions */}
         <div className="space-y-3">
           <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-sm font-semibold text-gray-700 mb-3">Acciones rápidas</p>
+            <p className="text-sm font-semibold text-gray-700 mb-3">{t('quickActions')}</p>
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
               {[
-                { href: '/work-orders/new',  label: 'Nueva OT',         icon: '📋' },
-                { href: '/customers/new',    label: 'Nuevo cliente',    icon: '👤' },
-                { href: '/vehicles/new',     label: 'Nuevo vehículo',   icon: '🏍' },
-                { href: '/appointments/new', label: 'Nueva cita',       icon: '📅' },
-                { href: '/inventory/new',    label: 'Nuevo ítem',       icon: '📦' },
+                { href: '/work-orders/new',  label: t('newOT'),        icon: '📋' },
+                { href: '/customers/new',    label: t('newCustomer'),  icon: '👤' },
+                { href: '/vehicles/new',     label: t('newVehicle'),   icon: '🏍' },
+                { href: '/appointments/new', label: t('newAppointment'), icon: '📅' },
+                { href: '/inventory/new',    label: t('newItem'),      icon: '📦' },
               ].map(a => (
                 <Link key={a.href} href={a.href}
                   className="flex items-center gap-2 p-3 rounded-lg border border-gray-100 hover:border-slate-300 hover:bg-gray-50 transition-all text-sm text-gray-700">
@@ -127,7 +129,7 @@ export default async function DashboardPage() {
 
           {(pendingInvoices ?? []).length > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-xs font-semibold text-amber-700 mb-2">Facturas pendientes</p>
+              <p className="text-xs font-semibold text-amber-700 mb-2">{t('pendingInvoices')}</p>
               {pendingInvoices!.map((inv: any) => (
                 <Link key={inv.id} href={`/billing/${inv.id}`}
                   className="flex justify-between text-xs py-1 text-amber-800 hover:text-amber-600">

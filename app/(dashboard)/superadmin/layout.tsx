@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SuperAdminTabs } from './tabs'
+import { getTranslations } from 'next-intl/server'
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -15,6 +16,8 @@ export default async function SuperAdminLayout({ children }: { children: React.R
 
   if (!profile?.is_platform_admin) redirect('/dashboard')
 
+  const t = await getTranslations('superadmin')
+
   return (
     <div>
       <div className="mb-6">
@@ -24,9 +27,9 @@ export default async function SuperAdminLayout({ children }: { children: React.R
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900">Superadmin</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
           <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FFF0E6', color: '#FF7316' }}>
-            DA Workshop Platform
+            {t('badge')}
           </span>
         </div>
         <SuperAdminTabs />

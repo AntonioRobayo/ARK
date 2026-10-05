@@ -6,6 +6,7 @@ import {
 } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
 import { changeStatus } from './actions'
+import { getTranslations } from 'next-intl/server'
 
 export default async function WorkOrderDetailPage({
   params,
@@ -55,6 +56,7 @@ export default async function WorkOrderDetailPage({
 
   if (!ot) notFound()
 
+  const t = await getTranslations('workOrders')
   const transitions = STATUS_TRANSITIONS[ot.status as WorkOrderStatus] ?? []
   const activeQuotation = (quotations ?? [])[0] ?? null
   const items = activeQuotation?.quotation_item ?? []
@@ -66,7 +68,7 @@ export default async function WorkOrderDetailPage({
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/work-orders" className="text-gray-400 hover:text-gray-600 text-sm">← OTs</Link>
+          <Link href="/work-orders" className="text-gray-400 hover:text-gray-600 text-sm">{t('detail.backToOTs')}</Link>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900 font-mono">OT-{ot.number}</h1>
@@ -122,7 +124,7 @@ export default async function WorkOrderDetailPage({
                 {ot.reception_mileage && <p>Km recepción: {ot.reception_mileage.toLocaleString()}</p>}
               </div>
               <Link href={`/vehicles/${ot.vehicle?.id}`} className="text-xs text-slate-500 hover:underline mt-2 inline-block">
-                Ver historial →
+                {t('detail.viewHistory')}
               </Link>
             </div>
 
@@ -132,17 +134,17 @@ export default async function WorkOrderDetailPage({
               {ot.customer?.phone && <p className="text-sm text-gray-500 mt-0.5">{ot.customer.phone}</p>}
               {ot.customer?.email && <p className="text-xs text-gray-400">{ot.customer.email}</p>}
               <Link href={`/customers/${ot.customer?.id}`} className="text-xs text-slate-500 hover:underline mt-2 inline-block">
-                Ver perfil →
+                {t('detail.viewProfile')}
               </Link>
             </div>
           </div>
 
           {/* Recepción */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Detalles de recepción</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('detail.reception')}</p>
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="text-gray-400 text-xs">Combustible</p>
+                <p className="text-gray-400 text-xs">{t('detail.fuel')}</p>
                 <div className="flex gap-0.5 mt-1">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div
@@ -154,25 +156,25 @@ export default async function WorkOrderDetailPage({
                 </div>
               </div>
               <div>
-                <p className="text-gray-400 text-xs">Batería</p>
+                <p className="text-gray-400 text-xs">{t('detail.battery')}</p>
                 <p className="font-medium text-gray-700 mt-1">{ot.battery_level != null ? `${ot.battery_level}/10` : '—'}</p>
               </div>
               <div>
-                <p className="text-gray-400 text-xs">Técnico</p>
+                <p className="text-gray-400 text-xs">{t('detail.technician')}</p>
                 <p className="font-medium text-gray-700 mt-1">
-                  {ot.technician ? `${ot.technician.first_name} ${ot.technician.last_name ?? ''}` : 'Sin asignar'}
+                  {ot.technician ? `${ot.technician.first_name} ${ot.technician.last_name ?? ''}` : t('unassigned')}
                 </p>
               </div>
             </div>
             {ot.reception_notes && (
               <div className="mt-3 pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-400">Observaciones</p>
+                <p className="text-xs text-gray-400">{t('detail.observations')}</p>
                 <p className="text-sm text-gray-700 mt-0.5">{ot.reception_notes}</p>
               </div>
             )}
             {ot.estimated_delivery_at && (
               <div className="mt-3 pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-400">Entrega estimada</p>
+                <p className="text-xs text-gray-400">{t('detail.estimatedDelivery')}</p>
                 <p className="text-sm font-medium text-gray-700 mt-0.5">
                   {new Date(ot.estimated_delivery_at).toLocaleString('es-CO', { day:'2-digit', month:'long', hour:'2-digit', minute:'2-digit' })}
                 </p>
@@ -184,7 +186,7 @@ export default async function WorkOrderDetailPage({
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Cotización / Servicios</p>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{t('detail.quotation')}</p>
                 {activeQuotation && (
                   <p className="text-xs text-gray-500 mt-0.5">
                     COT-{activeQuotation.number} ·{' '}
@@ -192,9 +194,9 @@ export default async function WorkOrderDetailPage({
                       activeQuotation.status === 'approved' ? 'text-emerald-600' :
                       activeQuotation.status === 'draft' ? 'text-amber-600' : 'text-gray-500'
                     }`}>
-                      {activeQuotation.status === 'approved' ? 'Aprobada' :
-                       activeQuotation.status === 'draft' ? 'Borrador' :
-                       activeQuotation.status === 'sent' ? 'Enviada' : activeQuotation.status}
+                      {activeQuotation.status === 'approved' ? t('detail.approved') :
+                       activeQuotation.status === 'draft' ? t('detail.draft') :
+                       activeQuotation.status === 'sent' ? t('detail.sent') : activeQuotation.status}
                     </span>
                   </p>
                 )}
@@ -203,12 +205,12 @@ export default async function WorkOrderDetailPage({
                 href={`/work-orders/${id}/quotation`}
                 className="text-xs text-slate-600 hover:text-slate-800 font-medium border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                {activeQuotation ? 'Gestionar cotización' : '+ Crear cotización'}
+                {activeQuotation ? t('detail.manageQuotation') : t('detail.createQuotation')}
               </Link>
             </div>
 
             {items.length === 0 ? (
-              <p className="text-sm text-gray-400 py-4 text-center">Aún no hay servicios en la cotización</p>
+              <p className="text-sm text-gray-400 py-4 text-center">{t('detail.noServices')}</p>
             ) : (
               <>
                 <table className="w-full text-sm">
@@ -229,7 +231,7 @@ export default async function WorkOrderDetailPage({
                           <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                             item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'
                           }`}>
-                            {item.item_type === 'service' ? 'Servicio' : 'Repuesto'}
+                            {item.item_type === 'service' ? t('detail.itemType.service') : t('detail.itemType.part')}
                           </span>
                         </td>
                         <td className="py-2 text-right text-gray-500">{item.quantity}</td>
@@ -241,11 +243,11 @@ export default async function WorkOrderDetailPage({
                 </table>
                 <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-1">
                   <div className="text-xs text-gray-400">
-                    {activeQuotation?.tax_amount ? `IVA: $${activeQuotation.tax_amount.toLocaleString('es-CO')}` : ''}
-                    {activeQuotation?.discount_amount ? ` · Descuento: $${activeQuotation.discount_amount.toLocaleString('es-CO')}` : ''}
+                    {activeQuotation?.tax_amount ? `${t('detail.tax')} $${activeQuotation.tax_amount.toLocaleString('es-CO')}` : ''}
+                    {activeQuotation?.discount_amount ? ` · ${t('detail.discount')} $${activeQuotation.discount_amount.toLocaleString('es-CO')}` : ''}
                   </div>
                   <span className="text-sm font-bold text-gray-900">
-                    Total: ${(activeQuotation?.total ?? totalServices).toLocaleString('es-CO')}
+                    {t('detail.total', { amount: (activeQuotation?.total ?? totalServices).toLocaleString('es-CO') })}
                   </span>
                 </div>
               </>
@@ -256,9 +258,9 @@ export default async function WorkOrderDetailPage({
           {activeInvoice && (
             <div className="bg-white border border-gray-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Factura</p>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{t('detail.invoice')}</p>
                 <Link href={`/billing/${activeInvoice.id}`} className="text-xs text-slate-600 hover:underline font-medium">
-                  Ver factura →
+                  {t('detail.viewInvoice')}
                 </Link>
               </div>
               <div className="flex items-center justify-between">
@@ -269,15 +271,15 @@ export default async function WorkOrderDetailPage({
                     activeInvoice.status === 'partially_paid' ? 'bg-amber-50 text-amber-600' :
                     'bg-gray-50 text-gray-500'
                   }`}>
-                    {activeInvoice.status === 'paid' ? 'Pagada' :
-                     activeInvoice.status === 'partially_paid' ? 'Parcialmente pagada' :
-                     activeInvoice.status === 'issued' ? 'Emitida' : activeInvoice.status}
+                    {activeInvoice.status === 'paid' ? t('detail.paid') :
+                     activeInvoice.status === 'partially_paid' ? t('detail.partiallyPaid') :
+                     activeInvoice.status === 'issued' ? t('detail.issued') : activeInvoice.status}
                   </span>
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-gray-800">${(activeInvoice.total ?? 0).toLocaleString('es-CO')}</p>
                   {activeInvoice.paid_amount > 0 && (
-                    <p className="text-xs text-gray-400">Pagado: ${(activeInvoice.paid_amount).toLocaleString('es-CO')}</p>
+                    <p className="text-xs text-gray-400">{t('detail.paidAmount', { amount: activeInvoice.paid_amount.toLocaleString('es-CO') })}</p>
                   )}
                 </div>
               </div>
@@ -288,14 +290,14 @@ export default async function WorkOrderDetailPage({
           {activeQuotation?.status === 'approved' && !activeInvoice && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-emerald-800">Cotización aprobada</p>
-                <p className="text-xs text-emerald-600 mt-0.5">Puedes generar la factura ahora</p>
+                <p className="text-sm font-medium text-emerald-800">{t('detail.quoteApproved')}</p>
+                <p className="text-xs text-emerald-600 mt-0.5">{t('detail.canCreateInvoice')}</p>
               </div>
               <Link
                 href={`/billing/new?work_order_id=${id}`}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
               >
-                Crear factura
+                {t('detail.createInvoice')}
               </Link>
             </div>
           )}
@@ -306,37 +308,37 @@ export default async function WorkOrderDetailPage({
 
           {/* Acciones rápidas de la OT */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Acciones</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('detail.actions')}</p>
             <div className="space-y-2">
               <Link href={`/work-orders/${id}/quotation`}
                 className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                <span>📋</span> {activeQuotation ? 'Ver / editar cotización' : 'Crear cotización'}
+                <span>📋</span> {activeQuotation ? t('detail.editQuotation') : 'Crear cotización'}
               </Link>
               {activeQuotation?.status === 'approved' && !activeInvoice && (
                 <Link href={`/billing/new?work_order_id=${id}`}
                   className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span>🧾</span> Generar factura
+                  <span>🧾</span> {t('detail.generateInvoice')}
                 </Link>
               )}
               {activeInvoice && activeInvoice.status !== 'paid' && (
                 <Link href={`/billing/${activeInvoice.id}`}
                   className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span>💳</span> Registrar pago
+                  <span>💳</span> {t('detail.registerPayment')}
                 </Link>
               )}
               <Link href={`/appointments/new?customer_id=${ot.customer_id}&vehicle_id=${ot.vehicle_id}`}
                 className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                <span>📅</span> Agendar próxima cita
+                <span>📅</span> {t('detail.scheduleAppointment')}
               </Link>
             </div>
           </div>
 
           {/* Timeline */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-4">Historial de estados</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-4">{t('detail.statusHistory')}</p>
 
             {!statusLog || statusLog.length === 0 ? (
-              <p className="text-xs text-gray-400">Sin historial</p>
+              <p className="text-xs text-gray-400">{t('detail.noHistory')}</p>
             ) : (
               <div className="space-y-3">
                 {statusLog.map((log: any, i: number) => (

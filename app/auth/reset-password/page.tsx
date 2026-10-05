@@ -1,4 +1,5 @@
 import { requestPasswordReset } from './actions'
+import { getTranslations } from 'next-intl/server'
 
 export default async function ResetPasswordPage({
   searchParams,
@@ -6,6 +7,7 @@ export default async function ResetPasswordPage({
   searchParams: Promise<{ sent?: string; error?: string }>
 }) {
   const { sent, error } = await searchParams
+  const t = await getTranslations('auth')
 
   if (sent) {
     return (
@@ -16,12 +18,12 @@ export default async function ResetPasswordPage({
             <polyline points="22,6 12,13 2,6"/>
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Revisa tu correo</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('resetPassword.sentTitle')}</h2>
         <p className="text-gray-500 text-sm">
-          Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña.
+          {t('resetPassword.sentMessage')}
         </p>
         <a href="/auth/login" className="mt-6 inline-block text-sm font-medium" style={{ color: '#FF7316' }}>
-          Volver al inicio de sesión
+          {t('resetPassword.backToLogin')}
         </a>
       </div>
     )
@@ -29,9 +31,9 @@ export default async function ResetPasswordPage({
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-1">Recuperar contraseña</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-1">{t('resetPassword.title')}</h2>
       <p className="text-gray-500 text-sm mb-6">
-        Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+        {t('resetPassword.subtitle')}
       </p>
 
       {error && (
@@ -43,7 +45,7 @@ export default async function ResetPasswordPage({
       <form action={requestPasswordReset} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Correo electrónico
+            {t('resetPassword.email')}
           </label>
           <input
             id="email"
@@ -53,7 +55,7 @@ export default async function ResetPasswordPage({
             autoComplete="email"
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
             style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties}
-            placeholder="tu@taller.com"
+            placeholder={t('resetPassword.emailPlaceholder')}
           />
         </div>
 
@@ -61,13 +63,13 @@ export default async function ResetPasswordPage({
           type="submit"
           className="w-full ark-btn-primary font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors"
         >
-          Enviar enlace
+          {t('resetPassword.submit')}
         </button>
       </form>
 
       <p className="mt-4 text-center text-xs">
         <a href="/auth/login" className="text-gray-400 hover:underline">
-          Volver al inicio de sesión
+          {t('resetPassword.backToLogin')}
         </a>
       </p>
     </div>

@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { SWRegister } from "./sw-register"
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,15 +32,19 @@ export const viewport = {
   viewportFit: "cover",
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale()
+  const messages = await getMessages()
   return (
-    <html lang="es" className={`${inter.className} h-full antialiased`}>
+    <html lang={locale} className={`${inter.className} h-full antialiased`}>
       <head>
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="min-h-full flex flex-col">
-        <SWRegister />
-        {children}
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <SWRegister />
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   )

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getTranslations } from 'next-intl/server'
 
 export default async function ReportsPage() {
   const supabase = await createClient()
@@ -28,11 +29,12 @@ export default async function ReportsPage() {
     acc[ot.status] = (acc[ot.status] ?? 0) + 1
     return acc
   }, {})
+  const t = await getTranslations('reports')
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
         <p className="text-sm text-gray-500 mt-0.5">
           {now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}
         </p>
@@ -40,30 +42,30 @@ export default async function ReportsPage() {
 
       <div className="grid grid-cols-3 gap-5 mb-8">
         <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Ingresos este mes</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">{t('thisMonth')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">${thisMonthTotal.toLocaleString('es-CO')}</p>
           {growthPct !== null && (
             <p className={`text-xs mt-1 font-medium ${Number(growthPct) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-              {Number(growthPct) >= 0 ? '↑' : '↓'} {Math.abs(Number(growthPct))}% vs mes anterior
+              {t('vsLastMonth', { sign: Number(growthPct) >= 0 ? '↑' : '↓', pct: Math.abs(Number(growthPct)) })}
             </p>
           )}
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Ingresos mes anterior</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">{t('lastMonth')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">${lastMonthTotal.toLocaleString('es-CO')}</p>
-          <p className="text-xs text-gray-400 mt-1">{(lastMonthInvoices ?? []).length} facturas pagadas</p>
+          <p className="text-xs text-gray-400 mt-1">{t('paidInvoices', { n: (lastMonthInvoices ?? []).length })}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">OTs este mes</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">{t('otsThisMonth')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{(otsByStatus ?? []).length}</p>
-          <p className="text-xs text-gray-400 mt-1">{statusCounts['closed'] ?? 0} cerradas</p>
+          <p className="text-xs text-gray-400 mt-1">{t('otsClosed', { n: statusCounts['closed'] ?? 0 })}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-5">
         {/* Estados de OTs */}
         <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-sm font-semibold text-gray-700 mb-4">OTs por estado</p>
+          <p className="text-sm font-semibold text-gray-700 mb-4">{t('otsByStatus')}</p>
           <div className="space-y-2">
             {Object.entries(statusCounts)
               .sort(([,a],[,b]) => b - a)
@@ -79,7 +81,7 @@ export default async function ReportsPage() {
         {/* Servicios más vendidos */}
         {(topServices ?? []).length > 0 && (
           <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <p className="text-sm font-semibold text-gray-700 mb-4">Servicios más facturados</p>
+            <p className="text-sm font-semibold text-gray-700 mb-4">{t('topServices')}</p>
             <div className="space-y-2">
               {(topServices ?? []).slice(0, 8).map((svc: any, i) => (
                 <div key={i} className="flex justify-between items-center text-sm">

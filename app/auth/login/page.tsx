@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { login } from './actions'
+import { getTranslations } from 'next-intl/server'
 
 export default async function LoginPage({
   searchParams,
@@ -7,11 +8,12 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>
 }) {
   const { error } = await searchParams
+  const t = await getTranslations('auth')
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-1">Iniciar sesión</h2>
-      <p className="text-gray-500 text-sm mb-6">Ingresa con tu cuenta de taller</p>
+      <h2 className="text-xl font-semibold text-gray-900 mb-1">{t('login.title')}</h2>
+      <p className="text-gray-500 text-sm mb-6">{t('login.subtitle')}</p>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -19,7 +21,7 @@ export default async function LoginPage({
           {(error.includes('expirado') || error.includes('expired') || error.includes('inv')) && (
             <div className="mt-2 pt-2 border-t border-red-200">
               <a href="/auth/reset-password" className="font-medium underline">
-                Solicitar nuevo enlace →
+                {t('login.requestLink')}
               </a>
             </div>
           )}
@@ -29,7 +31,7 @@ export default async function LoginPage({
       <form action={login} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Correo electrónico
+            {t('login.email')}
           </label>
           <input
             id="email"
@@ -38,17 +40,17 @@ export default async function LoginPage({
             required
             autoComplete="email"
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-            placeholder="tu@taller.com"
+            placeholder={t('login.emailPlaceholder')}
           />
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Contraseña
+              {t('login.password')}
             </label>
             <Link href="/auth/reset-password" className="text-xs text-slate-600 hover:underline">
-              ¿Olvidaste tu contraseña?
+              {t('login.forgotPassword')}
             </Link>
           </div>
           <input
@@ -58,7 +60,7 @@ export default async function LoginPage({
             required
             autoComplete="current-password"
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-            placeholder="••••••••"
+            placeholder={t('login.passwordPlaceholder')}
           />
         </div>
 
@@ -66,12 +68,12 @@ export default async function LoginPage({
           type="submit"
           className="w-full ark-btn-primary font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors"
         >
-          Entrar
+          {t('login.submit')}
         </button>
       </form>
 
       <p className="mt-6 text-center text-xs text-gray-400">
-        ¿Problemas para acceder? Contacta a tu administrador de cuenta.
+        {t('login.contactAdmin')}
       </p>
     </div>
   )

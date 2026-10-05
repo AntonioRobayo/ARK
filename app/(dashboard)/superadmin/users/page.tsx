@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { getTranslations } from 'next-intl/server'
 
 export default async function SuperAdminUsersPage() {
   const supabase = await createClient()
@@ -16,20 +17,22 @@ export default async function SuperAdminUsersPage() {
     authUsers.map(u => [u.id, u.email ?? ''])
   )
 
+  const t = await getTranslations('superadmin')
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-500">{profiles?.length ?? 0} usuarios registrados</p>
+        <p className="text-sm text-gray-500">{t('users.count', { n: profiles?.length ?? 0 })}</p>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Usuario</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Email</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Taller</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Rol</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.user')}</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.email')}</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.workshop')}</th>
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.role')}</th>
             </tr>
           </thead>
           <tbody>
@@ -54,7 +57,7 @@ export default async function SuperAdminUsersPage() {
                   <td className="px-5 py-3.5">
                     {tenant
                       ? <span className="text-gray-700 text-sm">{tenant.name}</span>
-                      : <span className="text-gray-300 text-xs">Sin taller</span>
+                      : <span className="text-gray-300 text-xs">{t('users.noWorkshop')}</span>
                     }
                   </td>
                   <td className="px-5 py-3.5">
@@ -67,10 +70,10 @@ export default async function SuperAdminUsersPage() {
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                           </svg>
-                          Superadmin
+                          {t('users.roleSuperadmin')}
                         </span>
                       )
-                      : <span className="text-xs font-medium text-gray-500">Admin</span>
+                      : <span className="text-xs font-medium text-gray-500">{t('users.roleAdmin')}</span>
                     }
                   </td>
                 </tr>
@@ -79,7 +82,7 @@ export default async function SuperAdminUsersPage() {
             {(!profiles || profiles.length === 0) && (
               <tr>
                 <td colSpan={4} className="px-5 py-12 text-center">
-                  <p className="text-sm text-gray-400">No hay usuarios registrados</p>
+                  <p className="text-sm text-gray-400">{t('users.empty')}</p>
                 </td>
               </tr>
             )}

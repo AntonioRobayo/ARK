@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { updateTenant } from '../actions'
+import { getTranslations } from 'next-intl/server'
 
 export default async function EditTenantPage({
   params,
@@ -33,6 +34,7 @@ export default async function EditTenantPage({
   const expiryValue = tenant.plan_expires_at
     ? new Date(tenant.plan_expires_at).toISOString().slice(0, 10)
     : ''
+  const t = await getTranslations('superadmin')
 
   return (
     <div className="max-w-xl">
@@ -42,7 +44,7 @@ export default async function EditTenantPage({
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </Link>
-        <h2 className="text-lg font-semibold text-gray-900">Editar taller — {tenant.name}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('workshops.edit.title', { name: tenant.name })}</h2>
       </div>
 
       {error && (
@@ -53,32 +55,32 @@ export default async function EditTenantPage({
 
       <form action={updateWithId} className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre del taller *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('workshops.edit.name')}</label>
           <input name="name" type="text" required defaultValue={tenant.name}
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">País</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('workshops.edit.country')}</label>
             <input name="country_code" type="text" maxLength={2} defaultValue={tenant.country_code ?? 'CO'}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Moneda</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('workshops.edit.currency')}</label>
             <input name="currency_code" type="text" maxLength={3} defaultValue={tenant.currency_code ?? 'COP'}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Zona horaria</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('workshops.edit.timezone')}</label>
           <input name="timezone" type="text" defaultValue={tenant.timezone ?? 'America/Bogota'}
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
         </div>
 
         <hr className="border-gray-100" />
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Licencia</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('workshops.edit.licenseSection')}</p>
 
         <div className="space-y-2">
           {plans?.map(plan => (
@@ -91,16 +93,16 @@ export default async function EditTenantPage({
                 <div>
                   <p className="font-semibold text-sm text-gray-800">{plan.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {plan.max_branches === 999 ? 'Sedes ilimitadas' : `${plan.max_branches} sede${plan.max_branches !== 1 ? 's' : ''}`}
+                    {plan.max_branches === 999 ? t('workshops.new.unlimitedBranches') : plan.max_branches !== 1 ? t('workshops.new.branchesPlural', { n: plan.max_branches }) : t('workshops.new.branches', { n: plan.max_branches })}
                     {' · '}
-                    {plan.max_users === 999 ? 'Usuarios ilimitados' : `${plan.max_users} usuarios`}
+                    {plan.max_users === 999 ? t('workshops.new.unlimitedUsers') : t('workshops.new.usersPlural', { n: plan.max_users })}
                   </p>
                 </div>
               </div>
               <span className="text-sm font-bold text-gray-700">
                 {Number(plan.price_monthly) > 0
                   ? `$${Number(plan.price_monthly).toLocaleString('es-CO')} ${plan.currency}/mes`
-                  : <span className="text-gray-400 font-normal text-xs">Sin precio</span>}
+                  : <span className="text-gray-400 font-normal text-xs">{t('workshops.new.noPrice')}</span>}
               </span>
             </label>
           ))}
@@ -108,8 +110,8 @@ export default async function EditTenantPage({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Vencimiento de licencia
-            <span className="ml-1 font-normal text-gray-400">(opcional — vacío = sin vencimiento)</span>
+            {t('workshops.edit.expiry')}
+            <span className="ml-1 font-normal text-gray-400">{t('workshops.edit.expiryHint')}</span>
           </label>
           <input name="plan_expires_at" type="date" defaultValue={expiryValue}
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
@@ -118,7 +120,7 @@ export default async function EditTenantPage({
         <button type="submit"
           className="w-full font-semibold py-2.5 px-4 rounded-lg text-sm text-white transition-colors"
           style={{ backgroundColor: '#FF7316' }}>
-          Guardar cambios
+          {t('workshops.edit.save')}
         </button>
       </form>
     </div>

@@ -1,9 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-
-const TYPE_LABEL: Record<string, string> = {
-  part: 'Repuesto', consumable: 'Consumible', accessory: 'Accesorio', tool: 'Herramienta', other: 'Otro',
-}
+import { getTranslations } from 'next-intl/server'
 
 export default async function InventoryPage({
   searchParams,
@@ -24,51 +21,56 @@ export default async function InventoryPage({
   if (type) query = query.eq('type', type)
 
   const { data: items } = await query.limit(80)
+  const t = await getTranslations('inventory')
+  const TYPE_LABEL: Record<string, string> = {
+    part: t('types.part'), consumable: t('types.consumable'), accessory: t('types.accessory'),
+    tool: t('types.tool'), other: t('types.other'),
+  }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{items?.length ?? 0} ítems</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{t('count', { n: items?.length ?? 0 })}</p>
         </div>
         <Link href="/inventory/new" className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          + Nuevo ítem
+          {t('newBtn')}
         </Link>
       </div>
 
       <form method="get" className="flex gap-2 mb-5">
         <input name="q" type="search" defaultValue={q}
           className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-          placeholder="Buscar por nombre, código..." />
+          placeholder={t('searchPlaceholder')} />
         <select name="type" defaultValue={type ?? ''}
           className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-          <option value="">Todos los tipos</option>
+          <option value="">{t('allTypes')}</option>
           {Object.entries(TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <button type="submit" className="px-4 py-2.5 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-700 transition-colors">
-          Buscar
+          {t('search')}
         </button>
       </form>
 
       {!items || items.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-3">📦</p>
-          <p className="font-medium text-gray-500">{q ? `Sin resultados para "${q}"` : 'Sin ítems en inventario'}</p>
-          <Link href="/inventory/new" className="text-slate-600 text-sm hover:underline mt-2 inline-block">Agregar primer ítem →</Link>
+          <p className="font-medium text-gray-500">{q ? t('noResults', { q }) : t('empty')}</p>
+          <Link href="/inventory/new" className="text-slate-600 text-sm hover:underline mt-2 inline-block">{t('createFirst')}</Link>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Ítem</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Código</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Tipo</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Precio venta</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Costo</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">Stock</th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-gray-500">Estado</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">{t('table.item')}</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">{t('table.code')}</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">{t('table.type')}</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.salePrice')}</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.cost')}</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.stock')}</th>
+                <th className="text-center px-4 py-3 text-xs font-medium text-gray-500">{t('table.status')}</th>
               </tr>
             </thead>
             <tbody>
@@ -102,7 +104,7 @@ export default async function InventoryPage({
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         item.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'
                       }`}>
-                        {item.is_active ? 'Activo' : 'Inactivo'}
+                        {item.is_active ? t('active') : t('inactive')}
                       </span>
                     </td>
                   </tr>

@@ -1,44 +1,22 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
-const sections = [
-  {
-    href: '/settings/services',
-    title: 'Catálogo de servicios',
-    description: 'Servicios estándar del taller, precios base y tiempos estimados',
-    icon: '🔧',
-  },
-  {
-    href: '/settings/taxes',
-    title: 'Tasas de impuesto',
-    description: 'IVA y otros impuestos aplicables a facturas',
-    icon: '📊',
-  },
-  {
-    href: '/settings/payment-methods',
-    title: 'Métodos de pago',
-    description: 'Efectivo, transferencia, tarjeta, etc.',
-    icon: '💳',
-  },
-  {
-    href: '/settings/cash-registers',
-    title: 'Cajas',
-    description: 'Puntos de caja para registro de pagos',
-    icon: '🏧',
-  },
-  {
-    href: '/auth/update-password?from=settings',
-    title: 'Cambiar contraseña',
-    description: 'Actualiza la contraseña de tu cuenta',
-    icon: '🔑',
-  },
-]
+export default async function SettingsPage() {
+  const t = await getTranslations('settings')
+  const sections = [
+    { href: '/settings/services',                title: t('cards.services'),       description: t('cards.servicesDesc'),       icon: '🔧' },
+    { href: '/settings/taxes',                   title: t('cards.taxes'),          description: t('cards.taxesDesc'),          icon: '📊' },
+    { href: '/settings/payment-methods',         title: t('cards.paymentMethods'), description: t('cards.paymentMethodsDesc'), icon: '💳' },
+    { href: '/settings/cash-registers',          title: t('cards.cashRegisters'),  description: t('cards.cashRegistersDesc'),  icon: '🏧' },
+    { href: '/auth/update-password?from=settings', title: t('cards.password'),     description: t('cards.passwordDesc'),       icon: '🔑' },
+    { href: '/settings/language',                title: t('cards.language'),       description: t('cards.languageDesc'),       icon: '🌐' },
+  ]
 
-export default function SettingsPage() {
   return (
     <div className="max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Parámetros del taller</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{t('workshop')}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
