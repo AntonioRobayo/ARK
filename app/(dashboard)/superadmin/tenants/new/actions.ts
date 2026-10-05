@@ -22,7 +22,8 @@ export async function createTenantAndInvite(formData: FormData) {
   const countryCode   = (formData.get('country_code') as string) || 'CO'
   const currencyCode  = (formData.get('currency_code') as string) || 'COP'
   const timezone      = (formData.get('timezone') as string) || 'America/Bogota'
-  const adminEmail    = formData.get('admin_email') as string
+  const adminEmail      = formData.get('admin_email') as string
+  const adminFirstName  = (formData.get('admin_first_name') as string) || undefined
 
   // Obtener el slug del plan seleccionado
   const { data: planData } = await supabase
@@ -54,7 +55,7 @@ export async function createTenantAndInvite(formData: FormData) {
   // El link de invitación redirige a /onboarding?tenant_id=...
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(adminEmail, {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?tenant_id=${tenantId}`,
-    data: { tenant_id: tenantId, role: 'admin' },
+    data: { tenant_id: tenantId, role: 'admin', ...(adminFirstName ? { first_name: adminFirstName } : {}) },
   })
 
   if (inviteError) {
