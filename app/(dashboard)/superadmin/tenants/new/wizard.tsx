@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { createTenantAndInvite } from './actions'
 
 type Plan = {
@@ -29,17 +29,17 @@ type WizardDraft = {
 const DRAFT_KEY = 'ark_wizard_new_tenant'
 
 const COUNTRIES = [
-  { code: 'CO', label: 'Colombia', currency: 'COP', tz: 'America/Bogota' },
-  { code: 'MX', label: 'México', currency: 'MXN', tz: 'America/Mexico_City' },
-  { code: 'PE', label: 'Perú', currency: 'PEN', tz: 'America/Lima' },
-  { code: 'CL', label: 'Chile', currency: 'CLP', tz: 'America/Santiago' },
-  { code: 'AR', label: 'Argentina', currency: 'ARS', tz: 'America/Argentina/Buenos_Aires' },
-  { code: 'BR', label: 'Brasil', currency: 'BRL', tz: 'America/Sao_Paulo' },
-  { code: 'EC', label: 'Ecuador', currency: 'USD', tz: 'America/Guayaquil' },
-  { code: 'PA', label: 'Panamá', currency: 'USD', tz: 'America/Panama' },
-  { code: 'ES', label: 'España', currency: 'EUR', tz: 'Europe/Madrid' },
-  { code: 'US', label: 'Estados Unidos', currency: 'USD', tz: 'America/New_York' },
-  { code: 'OTHER', label: 'Otro', currency: 'USD', tz: 'UTC' },
+  { code: 'CO', label: 'Colombia',        currency: 'COP', tz: 'America/Bogota' },
+  { code: 'MX', label: 'México',          currency: 'MXN', tz: 'America/Mexico_City' },
+  { code: 'PE', label: 'Perú',            currency: 'PEN', tz: 'America/Lima' },
+  { code: 'CL', label: 'Chile',           currency: 'CLP', tz: 'America/Santiago' },
+  { code: 'AR', label: 'Argentina',       currency: 'ARS', tz: 'America/Argentina/Buenos_Aires' },
+  { code: 'BR', label: 'Brasil',          currency: 'BRL', tz: 'America/Sao_Paulo' },
+  { code: 'EC', label: 'Ecuador',         currency: 'USD', tz: 'America/Guayaquil' },
+  { code: 'PA', label: 'Panamá',          currency: 'USD', tz: 'America/Panama' },
+  { code: 'ES', label: 'España',          currency: 'EUR', tz: 'Europe/Madrid' },
+  { code: 'US', label: 'Estados Unidos',  currency: 'USD', tz: 'America/New_York' },
+  { code: 'OTHER', label: 'Otro',         currency: 'USD', tz: 'UTC' },
 ]
 
 const TIMEZONES = [
@@ -56,13 +56,6 @@ const TIMEZONES = [
   'UTC',
 ]
 
-const STEPS = [
-  { n: 1, label: 'Taller' },
-  { n: 2, label: 'Plan' },
-  { n: 3, label: 'Admin' },
-  { n: 4, label: 'Confirmar' },
-]
-
 function toSlug(text: string) {
   return text
     .toLowerCase()
@@ -73,7 +66,7 @@ function toSlug(text: string) {
 }
 
 export function NewTenantWizard({ plans }: { plans: Plan[] }) {
-  const router = useRouter()
+  const t = useTranslations('superadmin.workshops.new.wizard')
   const [isPending, startTransition] = useTransition()
 
   const [step, setStep] = useState(1)
@@ -94,7 +87,13 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
   const [adminEmail, setAdminEmail] = useState('')
   const [adminFirstName, setAdminFirstName] = useState('')
 
-  // Load draft on mount
+  const STEPS = [
+    { n: 1, label: t('steps.workshop') },
+    { n: 2, label: t('steps.plan') },
+    { n: 3, label: t('steps.admin') },
+    { n: 4, label: t('steps.confirm') },
+  ]
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY)
@@ -103,12 +102,9 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
         setDraft(d)
         setShowDraftBanner(true)
       }
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   }, [])
 
-  // Auto-save draft on field changes
   useEffect(() => {
     if (!workshopName && !adminEmail && !planId) return
     const d: WizardDraft = {
@@ -122,11 +118,7 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
       admin_email: adminEmail,
       admin_first_name: adminFirstName,
     }
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(d))
-    } catch {
-      // ignore
-    }
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)) } catch { /* ignore */ }
   }, [step, workshopName, countryCode, currencyCode, timezone, planId, adminEmail, adminFirstName])
 
   function resumeDraft() {
@@ -151,33 +143,18 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
   function handleCountryChange(code: string) {
     setCountryCode(code)
     const c = COUNTRIES.find(x => x.code === code)
-    if (c) {
-      setCurrencyCode(c.currency)
-      setTimezone(c.tz)
-    }
+    if (c) { setCurrencyCode(c.currency); setTimezone(c.tz) }
   }
 
   function next() {
-    if (step === 1 && !workshopName.trim()) {
-      setError('El nombre del taller es obligatorio.')
-      return
-    }
-    if (step === 2 && !planId) {
-      setError('Selecciona un plan.')
-      return
-    }
-    if (step === 3 && !adminEmail.trim()) {
-      setError('El email del administrador es obligatorio.')
-      return
-    }
+    if (step === 1 && !workshopName.trim()) { setError(t('errNameRequired')); return }
+    if (step === 2 && !planId)              { setError(t('errPlanRequired')); return }
+    if (step === 3 && !adminEmail.trim())   { setError(t('errEmailRequired')); return }
     setError('')
     setStep(s => Math.min(s + 1, 4) as 1 | 2 | 3 | 4)
   }
 
-  function back() {
-    setError('')
-    setStep(s => Math.max(s - 1, 1) as 1 | 2 | 3 | 4)
-  }
+  function back() { setError(''); setStep(s => Math.max(s - 1, 1) as 1 | 2 | 3 | 4) }
 
   async function handleSubmit() {
     setError('')
@@ -195,12 +172,9 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
         await createTenantAndInvite(fd)
         try { localStorage.removeItem(DRAFT_KEY) } catch {}
       } catch (e: unknown) {
-        // createTenantAndInvite uses redirect(), which throws NEXT_REDIRECT
-        // If it's not a redirect, it's a real error
         if (e instanceof Error && !e.message.includes('NEXT_REDIRECT')) {
           setError(e.message)
         }
-        // redirect throws are swallowed by Next.js — the router handles navigation
       }
     })
   }
@@ -211,6 +185,20 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
     ? new Date(draft.savedAt).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
     : ''
 
+  function planLabel(plan: Plan) {
+    const branches = plan.max_branches === 999
+      ? t('unlimitedBranches')
+      : plan.max_branches !== 1
+        ? t('branchPlural', { n: plan.max_branches })
+        : t('branch', { n: plan.max_branches })
+    const users = plan.max_users === 999
+      ? t('unlimitedUsers')
+      : plan.max_users !== 1
+        ? t('userPlural', { n: plan.max_users })
+        : t('user', { n: plan.max_users })
+    return `${branches} · ${users}`
+  }
+
   return (
     <div className="max-w-2xl">
       {/* Draft banner */}
@@ -218,19 +206,19 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
         <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
           <span className="text-amber-500 mt-0.5">⚠️</span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-amber-800">Tienes un borrador guardado</p>
+            <p className="text-sm font-medium text-amber-800">{t('draftFound')}</p>
             <p className="text-xs text-amber-600 mt-0.5">
-              Guardado el {draftDate} — {draft.workshop_name || 'sin nombre'}
+              {t('draftSavedAt', { date: draftDate, name: draft.workshop_name || t('noName') })}
             </p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <button onClick={resumeDraft}
               className="text-xs font-semibold px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">
-              Continuar borrador
+              {t('draftResume')}
             </button>
             <button onClick={discardDraft}
               className="text-xs font-medium px-3 py-1.5 bg-white border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">
-              Descartar
+              {t('draftDiscard')}
             </button>
           </div>
         </div>
@@ -244,7 +232,7 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
               <button
                 onClick={() => { if (s.n < step) { setError(''); setStep(s.n as 1 | 2 | 3 | 4) } }}
                 disabled={s.n >= step}
-                className="flex flex-col items-center gap-1 group disabled:cursor-default">
+                className="flex flex-col items-center gap-1 disabled:cursor-default">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors
                   ${step === s.n ? 'bg-orange-500 text-white shadow-md shadow-orange-200' :
                     step > s.n ? 'bg-orange-100 text-orange-600 cursor-pointer hover:bg-orange-200' :
@@ -270,58 +258,44 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
         </div>
       )}
 
-      {/* Steps */}
+      {/* Card */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
 
-        {/* Step 1 — Datos del taller */}
+        {/* Step 1 */}
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Datos del taller</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Información básica del taller</p>
+              <h3 className="text-base font-semibold text-gray-900">{t('step1Title')}</h3>
+              <p className="text-sm text-gray-500 mt-0.5">{t('step1Desc')}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre del taller *</label>
-              <input
-                type="text"
-                value={workshopName}
-                onChange={e => setWorkshopName(e.target.value)}
-                placeholder="Taller Moto Express"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Name')}</label>
+              <input type="text" value={workshopName} onChange={e => setWorkshopName(e.target.value)}
+                placeholder={t('step1NamePlaceholder')}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
               {workshopName && (
                 <p className="mt-1 text-xs text-gray-400">
-                  URL: <span className="font-mono text-gray-600">{toSlug(workshopName)}</span>
+                  {t('slugPreview', { slug: toSlug(workshopName) })}
                 </p>
               )}
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">País</label>
-              <select
-                value={countryCode}
-                onChange={e => handleCountryChange(e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Country')}</label>
+              <select value={countryCode} onChange={e => handleCountryChange(e.target.value)}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
                 {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
               </select>
             </div>
-
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Moneda</label>
-                <input
-                  type="text"
-                  value={currencyCode}
-                  onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Currency')}</label>
+                <input type="text" value={currencyCode} onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
                   maxLength={3}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
-                />
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Zona horaria</label>
-                <select
-                  value={timezone}
-                  onChange={e => setTimezone(e.target.value)}
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Timezone')}</label>
+                <select value={timezone} onChange={e => setTimezone(e.target.value)}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
                   {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
                 </select>
@@ -330,15 +304,18 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
           </div>
         )}
 
-        {/* Step 2 — Plan */}
+        {/* Step 2 */}
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Plan de licencia</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Selecciona el plan que tendrá este taller</p>
+              <h3 className="text-base font-semibold text-gray-900">{t('step2Title')}</h3>
+              <p className="text-sm text-gray-500 mt-0.5">{t('step2Desc')}</p>
             </div>
             {plans.length === 0 ? (
-              <p className="text-sm text-red-500">No hay planes activos. <a href="/superadmin/licenses/new" className="underline">Crea un plan primero.</a></p>
+              <p className="text-sm text-red-500">
+                {t('step2NoPlans')}{' '}
+                <a href="/superadmin/licenses/new" className="underline">{t('step2CreatePlan')}</a>
+              </p>
             ) : (
               <div className="space-y-2">
                 {plans.map(plan => (
@@ -346,28 +323,19 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
                     className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all
                       ${planId === plan.id ? 'border-orange-400 bg-orange-50 shadow-sm' : 'border-gray-200 hover:border-orange-200'}`}>
                     <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="plan_id"
-                        value={plan.id}
-                        checked={planId === plan.id}
-                        onChange={() => setPlanId(plan.id)}
-                        className="accent-orange-500 w-4 h-4"
-                      />
+                      <input type="radio" name="plan_id" value={plan.id}
+                        checked={planId === plan.id} onChange={() => setPlanId(plan.id)}
+                        className="accent-orange-500 w-4 h-4" />
                       <div>
                         <p className="font-semibold text-sm text-gray-800">{plan.name}</p>
                         {plan.description && <p className="text-xs text-gray-500 mt-0.5">{plan.description}</p>}
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {plan.max_branches === 999 ? 'Sucursales ilimitadas' : `${plan.max_branches} sucursal${plan.max_branches !== 1 ? 'es' : ''}`}
-                          {' · '}
-                          {plan.max_users === 999 ? 'Usuarios ilimitados' : `${plan.max_users} usuario${plan.max_users !== 1 ? 's' : ''}`}
-                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">{planLabel(plan)}</p>
                       </div>
                     </div>
                     <span className="text-sm font-bold text-gray-700 ml-4 shrink-0">
                       {Number(plan.price_monthly) > 0
                         ? `$${Number(plan.price_monthly).toLocaleString('es-CO')} ${plan.currency}/mes`
-                        : <span className="text-gray-400 font-normal text-xs">Sin precio</span>}
+                        : <span className="text-gray-400 font-normal text-xs">{t('noPrice')}</span>}
                     </span>
                   </label>
                 ))}
@@ -376,40 +344,26 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
           </div>
         )}
 
-        {/* Step 3 — Admin */}
+        {/* Step 3 */}
         {step === 3 && (
           <div className="space-y-5">
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Administrador del taller</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Se enviará una invitación a este correo</p>
+              <h3 className="text-base font-semibold text-gray-900">{t('step3Title')}</h3>
+              <p className="text-sm text-gray-500 mt-0.5">{t('step3Desc')}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email del administrador *</label>
-              <input
-                type="email"
-                value={adminEmail}
-                onChange={e => setAdminEmail(e.target.value)}
-                placeholder="admin@tallermotoexpress.com"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
-              />
-              <p className="mt-1.5 text-xs text-gray-400">
-                Recibirá un enlace para configurar su contraseña y completar el registro.
-              </p>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step3Email')}</label>
+              <input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)}
+                placeholder={t('step3EmailPlaceholder')}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+              <p className="mt-1.5 text-xs text-gray-400">{t('step3EmailHint')}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Nombre (opcional)
-              </label>
-              <input
-                type="text"
-                value={adminFirstName}
-                onChange={e => setAdminFirstName(e.target.value)}
-                placeholder="Carlos"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
-              />
-              <p className="mt-1.5 text-xs text-gray-400">
-                Se pre-rellena en el formulario de bienvenida del administrador.
-              </p>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step3FirstName')}</label>
+              <input type="text" value={adminFirstName} onChange={e => setAdminFirstName(e.target.value)}
+                placeholder={t('step3FirstNamePlaceholder')}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+              <p className="mt-1.5 text-xs text-gray-400">{t('step3FirstNameHint')}</p>
             </div>
           </div>
         )}
@@ -418,59 +372,31 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
         {step === 4 && (
           <div className="space-y-5">
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Confirmar creación</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Revisa los datos antes de crear el taller</p>
+              <h3 className="text-base font-semibold text-gray-900">{t('step4Title')}</h3>
+              <p className="text-sm text-gray-500 mt-0.5">{t('step4Desc')}</p>
             </div>
-
             <div className="space-y-3">
               <div className="p-4 bg-gray-50 rounded-xl space-y-2">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Taller</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Nombre</span>
-                  <span className="text-sm font-semibold text-gray-900">{workshopName}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">País / Moneda</span>
-                  <span className="text-sm text-gray-900">
-                    {COUNTRIES.find(c => c.code === countryCode)?.label ?? countryCode} · {currencyCode}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Zona horaria</span>
-                  <span className="text-sm text-gray-900">{timezone}</span>
-                </div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reviewSectionWorkshop')}</p>
+                <Row label={t('reviewName')} value={workshopName} />
+                <Row label={t('reviewCountry')} value={`${COUNTRIES.find(c => c.code === countryCode)?.label ?? countryCode} · ${currencyCode}`} />
+                <Row label={t('reviewTimezone')} value={timezone} />
               </div>
-
               <div className="p-4 bg-gray-50 rounded-xl space-y-2">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Plan</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Plan seleccionado</span>
-                  <span className="text-sm font-semibold text-orange-600">{selectedPlan?.name ?? '—'}</span>
-                </div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reviewSectionPlan')}</p>
+                <Row label={t('reviewPlanSelected')} value={selectedPlan?.name ?? '—'} highlight />
                 {selectedPlan && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Precio</span>
-                    <span className="text-sm text-gray-900">
-                      {Number(selectedPlan.price_monthly) > 0
-                        ? `$${Number(selectedPlan.price_monthly).toLocaleString('es-CO')} ${selectedPlan.currency}/mes`
-                        : 'Sin precio'}
-                    </span>
-                  </div>
+                  <Row label={t('reviewPrice')} value={
+                    Number(selectedPlan.price_monthly) > 0
+                      ? `$${Number(selectedPlan.price_monthly).toLocaleString('es-CO')} ${selectedPlan.currency}/mes`
+                      : t('noPrice')
+                  } />
                 )}
               </div>
-
               <div className="p-4 bg-gray-50 rounded-xl space-y-2">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Administrador</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Email</span>
-                  <span className="text-sm font-semibold text-gray-900">{adminEmail}</span>
-                </div>
-                {adminFirstName && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Nombre</span>
-                    <span className="text-sm text-gray-900">{adminFirstName}</span>
-                  </div>
-                )}
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reviewSectionAdmin')}</p>
+                <Row label={t('reviewEmail')} value={adminEmail} />
+                {adminFirstName && <Row label={t('reviewFirstName')} value={adminFirstName} />}
               </div>
             </div>
           </div>
@@ -483,17 +409,17 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
           {step > 1 && (
             <button onClick={back} disabled={isPending}
               className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
-              ← Anterior
+              {t('back')}
             </button>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400">Paso {step} de 4</span>
+          <span className="text-xs text-gray-400">{t('stepOf', { current: step, total: 4 })}</span>
           {step < 4 ? (
             <button onClick={next}
               className="px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-colors hover:opacity-90"
               style={{ backgroundColor: '#FF7316' }}>
-              Siguiente →
+              {t('next')}
             </button>
           ) : (
             <button onClick={handleSubmit} disabled={isPending}
@@ -505,11 +431,20 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
               )}
-              {isPending ? 'Creando...' : 'Crear taller y enviar invitación'}
+              {isPending ? t('submitting') : t('submit')}
             </button>
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-gray-600">{label}</span>
+      <span className={`text-sm ${highlight ? 'font-semibold text-orange-600' : 'text-gray-900'}`}>{value}</span>
     </div>
   )
 }
