@@ -57,7 +57,8 @@ export async function GET(request: Request) {
     const expiresStr = expiresDate.toISOString().slice(0, 10)
 
     const tenantProfiles = profiles.filter(p => p.tenant_id === tenant.id)
-    const planName = (tenant.license_plan as { name: string } | null)?.name ?? 'Plan ARK'
+    const lp = tenant.license_plan as unknown as { name: string } | { name: string }[] | null
+    const planName = (Array.isArray(lp) ? lp[0]?.name : lp?.name) ?? 'Plan ARK'
 
     for (const profile of tenantProfiles) {
       const email = emailMap.get(profile.id)
