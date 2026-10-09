@@ -4,6 +4,20 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
+async function logEvent(tenantId: string, event: string, details?: object) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const adminClient = createAdminClient()
+    await adminClient.from('tenant_audit_log').insert({
+      tenant_id: tenantId,
+      event,
+      details: details ?? null,
+      actor_id: user?.id ?? null,
+    })
+  } catch { /* non-blocking */ }
+}
+
 export async function updateTenant(id: string, formData: FormData) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
@@ -41,6 +55,7 @@ export async function updateTenant(id: string, formData: FormData) {
   if (error) {
     redirect(`/superadmin/tenants/${id}/edit?error=${encodeURIComponent(error.message)}`)
   }
+  await logEvent(id, 'plan_updated', { plan_id: planId, expires_at: expiresAt, contracted_users: contractedUsers })
   redirect('/superadmin?success=Taller actualizado correctamente')
 }
 
@@ -75,7 +90,34 @@ export async function extendLicense(formData: FormData) {
   if (error) {
     redirect(`/superadmin?error=${encodeURIComponent(error.message)}`)
   }
+  await logEvent(id, 'license_extended', { days, new_expiry: newExpiry })
   redirect(`/superadmin?success=${encodeURIComponent(`Licencia extendida +${days} días`)}`)
+}
+
+export async function resetUserPassword(formData: FormData) {
+  const adminClient = createAdminClient()
+  const email    = formData.get('email') as string
+  const tenantId = formData.get('tenant_id') as string
+
+  const { error } = await adminClient.auth.admin.generateLink({
+    type: 'recovery',
+    email,
+  })
+
+  if (error) {
+    redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(error.message)}`)
+  }
+  redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent(`Email de restablecimiento enviado a ${email}`)}`)
+}
+
+export async function generateImpersonateLink(email: string): Promise<{ url?: string; error?: string }> {
+  const adminClient = createAdminClient()
+  const { data, error } = await adminClient.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+  })
+  if (error) return { error: error.message }
+  return { url: data.properties?.action_link ?? '' }
 }
 
 export async function toggleTenantStatus(formData: FormData) {
@@ -91,5 +133,6 @@ export async function toggleTenantStatus(formData: FormData) {
   if (error) {
     redirect(`/superadmin?error=${encodeURIComponent(error.message)}`)
   }
+  await logEvent(id, 'status_changed', { is_active: !isActive })
   redirect('/superadmin')
 }

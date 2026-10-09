@@ -68,5 +68,15 @@ export async function createTenantAndInvite(formData: FormData) {
     redirect(`/superadmin/tenants/new?error=${encodeURIComponent(inviteError.message)}`)
   }
 
+  // Log creation (best-effort, non-blocking)
+  try {
+    await adminClient.from('tenant_audit_log').insert({
+      tenant_id: tenantId,
+      event: 'tenant_created',
+      details: { admin_email: adminEmail, plan_id: planId },
+      actor_id: null,
+    })
+  } catch { /* non-blocking */ }
+
   redirect(`/superadmin?success=Taller creado. Invitación enviada a ${adminEmail}`)
 }

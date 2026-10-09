@@ -695,7 +695,9 @@
       "workshops": "Talleres",
       "licenses": "Licencias",
       "users": "Usuarios",
-      "catalogs": "Catálogos"
+      "catalogs": "Catálogos",
+      "settings": "Configuración",
+      "announcements": "Anuncios"
     },
     "workshops": {
       "count": "{n} talleres registrados",
@@ -968,6 +970,79 @@
           "namePlaceholder": "Peso colombiano",
           "submit": "Guardar moneda"
         }
+      }
+    },
+    "tenantDetail": {
+      "tabUsers": "Usuarios",
+      "tabActivity": "Actividad",
+      "tabImpersonate": "Impersonar",
+      "users": {
+        "count": "{n} usuarios",
+        "table": { "user": "Usuario", "email": "Email", "role": "Rol" },
+        "resetPassword": "Restablecer contraseña",
+        "resetSent": "Email de restablecimiento enviado a {email}",
+        "noUsers": "Este taller no tiene usuarios registrados"
+      },
+      "activity": {
+        "empty": "Sin actividad registrada",
+        "events": {
+          "tenant_created": "Taller creado",
+          "plan_updated": "Plan actualizado",
+          "license_extended": "Licencia extendida",
+          "status_changed": "Estado cambiado"
+        }
+      },
+      "impersonate": {
+        "title": "Acceso de soporte",
+        "description": "Genera un enlace de acceso temporal para ver el taller como su administrador. Ábrelo en una ventana privada para no afectar tu sesión actual.",
+        "warning": "Este enlace inicia sesión como el usuario del taller. Úsalo solo para soporte.",
+        "noAdmin": "Este taller no tiene ningún administrador registrado.",
+        "selectAdmin": "Seleccionar usuario",
+        "generateBtn": "Generar enlace de acceso",
+        "copyBtn": "Copiar enlace",
+        "openBtn": "Abrir en nueva pestaña",
+        "copied": "Enlace copiado",
+        "generatedFor": "Enlace generado para {email}"
+      }
+    },
+    "settings": {
+      "title": "Configuración de plataforma",
+      "description": "Variables globales de la plataforma ARK Workshop.",
+      "saveBtn": "Guardar cambios",
+      "savedOk": "Configuración guardada",
+      "keys": {
+        "support_email": "Email de soporte",
+        "platform_name": "Nombre de la plataforma",
+        "terms_url": "URL de términos de uso",
+        "maintenance_mode": "Modo mantenimiento"
+      },
+      "descriptions": {
+        "support_email": "Email visible en pantallas de bloqueo y notificaciones",
+        "platform_name": "Nombre mostrado en emails y UI pública",
+        "terms_url": "Enlace a los términos y condiciones",
+        "maintenance_mode": "Escribe 'true' para bloquear el acceso a todos los tenants"
+      }
+    },
+    "announcements": {
+      "title": "Anuncios",
+      "count": "{n} anuncios",
+      "newBtn": "Nuevo anuncio",
+      "table": { "title": "Título", "type": "Tipo", "status": "Estado", "dates": "Vigencia" },
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "deactivate": "Desactivar",
+      "activate": "Activar",
+      "empty": "No hay anuncios configurados",
+      "types": { "info": "Información", "warning": "Aviso", "maintenance": "Mantenimiento" },
+      "new": {
+        "title": "Nuevo anuncio",
+        "fieldTitle": "Título *",
+        "fieldBody": "Mensaje *",
+        "fieldType": "Tipo",
+        "fieldStartsAt": "Visible desde",
+        "fieldEndsAt": "Visible hasta (opcional)",
+        "submitBtn": "Publicar anuncio",
+        "savedOk": "Anuncio publicado"
       }
     }
   },

@@ -282,6 +282,12 @@ export default async function SuperAdminPage({
                       <div className="flex items-center gap-2 justify-end flex-wrap">
                         <QuickExtend tenantId={tenant.id} compact />
                         <Link
+                          href={`/superadmin/tenants/${tenant.id}`}
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                        >
+                          Ver
+                        </Link>
+                        <Link
                           href={`/superadmin/tenants/${tenant.id}/edit`}
                           className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors"
                         >

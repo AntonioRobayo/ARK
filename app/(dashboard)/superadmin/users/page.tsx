@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
+import Link from 'next/link'
 
 export default async function SuperAdminUsersPage() {
   const supabase = await createClient()
@@ -55,8 +56,13 @@ export default async function SuperAdminUsersPage() {
                   </td>
                   <td className="px-5 py-3.5 text-gray-500 text-xs">{email || '—'}</td>
                   <td className="px-5 py-3.5">
-                    {tenant
-                      ? <span className="text-gray-700 text-sm">{tenant.name}</span>
+                    {tenant && p.tenant_id
+                      ? (
+                        <Link href={`/superadmin/tenants/${p.tenant_id}`}
+                          className="text-sm text-gray-700 hover:text-orange-600 transition-colors">
+                          {tenant.name}
+                        </Link>
+                      )
                       : <span className="text-gray-300 text-xs">{t('users.noWorkshop')}</span>
                     }
                   </td>

@@ -695,7 +695,9 @@
       "workshops": "Oficinas",
       "licenses": "Licenças",
       "users": "Usuários",
-      "catalogs": "Catálogos"
+      "catalogs": "Catálogos",
+      "settings": "Configurações",
+      "announcements": "Avisos"
     },
     "workshops": {
       "count": "{n} oficinas cadastradas",
@@ -949,6 +951,79 @@
           "name": "Nome *", "namePlaceholder": "Real brasileiro",
           "submit": "Salvar moeda"
         }
+      }
+    },
+    "tenantDetail": {
+      "tabUsers": "Usuários",
+      "tabActivity": "Atividade",
+      "tabImpersonate": "Impersonar",
+      "users": {
+        "count": "{n} usuários",
+        "table": { "user": "Usuário", "email": "Email", "role": "Função" },
+        "resetPassword": "Redefinir senha",
+        "resetSent": "Email de redefinição enviado para {email}",
+        "noUsers": "Esta oficina não tem usuários cadastrados"
+      },
+      "activity": {
+        "empty": "Sem atividade registrada",
+        "events": {
+          "tenant_created": "Oficina criada",
+          "plan_updated": "Plano atualizado",
+          "license_extended": "Licença prorrogada",
+          "status_changed": "Status alterado"
+        }
+      },
+      "impersonate": {
+        "title": "Acesso de suporte",
+        "description": "Gera um link de acesso temporário para ver a oficina como seu administrador. Abra em uma janela privada para não afetar sua sessão atual.",
+        "warning": "Este link inicia sessão como o usuário da oficina. Use apenas para suporte.",
+        "noAdmin": "Esta oficina não tem nenhum administrador cadastrado.",
+        "selectAdmin": "Selecionar usuário",
+        "generateBtn": "Gerar link de acesso",
+        "copyBtn": "Copiar link",
+        "openBtn": "Abrir em nova aba",
+        "copied": "Link copiado",
+        "generatedFor": "Link gerado para {email}"
+      }
+    },
+    "settings": {
+      "title": "Configurações da plataforma",
+      "description": "Variáveis globais da plataforma ARK Workshop.",
+      "saveBtn": "Salvar alterações",
+      "savedOk": "Configurações salvas",
+      "keys": {
+        "support_email": "Email de suporte",
+        "platform_name": "Nome da plataforma",
+        "terms_url": "URL dos termos de uso",
+        "maintenance_mode": "Modo manutenção"
+      },
+      "descriptions": {
+        "support_email": "Email visível nas telas de bloqueio e notificações",
+        "platform_name": "Nome exibido em emails e UI pública",
+        "terms_url": "Link para os termos e condições",
+        "maintenance_mode": "Digite 'true' para bloquear o acesso de todos os tenants"
+      }
+    },
+    "announcements": {
+      "title": "Avisos",
+      "count": "{n} avisos",
+      "newBtn": "Novo aviso",
+      "table": { "title": "Título", "type": "Tipo", "status": "Status", "dates": "Vigência" },
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "deactivate": "Desativar",
+      "activate": "Ativar",
+      "empty": "Nenhum aviso configurado",
+      "types": { "info": "Informação", "warning": "Aviso", "maintenance": "Manutenção" },
+      "new": {
+        "title": "Novo aviso",
+        "fieldTitle": "Título *",
+        "fieldBody": "Mensagem *",
+        "fieldType": "Tipo",
+        "fieldStartsAt": "Visível a partir de",
+        "fieldEndsAt": "Visível até (opcional)",
+        "submitBtn": "Publicar aviso",
+        "savedOk": "Aviso publicado"
       }
     }
   },

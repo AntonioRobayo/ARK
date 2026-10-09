@@ -9,10 +9,12 @@ export function SuperAdminTabs() {
   const t = useTranslations('superadmin')
 
   const SUPERADMIN_NAV = [
-    { href: '/superadmin',           label: t('tabs.workshops') },
-    { href: '/superadmin/licenses',  label: t('tabs.licenses') },
-    { href: '/superadmin/users',     label: t('tabs.users') },
-    { href: '/superadmin/catalogs',  label: t('tabs.catalogs') },
+    { href: '/superadmin',                label: t('tabs.workshops') },
+    { href: '/superadmin/licenses',       label: t('tabs.licenses') },
+    { href: '/superadmin/users',          label: t('tabs.users') },
+    { href: '/superadmin/catalogs',       label: t('tabs.catalogs') },
+    { href: '/superadmin/announcements',  label: t('tabs.announcements') },
+    { href: '/superadmin/settings',       label: t('tabs.settings') },
   ]
 
   return (
