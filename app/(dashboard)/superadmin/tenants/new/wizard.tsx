@@ -14,6 +14,13 @@ type Plan = {
   description?: string | null
 }
 
+type Country = {
+  code: string
+  name: string
+  currency: string
+  timezone: string
+}
+
 type WizardDraft = {
   savedAt: string
   step: number
@@ -28,32 +35,40 @@ type WizardDraft = {
 
 const DRAFT_KEY = 'ark_wizard_new_tenant'
 
-const COUNTRIES = [
-  { code: 'CO', label: 'Colombia',        currency: 'COP', tz: 'America/Bogota' },
-  { code: 'MX', label: 'México',          currency: 'MXN', tz: 'America/Mexico_City' },
-  { code: 'PE', label: 'Perú',            currency: 'PEN', tz: 'America/Lima' },
-  { code: 'CL', label: 'Chile',           currency: 'CLP', tz: 'America/Santiago' },
-  { code: 'AR', label: 'Argentina',       currency: 'ARS', tz: 'America/Argentina/Buenos_Aires' },
-  { code: 'BR', label: 'Brasil',          currency: 'BRL', tz: 'America/Sao_Paulo' },
-  { code: 'EC', label: 'Ecuador',         currency: 'USD', tz: 'America/Guayaquil' },
-  { code: 'PA', label: 'Panamá',          currency: 'USD', tz: 'America/Panama' },
-  { code: 'ES', label: 'España',          currency: 'EUR', tz: 'Europe/Madrid' },
-  { code: 'US', label: 'Estados Unidos',  currency: 'USD', tz: 'America/New_York' },
-  { code: 'OTHER', label: 'Otro',         currency: 'USD', tz: 'UTC' },
-]
-
-const TIMEZONES = [
-  'America/Bogota',
-  'America/Mexico_City',
-  'America/Lima',
-  'America/Santiago',
-  'America/Argentina/Buenos_Aires',
-  'America/Sao_Paulo',
-  'America/Guayaquil',
-  'America/Panama',
-  'America/New_York',
-  'Europe/Madrid',
-  'UTC',
+const CURRENCIES = [
+  { code: 'ARS', name: 'ARS — Peso argentino' },
+  { code: 'BOB', name: 'BOB — Boliviano' },
+  { code: 'BRL', name: 'BRL — Real brasileño' },
+  { code: 'BZD', name: 'BZD — Dólar de Belice' },
+  { code: 'CAD', name: 'CAD — Dólar canadiense' },
+  { code: 'CHF', name: 'CHF — Franco suizo' },
+  { code: 'CLP', name: 'CLP — Peso chileno' },
+  { code: 'COP', name: 'COP — Peso colombiano' },
+  { code: 'CRC', name: 'CRC — Colón costarricense' },
+  { code: 'CUP', name: 'CUP — Peso cubano' },
+  { code: 'DKK', name: 'DKK — Corona danesa' },
+  { code: 'DOP', name: 'DOP — Peso dominicano' },
+  { code: 'EUR', name: 'EUR — Euro' },
+  { code: 'GBP', name: 'GBP — Libra esterlina' },
+  { code: 'GTQ', name: 'GTQ — Quetzal guatemalteco' },
+  { code: 'GYD', name: 'GYD — Dólar guyanés' },
+  { code: 'HNL', name: 'HNL — Lempira hondureño' },
+  { code: 'HTG', name: 'HTG — Gourde haitiano' },
+  { code: 'JMD', name: 'JMD — Dólar jamaicano' },
+  { code: 'MXN', name: 'MXN — Peso mexicano' },
+  { code: 'NIO', name: 'NIO — Córdoba nicaragüense' },
+  { code: 'NOK', name: 'NOK — Corona noruega' },
+  { code: 'PAB', name: 'PAB — Balboa panameño' },
+  { code: 'PEN', name: 'PEN — Sol peruano' },
+  { code: 'PLN', name: 'PLN — Esloti polaco' },
+  { code: 'PYG', name: 'PYG — Guaraní paraguayo' },
+  { code: 'RUB', name: 'RUB — Rublo ruso' },
+  { code: 'SEK', name: 'SEK — Corona sueca' },
+  { code: 'SRD', name: 'SRD — Dólar surinamés' },
+  { code: 'TTD', name: 'TTD — Dólar de Trinidad y Tobago' },
+  { code: 'USD', name: 'USD — Dólar estadounidense' },
+  { code: 'UYU', name: 'UYU — Peso uruguayo' },
+  { code: 'VES', name: 'VES — Bolívar venezolano' },
 ]
 
 function toSlug(text: string) {
@@ -65,7 +80,7 @@ function toSlug(text: string) {
     .replace(/^-|-$/g, '')
 }
 
-export function NewTenantWizard({ plans }: { plans: Plan[] }) {
+export function NewTenantWizard({ plans, countries }: { plans: Plan[]; countries: Country[] }) {
   const t = useTranslations('superadmin.workshops.new.wizard')
   const [isPending, startTransition] = useTransition()
 
@@ -74,11 +89,13 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
   const [showDraftBanner, setShowDraftBanner] = useState(false)
   const [error, setError] = useState('')
 
+  const defaultCountry = countries[0]
+
   // Step 1
   const [workshopName, setWorkshopName] = useState('')
-  const [countryCode, setCountryCode] = useState('CO')
-  const [currencyCode, setCurrencyCode] = useState('COP')
-  const [timezone, setTimezone] = useState('America/Bogota')
+  const [countryCode, setCountryCode] = useState(defaultCountry?.code ?? 'CO')
+  const [currencyCode, setCurrencyCode] = useState(defaultCountry?.currency ?? 'COP')
+  const [timezone, setTimezone] = useState(defaultCountry?.timezone ?? 'America/Bogota')
 
   // Step 2
   const [planId, setPlanId] = useState('')
@@ -142,8 +159,11 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
 
   function handleCountryChange(code: string) {
     setCountryCode(code)
-    const c = COUNTRIES.find(x => x.code === code)
-    if (c) { setCurrencyCode(c.currency); setTimezone(c.tz) }
+    const c = countries.find(x => x.code === code)
+    if (c) {
+      setCurrencyCode(c.currency)
+      setTimezone(c.timezone)
+    }
   }
 
   function next() {
@@ -180,6 +200,7 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
   }
 
   const selectedPlan = plans.find(p => p.id === planId)
+  const selectedCountry = countries.find(c => c.code === countryCode)
 
   const draftDate = draft
     ? new Date(draft.savedAt).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -188,14 +209,10 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
   function planLabel(plan: Plan) {
     const branches = plan.max_branches === 999
       ? t('unlimitedBranches')
-      : plan.max_branches !== 1
-        ? t('branchPlural', { n: plan.max_branches })
-        : t('branch', { n: plan.max_branches })
+      : plan.max_branches !== 1 ? t('branchPlural', { n: plan.max_branches }) : t('branch', { n: plan.max_branches })
     const users = plan.max_users === 999
       ? t('unlimitedUsers')
-      : plan.max_users !== 1
-        ? t('userPlural', { n: plan.max_users })
-        : t('user', { n: plan.max_users })
+      : plan.max_users !== 1 ? t('userPlural', { n: plan.max_users }) : t('user', { n: plan.max_users })
     return `${branches} · ${users}`
   }
 
@@ -251,17 +268,13 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
         </div>
       </div>
 
-      {/* Error */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-          {error}
-        </div>
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
       )}
 
-      {/* Card */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
 
-        {/* Step 1 */}
+        {/* Step 1 — Taller */}
         {step === 1 && (
           <div className="space-y-5">
             <div>
@@ -274,37 +287,27 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
                 placeholder={t('step1NamePlaceholder')}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
               {workshopName && (
-                <p className="mt-1 text-xs text-gray-400">
-                  {t('slugPreview', { slug: toSlug(workshopName) })}
-                </p>
+                <p className="mt-1 text-xs text-gray-400">{t('slugPreview', { slug: toSlug(workshopName) })}</p>
               )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Country')}</label>
               <select value={countryCode} onChange={e => handleCountryChange(e.target.value)}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
-                {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+                {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Currency')}</label>
-                <input type="text" value={currencyCode} onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
-                  maxLength={3}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Timezone')}</label>
-                <select value={timezone} onChange={e => setTimezone(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
-                  {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Currency')}</label>
+              <select value={currencyCode} onChange={e => setCurrencyCode(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
+                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+              </select>
             </div>
           </div>
         )}
 
-        {/* Step 2 */}
+        {/* Step 2 — Plan */}
         {step === 2 && (
           <div className="space-y-5">
             <div>
@@ -344,7 +347,7 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
           </div>
         )}
 
-        {/* Step 3 */}
+        {/* Step 3 — Admin */}
         {step === 3 && (
           <div className="space-y-5">
             <div>
@@ -379,8 +382,7 @@ export function NewTenantWizard({ plans }: { plans: Plan[] }) {
               <div className="p-4 bg-gray-50 rounded-xl space-y-2">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reviewSectionWorkshop')}</p>
                 <Row label={t('reviewName')} value={workshopName} />
-                <Row label={t('reviewCountry')} value={`${COUNTRIES.find(c => c.code === countryCode)?.label ?? countryCode} · ${currencyCode}`} />
-                <Row label={t('reviewTimezone')} value={timezone} />
+                <Row label={t('reviewCountry')} value={`${selectedCountry?.name ?? countryCode} · ${currencyCode}`} />
               </div>
               <div className="p-4 bg-gray-50 rounded-xl space-y-2">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reviewSectionPlan')}</p>
