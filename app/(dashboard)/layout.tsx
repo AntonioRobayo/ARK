@@ -63,6 +63,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         lastName={profile?.last_name ?? ''}
         email={user.email}
         isSuperadmin={profile?.is_platform_admin === true}
+        locale={profile?.locale ?? 'es'}
       />
 
       {/* Main — pt-14 on mobile for the fixed header */}

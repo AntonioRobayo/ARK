@@ -2,47 +2,81 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { NavLinks } from './nav-links'
 import { logout } from '@/app/auth/login/actions'
+import { switchLocale } from '@/app/(dashboard)/settings/language/actions'
 import { useTranslations } from 'next-intl'
+
+const LOCALES = [
+  { code: 'es', flag: '🇪🇸' },
+  { code: 'en', flag: '🇬🇧' },
+  { code: 'pt', flag: '🇧🇷' },
+]
+
+function LocaleSwitcher({ current }: { current: string }) {
+  const pathname = usePathname()
+  return (
+    <div className="flex gap-1">
+      {LOCALES.map(({ code, flag }) => (
+        <form key={code} action={switchLocale}>
+          <input type="hidden" name="locale" value={code} />
+          <input type="hidden" name="next" value={pathname} />
+          <button
+            type="submit"
+            title={code.toUpperCase()}
+            className="w-7 h-7 rounded flex items-center justify-center text-base transition-colors hover:bg-white/15"
+            style={{ opacity: current === code ? 1 : 0.35 }}
+          >
+            {flag}
+          </button>
+        </form>
+      ))}
+    </div>
+  )
+}
 
 interface SidebarProps {
   firstName?: string | null
   lastName?: string | null
   email?: string | null
   isSuperadmin: boolean
+  locale?: string
 }
 
-function UserInfo({ firstName, lastName, email, isSuperadmin }: SidebarProps) {
+function UserInfo({ firstName, lastName, email, isSuperadmin, locale = 'es' }: SidebarProps) {
   const t = useTranslations('sidebar')
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || email || 'Usuario'
   const initials = firstName ? firstName[0].toUpperCase() : (email?.[0]?.toUpperCase() ?? 'U')
 
   return (
-    <div className="px-3 py-3 flex items-center gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-      <div
-        className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-        style={{ backgroundColor: isSuperadmin ? '#FF7316' : 'rgba(255,255,255,0.15)', color: '#fff' }}
-      >
-        {initials}
+    <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex items-center gap-3 mb-2">
+        <div
+          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+          style={{ backgroundColor: isSuperadmin ? '#FF7316' : 'rgba(255,255,255,0.15)', color: '#fff' }}
+        >
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>{displayName}</p>
+          {isSuperadmin && (
+            <span className="text-xs font-semibold" style={{ color: '#FF7316' }}>{t('superadminBadge')}</span>
+          )}
+        </div>
+        <Link
+          href="/settings"
+          className="shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
+          style={{ color: 'rgba(255,255,255,0.3)' }}
+          aria-label={t('settingsLink')}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </Link>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>{displayName}</p>
-        {isSuperadmin && (
-          <span className="text-xs font-semibold" style={{ color: '#FF7316' }}>{t('superadminBadge')}</span>
-        )}
-      </div>
-      <Link
-        href="/settings"
-        className="shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
-        style={{ color: 'rgba(255,255,255,0.3)' }}
-        aria-label={t('settingsLink')}
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-      </Link>
+      <LocaleSwitcher current={locale} />
     </div>
   )
 }
@@ -69,14 +103,14 @@ function LogoutButton() {
   )
 }
 
-export function Sidebar({ firstName, lastName, email, isSuperadmin }: SidebarProps) {
+export function Sidebar({ firstName, lastName, email, isSuperadmin, locale }: SidebarProps) {
   const [open, setOpen] = useState(false)
   const t = useTranslations('sidebar')
 
   const navContent = (
     <>
       <NavLinks isSuperadmin={isSuperadmin} onNavClick={() => setOpen(false)} />
-      <UserInfo firstName={firstName} lastName={lastName} email={email} isSuperadmin={isSuperadmin} />
+      <UserInfo firstName={firstName} lastName={lastName} email={email} isSuperadmin={isSuperadmin} locale={locale} />
       <LogoutButton />
     </>
   )
