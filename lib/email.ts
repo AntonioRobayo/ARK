@@ -21,7 +21,12 @@ function createTransporter() {
 }
 
 const FROM = () =>
-  `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_EMAIL}>`
+  `"${process.env.EMAIL_FROM_NAME ?? 'ARK Workshop'}" <${process.env.EMAIL_FROM_EMAIL}>`
+
+const SUPPORT_EMAIL = () => process.env.EMAIL_FROM_EMAIL ?? 'soporte@arkworkshop.app'
+
+const LOGO_URL     = 'https://rjcumppemoonwoolqmpz.supabase.co/storage/v1/object/public/assets/email/logo-ark-slogan.png'
+const DA_LOGO_URL  = 'https://rjcumppemoonwoolqmpz.supabase.co/storage/v1/object/public/assets/email/logo-da.png'
 
 interface SendEmailOptions {
   to:      string | string[]
@@ -41,54 +46,186 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   })
 }
 
-// ─── Template de marca ARK ────────────────────────────────────────────────────
+// ─── Layout base (table-based, email-client safe) ─────────────────────────────
 
-export function arkEmailLayout(title: string, bodyHtml: string) {
+export function arkEmailLayout(title: string, bodyHtml: string, icon = '📬') {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; padding: 0; background: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    .wrapper { max-width: 580px; margin: 40px auto; padding: 0 16px; }
-    .card { background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-    .header { background: #0f172a; padding: 28px 32px; }
-    .header-brand { color: #e8d5a3; font-size: 20px; font-weight: 700; letter-spacing: -.3px; margin: 0; }
-    .header-sub { color: #64748b; font-size: 12px; margin: 4px 0 0; }
-    .body { padding: 32px; color: #1e293b; font-size: 14px; line-height: 1.6; }
-    .body h2 { font-size: 18px; font-weight: 600; margin: 0 0 8px; color: #0f172a; }
-    .body p { margin: 0 0 16px; }
-    .btn { display: inline-block; background: #0f172a; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; margin: 8px 0 16px; }
-    .cred-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 13px; }
-    .cred-box strong { display: inline-block; width: 100px; color: #64748b; font-weight: 500; }
-    .cred-box span { color: #0f172a; font-weight: 600; }
-    .warn { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #92400e; margin: 16px 0; }
-    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
-    .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 32px; }
-    .footer p { color: #94a3b8; font-size: 11px; margin: 0 0 4px; }
-    .footer a { color: #64748b; text-decoration: none; }
-  </style>
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>${title}</title>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <p class="header-brand">ARK Workshop</p>
-        <p class="header-sub">Sistema de gestión de talleres</p>
-      </div>
-      <div class="body">
-        <h2>${title}</h2>
-        ${bodyHtml}
-      </div>
-      <div class="footer">
-        <p>Este correo fue enviado automáticamente por ARK Workshop.</p>
-        <p>¿Tienes dudas? Escríbenos a <a href="mailto:${process.env.EMAIL_FROM_EMAIL}">${process.env.EMAIL_FROM_EMAIL}</a></p>
-      </div>
-    </div>
-  </div>
+<body style="margin:0;padding:0;background-color:#F3F4F6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="background-color:#F3F4F6;padding:40px 16px;">
+    <tr>
+      <td align="center">
+
+        <!-- Cabecera con logo -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="max-width:560px;">
+          <tr>
+            <td align="center"
+              style="background-color:#1F2937;border-radius:16px 16px 0 0;padding:28px 40px;">
+              <img src="${LOGO_URL}" alt="ARK Workshop" width="200"
+                style="display:block;margin:0 auto;width:200px;max-width:100%;height:auto;border:0;" />
+            </td>
+          </tr>
+        </table>
+
+        <!-- Tarjeta principal -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="max-width:560px;background-color:#FFFFFF;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Línea de acento naranja -->
+          <tr>
+            <td height="4" style="background-color:#FF7316;font-size:0;line-height:0;height:4px;">&nbsp;</td>
+          </tr>
+
+          <tr>
+            <td style="padding:40px 40px 36px;">
+
+              <!-- Ícono -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+                style="margin-bottom:24px;">
+                <tr>
+                  <td width="56" height="56" align="center" valign="middle"
+                    style="width:56px;height:56px;background-color:#FFF7ED;border-radius:28px;font-size:26px;line-height:56px;">
+                    ${icon}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Título -->
+              <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#1F2937;line-height:1.3;">
+                ${title}
+              </h1>
+
+              <!-- Contenido -->
+              ${bodyHtml}
+
+            </td>
+          </tr>
+
+          <!-- Pie -->
+          <tr>
+            <td style="border-top:1px solid #F3F4F6;padding:22px 40px;background-color:#FAFAFA;border-radius:0 0 16px 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td valign="middle">
+                    <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#1F2937;">ARK Workshop</p>
+                    <p style="margin:0;font-size:11px;color:#9CA3AF;font-style:italic;">Todo tu taller. En un solo lugar.</p>
+                  </td>
+                  <td align="right" valign="middle">
+                    <p style="margin:0 0 4px;font-size:9px;color:#D1D5DB;text-transform:uppercase;letter-spacing:0.1em;">A product by</p>
+                    <img src="${DA_LOGO_URL}" alt="Developing Assets" width="88"
+                      style="display:block;width:88px;max-width:100%;height:auto;border:0;opacity:0.45;" />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Remitente -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="max-width:560px;margin-top:18px;">
+          <tr>
+            <td align="center">
+              <p style="margin:0;font-size:11px;color:#9CA3AF;">
+                Enviado desde <strong style="color:#6B7280;">${SUPPORT_EMAIL()}</strong>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`
+}
+
+// ─── Bloque reutilizable: botón CTA ──────────────────────────────────────────
+
+function btnBlock(label: string, url: string) {
+  return `
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+    <tr>
+      <td align="center" bgcolor="#FF7316" style="border-radius:10px;">
+        <a href="${url}"
+          style="display:inline-block;padding:15px 36px;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:10px;background-color:#FF7316;">
+          ${label}
+        </a>
+      </td>
+    </tr>
+  </table>`
+}
+
+// ─── Bloque reutilizable: aviso de seguridad ─────────────────────────────────
+
+function securityNotice(text: string) {
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="background-color:#F9FAFB;border-radius:10px;border:1px solid #E5E7EB;margin-bottom:28px;">
+    <tr>
+      <td style="padding:16px 20px;">
+        <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">
+          Información importante
+        </p>
+        <p style="margin:0;font-size:13px;color:#6B7280;line-height:1.6;">${text}</p>
+      </td>
+    </tr>
+  </table>`
+}
+
+// ─── Bloque reutilizable: enlace alternativo ──────────────────────────────────
+
+function fallbackLink(url: string) {
+  return `
+  <p style="margin:0;font-size:12px;color:#9CA3AF;line-height:1.6;">
+    Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+    <a href="${url}" style="color:#FF7316;word-break:break-all;text-decoration:underline;">${url}</a>
+  </p>`
+}
+
+// ─── Bloque reutilizable: caja de datos ──────────────────────────────────────
+
+function dataBox(rows: { label: string; value: string }[]) {
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:24px;">
+    <tr>
+      <td style="padding:16px 20px;">
+        ${rows.map((r, i) => `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            ${i > 0 ? 'style="border-top:1px solid #E5E7EB;margin-top:8px;padding-top:8px;"' : ''}>
+            <tr>
+              <td style="font-size:13px;color:#6B7280;width:120px;padding-right:12px;">${r.label}</td>
+              <td style="font-size:13px;font-weight:600;color:#1F2937;">${r.value}</td>
+            </tr>
+          </table>`).join('')}
+      </td>
+    </tr>
+  </table>`
+}
+
+// ─── Bloque reutilizable: alerta ──────────────────────────────────────────────
+
+function alertBox(text: string, color: '#FFF7ED' | '#FEF2F2' = '#FFF7ED', textColor = '#92400E') {
+  const borderColor = color === '#FEF2F2' ? '#FECACA' : '#FED7AA'
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="background-color:${color};border:1px solid ${borderColor};border-radius:10px;margin-bottom:24px;">
+    <tr>
+      <td style="padding:14px 20px;font-size:13px;color:${textColor};line-height:1.6;">
+        ${text}
+      </td>
+    </tr>
+  </table>`
 }
 
 // ─── Templates por módulo ─────────────────────────────────────────────────────
@@ -102,17 +239,21 @@ export async function sendWorkshopInviteEmail({
   workshopName: string
   inviteUrl: string
 }) {
-  const html = arkEmailLayout('Bienvenido a ARK Workshop', `
-    <p>Has sido invitado a administrar el taller <strong>${workshopName}</strong> en ARK Workshop.</p>
-    <p>Haz clic en el botón para activar tu cuenta y crear tu contraseña:</p>
-    <a href="${inviteUrl}" class="btn">Activar mi cuenta →</a>
-    <div class="warn">
-      ⚠️ Este enlace expira en 24 horas. Si no lo solicitaste, ignora este correo.
-    </div>
-    <p style="color:#64748b; font-size:13px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
-    <a href="${inviteUrl}" style="color:#0f172a; word-break:break-all;">${inviteUrl}</a></p>
-  `)
+  const body = `
+    <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
+      Has recibido una invitación para crear tu cuenta en
+      <strong style="color:#1F2937;">ARK Workshop</strong> y administrar el taller
+      <strong style="color:#1F2937;">${workshopName}</strong>.
+    </p>
+    <p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">
+      Acepta la invitación para configurar tu cuenta y comenzar.
+    </p>
+    ${btnBlock('Aceptar invitación →', inviteUrl)}
+    ${securityNotice('Este enlace está destinado exclusivamente a la persona invitada. Si no esperabas esta invitación, puedes ignorar este correo de forma segura.')}
+    ${fallbackLink(inviteUrl)}
+  `
 
+  const html = arkEmailLayout('¡Te damos la bienvenida a ARK!', body, '✉')
   await sendEmail({ to, subject: `Invitación a ARK Workshop — ${workshopName}`, html })
 }
 
@@ -123,15 +264,19 @@ export async function sendPasswordResetEmail({
   to: string
   resetUrl: string
 }) {
-  const html = arkEmailLayout('Restablecer contraseña', `
-    <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en ARK Workshop.</p>
-    <p>Haz clic en el botón para crear una nueva contraseña:</p>
-    <a href="${resetUrl}" class="btn">Restablecer contraseña →</a>
-    <div class="warn">
-      ⚠️ Este enlace expira en 1 hora. Si no solicitaste este cambio, ignora este correo.
-    </div>
-  `)
+  const body = `
+    <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
+      Recibimos una solicitud para restablecer la contraseña de tu cuenta en ARK Workshop.
+    </p>
+    <p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">
+      Haz clic en el botón para crear una nueva contraseña.
+    </p>
+    ${btnBlock('Restablecer contraseña →', resetUrl)}
+    ${securityNotice('Este enlace expira en 1 hora. Si no solicitaste este cambio, puedes ignorar este correo de forma segura.')}
+    ${fallbackLink(resetUrl)}
+  `
 
+  const html = arkEmailLayout('Restablecer contraseña', body, '🔑')
   await sendEmail({ to, subject: 'Restablecer contraseña — ARK Workshop', html })
 }
 
@@ -144,17 +289,19 @@ export async function sendLicenseExpiryTodayEmail({
   workshopName: string
   planName: string
 }) {
-  const html = arkEmailLayout('Tu licencia vence hoy', `
-    <p>Hola,</p>
-    <p>Te informamos que la licencia <strong>${planName}</strong> del taller <strong>${workshopName}</strong> vence <strong>hoy</strong>.</p>
-    <div class="warn">
-      ⚠️ Si no renuevas tu licencia, mañana no podrás acceder a la plataforma.
-    </div>
-    <p>Para renovar o ampliar tu plan, comunícate con nuestro equipo de soporte:</p>
-    <a href="mailto:${process.env.EMAIL_FROM_EMAIL}" class="btn">Contactar soporte →</a>
-    <p style="color:#64748b; font-size:13px;">Gracias por confiar en ARK Workshop.</p>
-  `)
+  const body = `
+    <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
+      Te informamos que la licencia <strong style="color:#1F2937;">${planName}</strong>
+      del taller <strong style="color:#1F2937;">${workshopName}</strong> vence <strong style="color:#1F2937;">hoy</strong>.
+    </p>
+    ${alertBox('⚠️ Tienes 3 días de gracia antes de perder el acceso a la plataforma. Renueva tu licencia para evitar interrupciones.')}
+    <p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">
+      Contacta a nuestro equipo para renovar o ampliar tu plan.
+    </p>
+    ${btnBlock('Contactar soporte →', `mailto:${SUPPORT_EMAIL()}`)}
+  `
 
+  const html = arkEmailLayout('Tu licencia vence hoy', body, '⏰')
   await sendEmail({ to, subject: `⚠️ Tu licencia ARK Workshop vence hoy — ${workshopName}`, html })
 }
 
@@ -167,17 +314,19 @@ export async function sendLicenseExpiredEmail({
   workshopName: string
   planName: string
 }) {
-  const html = arkEmailLayout('Tu licencia ha vencido', `
-    <p>Hola,</p>
-    <p>La licencia <strong>${planName}</strong> del taller <strong>${workshopName}</strong> <strong>venció ayer</strong> y el acceso a la plataforma ha sido bloqueado.</p>
-    <div class="warn">
-      🔒 Tu taller no puede acceder a ARK Workshop hasta que se renueve la licencia.
-    </div>
-    <p>Para reactivar tu cuenta, comunícate con nuestro equipo de soporte a la brevedad:</p>
-    <a href="mailto:${process.env.EMAIL_FROM_EMAIL}" class="btn">Reactivar mi cuenta →</a>
-    <p style="color:#64748b; font-size:13px;">Gracias por confiar en ARK Workshop.</p>
-  `)
+  const body = `
+    <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
+      La licencia <strong style="color:#1F2937;">${planName}</strong>
+      del taller <strong style="color:#1F2937;">${workshopName}</strong> venció ayer.
+    </p>
+    ${alertBox('🔒 El acceso a la plataforma será bloqueado en 2 días si no renuevas tu licencia.', '#FEF2F2', '#991B1B')}
+    <p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">
+      Contacta a nuestro equipo para reactivar tu cuenta a la brevedad.
+    </p>
+    ${btnBlock('Reactivar mi cuenta →', `mailto:${SUPPORT_EMAIL()}`)}
+  `
 
+  const html = arkEmailLayout('Tu licencia ha vencido', body, '🔒')
   await sendEmail({ to, subject: `🔒 Licencia vencida — ${workshopName}`, html })
 }
 
@@ -196,16 +345,25 @@ export async function sendOtStatusEmail({
   vehiclePlate: string
   notes?: string
 }) {
-  const html = arkEmailLayout(`Actualización OT ${otNumber}`, `
-    <p>Hola <strong>${customerName}</strong>,</p>
-    <p>Tu vehículo <strong>${vehiclePlate}</strong> tiene una actualización en su orden de trabajo:</p>
-    <div class="cred-box">
-      <div><strong>OT:</strong> <span>${otNumber}</span></div>
-      <div><strong>Estado:</strong> <span>${status}</span></div>
-      ${notes ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0; color:#475569;">${notes}</div>` : ''}
-    </div>
-    <p style="color:#64748b; font-size:13px;">Para más información contacta al taller directamente.</p>
-  `)
+  const rows = [
+    { label: 'Orden de trabajo', value: otNumber },
+    { label: 'Vehículo', value: vehiclePlate },
+    { label: 'Estado', value: status },
+    ...(notes ? [{ label: 'Notas', value: notes }] : []),
+  ]
 
+  const body = `
+    <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
+      Hola <strong style="color:#1F2937;">${customerName}</strong>,
+      tu vehículo <strong style="color:#1F2937;">${vehiclePlate}</strong>
+      tiene una actualización en su orden de trabajo.
+    </p>
+    ${dataBox(rows)}
+    <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">
+      Para más información contacta al taller directamente.
+    </p>
+  `
+
+  const html = arkEmailLayout(`Actualización OT ${otNumber}`, body, '🔧')
   await sendEmail({ to, subject: `OT ${otNumber} — ${status} | ARK Workshop`, html })
 }
