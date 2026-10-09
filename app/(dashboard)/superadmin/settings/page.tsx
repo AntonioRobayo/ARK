@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
 import { saveConfig } from './actions'
+import { MaintenanceToggle } from './maintenance-toggle'
 
 const CONFIG_KEYS = ['support_email', 'platform_name', 'terms_url', 'maintenance_mode'] as const
 
@@ -44,13 +45,16 @@ export default async function SettingsPage({
               {t(`keys.${key}`)}
             </label>
             <p className="text-xs text-gray-400 mb-2">{t(`descriptions.${key}`)}</p>
-            <input
-              id={key}
-              name={key}
-              defaultValue={configMap[key] ?? ''}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-              placeholder={key === 'maintenance_mode' ? 'false' : ''}
-            />
+            {key === 'maintenance_mode' ? (
+              <MaintenanceToggle defaultValue={configMap[key] === 'true'} />
+            ) : (
+              <input
+                id={key}
+                name={key}
+                defaultValue={configMap[key] ?? ''}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+              />
+            )}
           </div>
         ))}
         <div className="px-5 py-4">
