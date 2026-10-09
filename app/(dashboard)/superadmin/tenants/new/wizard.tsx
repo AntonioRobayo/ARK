@@ -35,41 +35,6 @@ type WizardDraft = {
 
 const DRAFT_KEY = 'ark_wizard_new_tenant'
 
-const CURRENCIES = [
-  { code: 'ARS', name: 'ARS — Peso argentino' },
-  { code: 'BOB', name: 'BOB — Boliviano' },
-  { code: 'BRL', name: 'BRL — Real brasileño' },
-  { code: 'BZD', name: 'BZD — Dólar de Belice' },
-  { code: 'CAD', name: 'CAD — Dólar canadiense' },
-  { code: 'CHF', name: 'CHF — Franco suizo' },
-  { code: 'CLP', name: 'CLP — Peso chileno' },
-  { code: 'COP', name: 'COP — Peso colombiano' },
-  { code: 'CRC', name: 'CRC — Colón costarricense' },
-  { code: 'CUP', name: 'CUP — Peso cubano' },
-  { code: 'DKK', name: 'DKK — Corona danesa' },
-  { code: 'DOP', name: 'DOP — Peso dominicano' },
-  { code: 'EUR', name: 'EUR — Euro' },
-  { code: 'GBP', name: 'GBP — Libra esterlina' },
-  { code: 'GTQ', name: 'GTQ — Quetzal guatemalteco' },
-  { code: 'GYD', name: 'GYD — Dólar guyanés' },
-  { code: 'HNL', name: 'HNL — Lempira hondureño' },
-  { code: 'HTG', name: 'HTG — Gourde haitiano' },
-  { code: 'JMD', name: 'JMD — Dólar jamaicano' },
-  { code: 'MXN', name: 'MXN — Peso mexicano' },
-  { code: 'NIO', name: 'NIO — Córdoba nicaragüense' },
-  { code: 'NOK', name: 'NOK — Corona noruega' },
-  { code: 'PAB', name: 'PAB — Balboa panameño' },
-  { code: 'PEN', name: 'PEN — Sol peruano' },
-  { code: 'PLN', name: 'PLN — Esloti polaco' },
-  { code: 'PYG', name: 'PYG — Guaraní paraguayo' },
-  { code: 'RUB', name: 'RUB — Rublo ruso' },
-  { code: 'SEK', name: 'SEK — Corona sueca' },
-  { code: 'SRD', name: 'SRD — Dólar surinamés' },
-  { code: 'TTD', name: 'TTD — Dólar de Trinidad y Tobago' },
-  { code: 'USD', name: 'USD — Dólar estadounidense' },
-  { code: 'UYU', name: 'UYU — Peso uruguayo' },
-  { code: 'VES', name: 'VES — Bolívar venezolano' },
-]
 
 function toSlug(text: string) {
   return text
@@ -80,7 +45,9 @@ function toSlug(text: string) {
     .replace(/^-|-$/g, '')
 }
 
-export function NewTenantWizard({ plans, countries }: { plans: Plan[]; countries: Country[] }) {
+type Currency = { code: string; name: string }
+
+export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[]; countries: Country[]; currencies: Currency[] }) {
   const t = useTranslations('superadmin.workshops.new.wizard')
   const [isPending, startTransition] = useTransition()
 
@@ -301,7 +268,7 @@ export function NewTenantWizard({ plans, countries }: { plans: Plan[]; countries
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('step1Currency')}</label>
               <select value={currencyCode} onChange={e => setCurrencyCode(e.target.value)}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
-                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                {currencies.map(c => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
               </select>
             </div>
           </div>

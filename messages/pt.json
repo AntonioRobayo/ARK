@@ -694,7 +694,8 @@
     "tabs": {
       "workshops": "Oficinas",
       "licenses": "Licenças",
-      "users": "Usuários"
+      "users": "Usuários",
+      "catalogs": "Catálogos"
     },
     "workshops": {
       "count": "{n} oficinas cadastradas",
@@ -895,6 +896,41 @@
       "roleSuperadmin": "Superadmin",
       "roleAdmin": "Admin",
       "empty": "Nenhum usuário cadastrado"
+    },
+    "catalogs": {
+      "title": "Catálogos",
+      "tabs": { "countries": "Países", "currencies": "Moedas" },
+      "countries": {
+        "count": "{n} países",
+        "addBtn": "+ Adicionar país",
+        "code": "Código", "name": "País", "currency": "Moeda",
+        "timezone": "Fuso horário", "status": "Status",
+        "active": "Ativo", "inactive": "Inativo",
+        "activate": "Ativar", "deactivate": "Desativar",
+        "empty": "Nenhum país cadastrado",
+        "add": {
+          "title": "Adicionar país",
+          "code": "Código ISO (2 letras) *", "codePlaceholder": "BR",
+          "name": "Nome *", "namePlaceholder": "Brasil",
+          "currency": "Moeda padrão *", "currencyPlaceholder": "BRL",
+          "timezone": "Fuso horário *", "timezonePlaceholder": "America/Sao_Paulo",
+          "submit": "Salvar país"
+        }
+      },
+      "currencies": {
+        "count": "{n} moedas",
+        "addBtn": "+ Adicionar moeda",
+        "code": "Código", "name": "Nome", "status": "Status",
+        "active": "Ativa", "inactive": "Inativa",
+        "activate": "Ativar", "deactivate": "Desativar",
+        "empty": "Nenhuma moeda cadastrada",
+        "add": {
+          "title": "Adicionar moeda",
+          "code": "Código ISO (3 letras) *", "codePlaceholder": "BRL",
+          "name": "Nome *", "namePlaceholder": "Real brasileiro",
+          "submit": "Salvar moeda"
+        }
+      }
     }
   },
   "common": {

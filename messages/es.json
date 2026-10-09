@@ -694,7 +694,8 @@
     "tabs": {
       "workshops": "Talleres",
       "licenses": "Licencias",
-      "users": "Usuarios"
+      "users": "Usuarios",
+      "catalogs": "Catálogos"
     },
     "workshops": {
       "count": "{n} talleres registrados",
@@ -895,6 +896,59 @@
       "roleSuperadmin": "Superadmin",
       "roleAdmin": "Admin",
       "empty": "No hay usuarios registrados"
+    },
+    "catalogs": {
+      "title": "Catálogos",
+      "tabs": {
+        "countries": "Países",
+        "currencies": "Monedas"
+      },
+      "countries": {
+        "count": "{n} países",
+        "addBtn": "+ Agregar país",
+        "code": "Código",
+        "name": "País",
+        "currency": "Moneda",
+        "timezone": "Timezone",
+        "status": "Estado",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "activate": "Activar",
+        "deactivate": "Desactivar",
+        "empty": "No hay países registrados",
+        "add": {
+          "title": "Agregar país",
+          "code": "Código ISO (2 letras) *",
+          "codePlaceholder": "CO",
+          "name": "Nombre *",
+          "namePlaceholder": "Colombia",
+          "currency": "Moneda por defecto *",
+          "currencyPlaceholder": "COP",
+          "timezone": "Timezone *",
+          "timezonePlaceholder": "America/Bogota",
+          "submit": "Guardar país"
+        }
+      },
+      "currencies": {
+        "count": "{n} monedas",
+        "addBtn": "+ Agregar moneda",
+        "code": "Código",
+        "name": "Nombre",
+        "status": "Estado",
+        "active": "Activa",
+        "inactive": "Inactiva",
+        "activate": "Activar",
+        "deactivate": "Desactivar",
+        "empty": "No hay monedas registradas",
+        "add": {
+          "title": "Agregar moneda",
+          "code": "Código ISO (3 letras) *",
+          "codePlaceholder": "COP",
+          "name": "Nombre *",
+          "namePlaceholder": "Peso colombiano",
+          "submit": "Guardar moneda"
+        }
+      }
     }
   },
   "common": {

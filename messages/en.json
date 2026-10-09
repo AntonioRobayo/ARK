@@ -694,7 +694,8 @@
     "tabs": {
       "workshops": "Workshops",
       "licenses": "Licenses",
-      "users": "Users"
+      "users": "Users",
+      "catalogs": "Catalogs"
     },
     "workshops": {
       "count": "{n} registered workshops",
@@ -895,6 +896,41 @@
       "roleSuperadmin": "Superadmin",
       "roleAdmin": "Admin",
       "empty": "No users registered"
+    },
+    "catalogs": {
+      "title": "Catalogs",
+      "tabs": { "countries": "Countries", "currencies": "Currencies" },
+      "countries": {
+        "count": "{n} countries",
+        "addBtn": "+ Add country",
+        "code": "Code", "name": "Country", "currency": "Currency",
+        "timezone": "Timezone", "status": "Status",
+        "active": "Active", "inactive": "Inactive",
+        "activate": "Activate", "deactivate": "Deactivate",
+        "empty": "No countries registered",
+        "add": {
+          "title": "Add country",
+          "code": "ISO code (2 letters) *", "codePlaceholder": "US",
+          "name": "Name *", "namePlaceholder": "United States",
+          "currency": "Default currency *", "currencyPlaceholder": "USD",
+          "timezone": "Timezone *", "timezonePlaceholder": "America/New_York",
+          "submit": "Save country"
+        }
+      },
+      "currencies": {
+        "count": "{n} currencies",
+        "addBtn": "+ Add currency",
+        "code": "Code", "name": "Name", "status": "Status",
+        "active": "Active", "inactive": "Inactive",
+        "activate": "Activate", "deactivate": "Deactivate",
+        "empty": "No currencies registered",
+        "add": {
+          "title": "Add currency",
+          "code": "ISO code (3 letters) *", "codePlaceholder": "USD",
+          "name": "Name *", "namePlaceholder": "US Dollar",
+          "submit": "Save currency"
+        }
+      }
     }
   },
   "common": {

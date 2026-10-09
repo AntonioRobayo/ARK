@@ -5,7 +5,7 @@ import { NewTenantWizard } from './wizard'
 export default async function NewTenantPage() {
   const supabase = await createClient()
 
-  const [{ data: plans }, { data: countries }] = await Promise.all([
+  const [{ data: plans }, { data: countries }, { data: currencies }] = await Promise.all([
     supabase
       .from('license_plan')
       .select('id, name, description, max_branches, max_users, price_monthly, currency')
@@ -14,6 +14,11 @@ export default async function NewTenantPage() {
     supabase
       .from('countries')
       .select('code, name, currency, timezone')
+      .eq('is_active', true)
+      .order('sort_order'),
+    supabase
+      .from('currencies')
+      .select('code, name')
       .eq('is_active', true)
       .order('sort_order'),
   ])
@@ -29,7 +34,7 @@ export default async function NewTenantPage() {
         <h2 className="text-lg font-semibold text-gray-900">Nuevo taller</h2>
       </div>
 
-      <NewTenantWizard plans={plans ?? []} countries={countries ?? []} />
+      <NewTenantWizard plans={plans ?? []} countries={countries ?? []} currencies={currencies ?? []} />
     </div>
   )
 }

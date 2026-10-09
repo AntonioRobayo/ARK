@@ -12,7 +12,7 @@ export default async function EditTenantPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: tenant }, { data: plans }, { data: countries }] = await Promise.all([
+  const [{ data: tenant }, { data: plans }, { data: countries }, { data: currencies }] = await Promise.all([
     supabase
       .from('tenants')
       .select('id, name, slug, plan, plan_id, plan_expires_at, is_active, country_code, currency_code, timezone')
@@ -26,6 +26,11 @@ export default async function EditTenantPage({
     supabase
       .from('countries')
       .select('code, name, currency, timezone')
+      .eq('is_active', true)
+      .order('sort_order'),
+    supabase
+      .from('currencies')
+      .select('code, name')
       .eq('is_active', true)
       .order('sort_order'),
   ])
@@ -45,7 +50,7 @@ export default async function EditTenantPage({
         <h2 className="text-lg font-semibold text-gray-900">{t('title', { name: tenant.name })}</h2>
       </div>
 
-      <EditTenantWizard tenant={tenant} plans={plans ?? []} countries={countries ?? []} />
+      <EditTenantWizard tenant={tenant} plans={plans ?? []} countries={countries ?? []} currencies={currencies ?? []} />
     </div>
   )
 }
