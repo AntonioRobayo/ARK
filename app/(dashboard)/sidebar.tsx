@@ -9,32 +9,35 @@ import { switchLocale } from '@/app/(dashboard)/settings/language/actions'
 import { useTranslations } from 'next-intl'
 
 const LOCALES = [
-  { code: 'es', flag: '🇪🇸' },
-  { code: 'en', flag: '🇬🇧' },
-  { code: 'pt', flag: '🇧🇷' },
+  { code: 'es', label: 'ES' },
+  { code: 'en', label: 'EN' },
+  { code: 'pt', label: 'PT' },
 ]
 
 function LocaleSwitcher({ current }: { current: string }) {
   const pathname = usePathname()
   return (
-    <div className="flex gap-1">
-      {LOCALES.map(({ code, flag }) => (
-        <form key={code} action={switchLocale}>
-          <input type="hidden" name="locale" value={code} />
-          <input type="hidden" name="next" value={pathname} />
-          <button
-            type="submit"
-            title={code.toUpperCase()}
-            className="w-7 h-7 rounded flex items-center justify-center text-base transition-colors"
-            style={{
-              opacity: current === code ? 1 : 0.55,
-              backgroundColor: current === code ? 'rgba(255,255,255,0.15)' : 'transparent',
-            }}
-          >
-            {flag}
-          </button>
-        </form>
-      ))}
+    <div className="flex gap-1.5">
+      {LOCALES.map(({ code, label }) => {
+        const active = current === code
+        return (
+          <form key={code} action={switchLocale}>
+            <input type="hidden" name="locale" value={code} />
+            <input type="hidden" name="next" value={pathname} />
+            <button
+              type="submit"
+              className="px-2 py-0.5 rounded text-xs font-semibold transition-colors"
+              style={{
+                backgroundColor: active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)',
+                color: active ? '#ffffff' : 'rgba(255,255,255,0.5)',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {label}
+            </button>
+          </form>
+        )
+      })}
     </div>
   )
 }
