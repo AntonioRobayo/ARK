@@ -721,6 +721,23 @@
       "announcements": "Announcements",
       "ads": "Advertising"
     },
+    "dashboard": {
+      "kpiActive": "Active workshops",
+      "kpiActiveDesc": "out of {n} registered",
+      "kpiMrr": "Estimated MRR",
+      "kpiMrrDesc": "plans with dynamic pricing",
+      "kpiExpiring": "Expiring (tomorrow)",
+      "kpiExpiringDesc": "need attention",
+      "kpiGrace": "Grace period",
+      "kpiGraceDesc": "expired, not yet blocked",
+      "kpiBlocked": "Blocked",
+      "kpiBlockedDesc": "no active license",
+      "graceTitle": "Grace period — access will be blocked soon",
+      "blockedTitle": "Blocked — license expired and past grace",
+      "expiringTitle": "Licenses expiring tomorrow",
+      "expiredAgo": "{n, plural, one {expired # day ago} other {expired # days ago}}",
+      "expiresIn": "{n, plural, one {expires in # day} other {expires in # days}}"
+    },
     "workshops": {
       "count": "{n} registered workshops",
       "newBtn": "New workshop",

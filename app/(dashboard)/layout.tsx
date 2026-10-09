@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { Sidebar } from './sidebar'
 import { LocaleSync } from '@/components/locale-sync'
 import { LicenseBlockedScreen } from '@/components/license-blocked'
@@ -8,6 +9,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
+
+  const cookieStore = await cookies()
+  const cookieLocale = cookieStore.get('ARK_LOCALE')?.value ?? 'es'
 
   const { data: profile } = await supabase
     .from('user_profile')
@@ -63,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         lastName={profile?.last_name ?? ''}
         email={user.email}
         isSuperadmin={profile?.is_platform_admin === true}
-        locale={profile?.locale ?? 'es'}
+        locale={cookieLocale}
       />
 
       {/* Main — pt-14 on mobile for the fixed header */}

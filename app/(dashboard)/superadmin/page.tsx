@@ -155,35 +155,35 @@ export default async function SuperAdminPage({
       {/* ── KPI cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Talleres activos</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">{t('dashboard.kpiActive')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{active.length}</p>
-          <p className="text-xs text-gray-400 mt-1">de {all.length} registrados</p>
+          <p className="text-xs text-gray-400 mt-1">{t('dashboard.kpiActiveDesc', { n: all.length })}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">MRR estimado</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">{t('dashboard.kpiMrr')}</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatUSD(estimatedMRR)}</p>
-          <p className="text-xs text-gray-400 mt-1">planes con pricing dinámico</p>
+          <p className="text-xs text-gray-400 mt-1">{t('dashboard.kpiMrrDesc')}</p>
         </div>
         <Link href="#expiring" className="bg-white border border-gray-200 rounded-xl p-4 hover:border-amber-300 transition-colors">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Por vencer (mañana)</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">{t('dashboard.kpiExpiring')}</p>
           <p className={`text-3xl font-bold mt-1 ${expiringSoon.length > 0 ? 'text-amber-500' : 'text-gray-900'}`}>
             {expiringSoon.length}
           </p>
-          <p className="text-xs text-gray-400 mt-1">requieren atención</p>
+          <p className="text-xs text-gray-400 mt-1">{t('dashboard.kpiExpiringDesc')}</p>
         </Link>
         <Link href="#grace" className="bg-white border border-gray-200 rounded-xl p-4 hover:border-red-300 transition-colors">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Período de gracia</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">{t('dashboard.kpiGrace')}</p>
           <p className={`text-3xl font-bold mt-1 ${gracePeriod.length > 0 ? 'text-red-500' : 'text-gray-900'}`}>
             {gracePeriod.length}
           </p>
-          <p className="text-xs text-gray-400 mt-1">vencidos, sin bloquear</p>
+          <p className="text-xs text-gray-400 mt-1">{t('dashboard.kpiGraceDesc')}</p>
         </Link>
         <Link href="#blocked" className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-400 transition-colors">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Bloqueados</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">{t('dashboard.kpiBlocked')}</p>
           <p className={`text-3xl font-bold mt-1 ${blocked.length > 0 ? 'text-gray-600' : 'text-gray-900'}`}>
             {blocked.length}
           </p>
-          <p className="text-xs text-gray-400 mt-1">sin licencia activa</p>
+          <p className="text-xs text-gray-400 mt-1">{t('dashboard.kpiBlockedDesc')}</p>
         </Link>
       </div>
 
@@ -193,7 +193,7 @@ export default async function SuperAdminPage({
           {gracePeriod.length > 0 && (
             <div id="grace" className="bg-red-50 border border-red-200 rounded-xl p-4">
               <p className="text-xs font-bold text-red-700 uppercase tracking-wide mb-3">
-                🔒 En período de gracia — acceso bloqueado en breve
+                🔒 {t('dashboard.graceTitle')}
               </p>
               <div className="space-y-2">
                 {gracePeriod.map(tenant => {
@@ -202,13 +202,13 @@ export default async function SuperAdminPage({
                     <div key={tenant.id} className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <span className="text-sm font-semibold text-red-900">{tenant.name}</span>
-                        <span className="text-xs text-red-500 ml-2">vencida hace {daysExpired} día{daysExpired !== 1 ? 's' : ''}</span>
+                        <span className="text-xs text-red-500 ml-2">{t('dashboard.expiredAgo', { n: daysExpired })}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <QuickExtend tenantId={tenant.id} />
                         <Link href={`/superadmin/tenants/${tenant.id}/edit`}
                           className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors font-medium">
-                          Editar
+                          {t('workshops.editBtn')}
                         </Link>
                       </div>
                     </div>
@@ -220,7 +220,7 @@ export default async function SuperAdminPage({
           {blocked.length > 0 && (
             <div id="blocked" className="bg-gray-50 border border-gray-300 rounded-xl p-4">
               <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">
-                🔐 Bloqueados — licencia vencida y fuera de gracia
+                🔐 {t('dashboard.blockedTitle')}
               </p>
               <div className="space-y-2">
                 {blocked.map(tenant => {
@@ -229,13 +229,13 @@ export default async function SuperAdminPage({
                     <div key={tenant.id} className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <span className="text-sm font-semibold text-gray-700">{tenant.name}</span>
-                        <span className="text-xs text-gray-400 ml-2">vencida hace {daysExpired} día{daysExpired !== 1 ? 's' : ''}</span>
+                        <span className="text-xs text-gray-400 ml-2">{t('dashboard.expiredAgo', { n: daysExpired })}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <QuickExtend tenantId={tenant.id} />
                         <Link href={`/superadmin/tenants/${tenant.id}/edit`}
                           className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors font-medium">
-                          Editar
+                          {t('workshops.editBtn')}
                         </Link>
                       </div>
                     </div>
@@ -247,7 +247,7 @@ export default async function SuperAdminPage({
           {expiringSoon.length > 0 && (
             <div id="expiring" className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-3">
-                ⏰ Licencias que vencen mañana
+                ⏰ {t('dashboard.expiringTitle')}
               </p>
               <div className="space-y-2">
                 {expiringSoon.map(tenant => {
@@ -256,13 +256,13 @@ export default async function SuperAdminPage({
                     <div key={tenant.id} className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <span className="text-sm font-semibold text-amber-900">{tenant.name}</span>
-                        <span className="text-xs text-amber-600 ml-2">vence en {daysLeft} día{daysLeft !== 1 ? 's' : ''}</span>
+                        <span className="text-xs text-amber-600 ml-2">{t('dashboard.expiresIn', { n: daysLeft })}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <QuickExtend tenantId={tenant.id} />
                         <Link href={`/superadmin/tenants/${tenant.id}/edit`}
                           className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors font-medium">
-                          Editar
+                          {t('workshops.editBtn')}
                         </Link>
                       </div>
                     </div>

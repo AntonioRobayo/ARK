@@ -721,6 +721,23 @@
       "announcements": "Comunicados",
       "ads": "Publicidade"
     },
+    "dashboard": {
+      "kpiActive": "Oficinas ativas",
+      "kpiActiveDesc": "de {n} registradas",
+      "kpiMrr": "MRR estimado",
+      "kpiMrrDesc": "planos com precificação dinâmica",
+      "kpiExpiring": "A vencer (amanhã)",
+      "kpiExpiringDesc": "precisam de atenção",
+      "kpiGrace": "Período de carência",
+      "kpiGraceDesc": "vencidos, sem bloquear",
+      "kpiBlocked": "Bloqueados",
+      "kpiBlockedDesc": "sem licença ativa",
+      "graceTitle": "Em período de carência — acesso será bloqueado em breve",
+      "blockedTitle": "Bloqueados — licença vencida e fora da carência",
+      "expiringTitle": "Licenças que vencem amanhã",
+      "expiredAgo": "{n, plural, one {vencida há # dia} other {vencida há # dias}}",
+      "expiresIn": "{n, plural, one {vence em # dia} other {vence em # dias}}"
+    },
     "workshops": {
       "count": "{n} oficinas cadastradas",
       "newBtn": "Nova oficina",

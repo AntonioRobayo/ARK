@@ -721,6 +721,23 @@
       "announcements": "Comunicados",
       "ads": "Publicidad"
     },
+    "dashboard": {
+      "kpiActive": "Talleres activos",
+      "kpiActiveDesc": "de {n} registrados",
+      "kpiMrr": "MRR estimado",
+      "kpiMrrDesc": "planes con pricing dinámico",
+      "kpiExpiring": "Por vencer (mañana)",
+      "kpiExpiringDesc": "requieren atención",
+      "kpiGrace": "Período de gracia",
+      "kpiGraceDesc": "vencidos, sin bloquear",
+      "kpiBlocked": "Bloqueados",
+      "kpiBlockedDesc": "sin licencia activa",
+      "graceTitle": "En período de gracia — acceso bloqueado en breve",
+      "blockedTitle": "Bloqueados — licencia vencida y fuera de gracia",
+      "expiringTitle": "Licencias que vencen mañana",
+      "expiredAgo": "{n, plural, one {vencida hace # día} other {vencida hace # días}}",
+      "expiresIn": "{n, plural, one {vence en # día} other {vence en # días}}"
+    },
     "workshops": {
       "count": "{n} talleres registrados",
       "newBtn": "Nuevo taller",
