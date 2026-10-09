@@ -14,6 +14,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ARK Workshop",
   description: "Todo tu taller. En un solo lugar.",
+  icons: {
+    icon: '/logo-ark.png',
+    shortcut: '/logo-ark.png',
+    apple: '/logo-ark.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
