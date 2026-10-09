@@ -10,7 +10,7 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
   const t = await getTranslations('superadmin.catalogs')
 
   const [{ data: countries }, { data: currencies }] = await Promise.all([
-    supabase.from('countries').select('code, name, currency, timezone, is_active').order('sort_order'),
+    supabase.from('countries').select('code, name, currency, timezone, is_active').order('name'),
     supabase.from('currencies').select('code, name, is_active, usd_rate').order('sort_order'),
   ])
 

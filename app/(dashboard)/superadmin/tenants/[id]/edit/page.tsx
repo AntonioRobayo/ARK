@@ -27,7 +27,7 @@ export default async function EditTenantPage({
       .from('countries')
       .select('code, name, currency, timezone')
       .eq('is_active', true)
-      .order('sort_order'),
+      .order('name'),
     supabase
       .from('currencies')
       .select('code, name')
