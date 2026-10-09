@@ -55,15 +55,15 @@ export default async function NewLicensePlanPage({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.pricePerUser')} <span className="font-normal text-gray-400">USD</span></label>
-            <NumericInput name="price_per_user" defaultValue={0} min={0} step="0.01" required className={cls} />
+            <NumericInput name="price_per_user" defaultValue={0} min={0} required className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.minMonthly')} <span className="font-normal text-gray-400">USD</span></label>
-            <NumericInput name="min_monthly" defaultValue={0} min={0} step="0.01" className={cls} />
+            <NumericInput name="min_monthly" defaultValue={0} min={0} className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.pricePerExtraBranch')} <span className="font-normal text-gray-400">USD</span></label>
-            <NumericInput name="price_per_extra_branch" defaultValue={0} min={0} step="0.01" className={cls} />
+            <NumericInput name="price_per_extra_branch" defaultValue={0} min={0} className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.sortOrder')}</label>

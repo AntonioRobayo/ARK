@@ -131,7 +131,15 @@ export function EditTenantWizard({
   const selectedCountry = countries.find(c => c.code === countryCode)
 
   const billing = selectedPlan?.price_per_user
-    ? calculateMonthly(selectedPlan, contractedUsers, contractedBranches)
+    ? calculateMonthly(
+        {
+          price_per_user: selectedPlan.price_per_user ?? null,
+          min_monthly: selectedPlan.min_monthly ?? null,
+          price_per_extra_branch: selectedPlan.price_per_extra_branch ?? null,
+        },
+        contractedUsers,
+        contractedBranches
+      )
     : null
 
   return (

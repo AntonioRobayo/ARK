@@ -182,13 +182,10 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
     : ''
 
   function planLabel(plan: Plan) {
-    const branches = plan.max_branches === 999
-      ? t('unlimitedBranches')
-      : plan.max_branches !== 1 ? t('branchPlural', { n: plan.max_branches }) : t('branch', { n: plan.max_branches })
     const users = plan.max_users === 999
       ? t('unlimitedUsers')
       : plan.max_users !== 1 ? t('userPlural', { n: plan.max_users }) : t('user', { n: plan.max_users })
-    return `${branches} · ${users}`
+    return users
   }
 
   return (
