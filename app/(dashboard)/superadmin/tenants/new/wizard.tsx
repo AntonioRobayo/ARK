@@ -3,13 +3,17 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { createTenantAndInvite } from './actions'
+import { calculateMonthly, formatUSD } from '@/lib/billing'
 
 type Plan = {
   id: string
   name: string
-  max_branches: number
+  min_users: number | null
   max_users: number
   price_monthly: number
+  price_per_user: number | null
+  min_monthly: number | null
+  price_per_extra_branch: number | null
   currency: string
   description?: string | null
 }
@@ -66,6 +70,8 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
 
   // Step 2
   const [planId, setPlanId] = useState('')
+  const [contractedUsers, setContractedUsers] = useState(1)
+  const [contractedBranches, setContractedBranches] = useState(1)
 
   // Step 3
   const [adminEmail, setAdminEmail] = useState('')
@@ -151,6 +157,8 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
     fd.set('currency_code', currencyCode)
     fd.set('timezone', timezone)
     fd.set('plan_id', planId)
+    fd.set('contracted_users', String(contractedUsers))
+    fd.set('contracted_branches', String(contractedBranches))
     fd.set('admin_email', adminEmail)
     fd.set('admin_first_name', adminFirstName)
 
@@ -294,21 +302,78 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
                       ${planId === plan.id ? 'border-orange-400 bg-orange-50 shadow-sm' : 'border-gray-200 hover:border-orange-200'}`}>
                     <div className="flex items-center gap-3">
                       <input type="radio" name="plan_id" value={plan.id}
-                        checked={planId === plan.id} onChange={() => setPlanId(plan.id)}
+                        checked={planId === plan.id}
+                        onChange={() => {
+                          setPlanId(plan.id)
+                          setContractedUsers(plan.min_users ?? 1)
+                        }}
                         className="accent-orange-500 w-4 h-4" />
                       <div>
                         <p className="font-semibold text-sm text-gray-800">{plan.name}</p>
                         {plan.description && <p className="text-xs text-gray-500 mt-0.5">{plan.description}</p>}
-                        <p className="text-xs text-gray-400 mt-0.5">{planLabel(plan)}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {plan.min_users ?? 1}–{plan.max_users === 999 ? '∞' : plan.max_users} {t('userPlural', { n: plan.max_users })}
+                        </p>
                       </div>
                     </div>
                     <span className="text-sm font-bold text-gray-700 ml-4 shrink-0">
-                      {Number(plan.price_monthly) > 0
-                        ? `$${Number(plan.price_monthly).toLocaleString('es-CO')} ${plan.currency}/mes`
+                      {plan.price_per_user
+                        ? <span>{formatUSD(Number(plan.price_per_user))}<span className="text-xs font-normal text-gray-400">/{t('userShort')}</span></span>
                         : <span className="text-gray-400 font-normal text-xs">{t('noPrice')}</span>}
                     </span>
                   </label>
                 ))}
+              </div>
+            )}
+
+            {/* Contracted users / branches + calculator */}
+            {selectedPlan?.price_per_user && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-xl space-y-4">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('step2ContractTitle')}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('step2Users')}</label>
+                    <input type="number"
+                      min={selectedPlan.min_users ?? 1}
+                      max={selectedPlan.max_users === 999 ? undefined : selectedPlan.max_users}
+                      value={contractedUsers}
+                      onChange={e => setContractedUsers(Math.max(selectedPlan.min_users ?? 1, Number(e.target.value)))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                    <p className="text-xs text-gray-400 mt-1">{t('step2UsersHint', { min: selectedPlan.min_users ?? 1, max: selectedPlan.max_users === 999 ? '∞' : selectedPlan.max_users })}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('step2Branches')}</label>
+                    <input type="number" min={1} value={contractedBranches}
+                      onChange={e => setContractedBranches(Math.max(1, Number(e.target.value)))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                    <p className="text-xs text-gray-400 mt-1">{t('step2BranchesHint')}</p>
+                  </div>
+                </div>
+                {/* Live price breakdown */}
+                {(() => {
+                  const b = calculateMonthly(selectedPlan, contractedUsers, contractedBranches)
+                  return (
+                    <div className="border-t border-gray-200 pt-3 space-y-1.5">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">{t('calcLicenses', { n: contractedUsers })}</span>
+                        <span className="text-gray-700">
+                          {formatUSD(b.licenseTotal)}
+                          {b.minApplied && <span className="text-xs text-orange-500 ml-1">({t('calcMinApplied')})</span>}
+                        </span>
+                      </div>
+                      {b.extraBranches > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">{t('calcExtraBranches', { n: b.extraBranches })}</span>
+                          <span className="text-gray-700">{formatUSD(b.branchTotal)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm font-semibold border-t border-gray-200 pt-1.5 mt-1">
+                        <span className="text-gray-900">{t('calcTotal')}</span>
+                        <span style={{ color: '#FF7316' }}>{formatUSD(b.total)} / {t('calcMonth')}</span>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             )}
           </div>
@@ -355,11 +420,16 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reviewSectionPlan')}</p>
                 <Row label={t('reviewPlanSelected')} value={selectedPlan?.name ?? '—'} highlight />
                 {selectedPlan && (
-                  <Row label={t('reviewPrice')} value={
-                    Number(selectedPlan.price_monthly) > 0
-                      ? `$${Number(selectedPlan.price_monthly).toLocaleString('es-CO')} ${selectedPlan.currency}/mes`
-                      : t('noPrice')
-                  } />
+                  <>
+                    <Row label={t('step2Users')} value={`${contractedUsers}`} />
+                    <Row label={t('step2Branches')} value={`${contractedBranches}`} />
+                    {selectedPlan.price_per_user ? (() => {
+                      const b = calculateMonthly(selectedPlan, contractedUsers, contractedBranches)
+                      return <Row label={t('reviewPrice')} value={`${formatUSD(b.total)} / ${t('calcMonth')}`} highlight />
+                    })() : (
+                      <Row label={t('reviewPrice')} value={t('noPrice')} />
+                    )}
+                  </>
                 )}
               </div>
               <div className="p-4 bg-gray-50 rounded-xl space-y-2">

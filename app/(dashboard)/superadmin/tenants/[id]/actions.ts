@@ -8,12 +8,14 @@ export async function updateTenant(id: string, formData: FormData) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  const name        = formData.get('name') as string
-  const planId      = formData.get('plan_id') as string
-  const expiresAt   = (formData.get('plan_expires_at') as string) || null
-  const countryCode = (formData.get('country_code') as string) || 'CO'
-  const currencyCode = (formData.get('currency_code') as string) || 'COP'
-  const timezone    = (formData.get('timezone') as string) || 'America/Bogota'
+  const name               = formData.get('name') as string
+  const planId             = formData.get('plan_id') as string
+  const expiresAt          = (formData.get('plan_expires_at') as string) || null
+  const countryCode        = (formData.get('country_code') as string) || 'CO'
+  const currencyCode       = (formData.get('currency_code') as string) || 'COP'
+  const timezone           = (formData.get('timezone') as string) || 'America/Bogota'
+  const contractedUsers    = Number(formData.get('contracted_users') || 1)
+  const contractedBranches = Number(formData.get('contracted_branches') || 1)
 
   const { data: planData } = await supabase
     .from('license_plan')
@@ -31,6 +33,8 @@ export async function updateTenant(id: string, formData: FormData) {
       country_code: countryCode,
       currency_code: currencyCode,
       timezone,
+      contracted_users: contractedUsers,
+      contracted_branches: contractedBranches,
     })
     .eq('id', id)
 

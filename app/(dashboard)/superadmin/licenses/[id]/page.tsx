@@ -56,32 +56,28 @@ export default async function EditLicensePlanPage({
         </div>
 
         <hr className="border-gray-100" />
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('licenses.new.limitsSection')}</p>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              {t('licenses.new.maxBranches')}
-              <span className="ml-1 font-normal text-gray-400">{t('licenses.new.maxBranchesHint')}</span>
-            </label>
-            <NumericInput name="max_branches" defaultValue={plan.max_branches} min={1} max={999} required className={cls} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              {t('licenses.new.maxUsers')}
-              <span className="ml-1 font-normal text-gray-400">{t('licenses.new.maxUsersHint')}</span>
-            </label>
-            <NumericInput name="max_users" defaultValue={plan.max_users} min={1} max={999} required className={cls} />
-          </div>
-        </div>
-
-        <hr className="border-gray-100" />
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('licenses.new.priceSection')}</p>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.priceMonthly')} <span className="font-normal text-gray-400">USD</span></label>
-            <NumericInput name="price_monthly" defaultValue={Number(plan.price_monthly)} min={0} required className={cls} />
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.minUsers')}</label>
+            <NumericInput name="min_users" defaultValue={plan.min_users ?? 1} min={1} required className={cls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.maxUsers')} <span className="ml-1 font-normal text-gray-400">{t('licenses.new.maxUsersHint')}</span></label>
+            <NumericInput name="max_users" defaultValue={plan.max_users} min={1} max={999} required className={cls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.pricePerUser')} <span className="font-normal text-gray-400">USD</span></label>
+            <NumericInput name="price_per_user" defaultValue={Number(plan.price_per_user ?? 0)} min={0} step="0.01" required className={cls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.minMonthly')} <span className="font-normal text-gray-400">USD</span></label>
+            <NumericInput name="min_monthly" defaultValue={Number(plan.min_monthly ?? 0)} min={0} step="0.01" className={cls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.pricePerExtraBranch')} <span className="font-normal text-gray-400">USD</span></label>
+            <NumericInput name="price_per_extra_branch" defaultValue={Number(plan.price_per_extra_branch ?? 0)} min={0} step="0.01" className={cls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.sortOrder')}</label>

@@ -17,13 +17,15 @@ export async function createTenantAndInvite(formData: FormData) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  const workshopName  = formData.get('workshop_name') as string
-  const planId        = formData.get('plan_id') as string
-  const countryCode   = (formData.get('country_code') as string) || 'CO'
-  const currencyCode  = (formData.get('currency_code') as string) || 'COP'
-  const timezone      = (formData.get('timezone') as string) || 'America/Bogota'
-  const adminEmail      = formData.get('admin_email') as string
-  const adminFirstName  = (formData.get('admin_first_name') as string) || undefined
+  const workshopName       = formData.get('workshop_name') as string
+  const planId             = formData.get('plan_id') as string
+  const countryCode        = (formData.get('country_code') as string) || 'CO'
+  const currencyCode       = (formData.get('currency_code') as string) || 'COP'
+  const timezone           = (formData.get('timezone') as string) || 'America/Bogota'
+  const contractedUsers    = Number(formData.get('contracted_users') || 1)
+  const contractedBranches = Number(formData.get('contracted_branches') || 1)
+  const adminEmail         = formData.get('admin_email') as string
+  const adminFirstName     = (formData.get('admin_first_name') as string) || undefined
 
   // Obtener el slug del plan seleccionado
   const { data: planData } = await supabase
@@ -48,8 +50,12 @@ export async function createTenantAndInvite(formData: FormData) {
 
   const tenantId = (tenantData as { tenant_id: string }).tenant_id
 
-  // Actualizar plan_id (el RPC solo setea el slug)
-  await adminClient.from('tenants').update({ plan_id: planId }).eq('id', tenantId)
+  // Actualizar plan_id, contracted_users y contracted_branches
+  await adminClient.from('tenants').update({
+    plan_id: planId,
+    contracted_users: contractedUsers,
+    contracted_branches: contractedBranches,
+  }).eq('id', tenantId)
 
   // 2. Invitar al admin por email usando service role
   // El link de invitación redirige a /onboarding?tenant_id=...

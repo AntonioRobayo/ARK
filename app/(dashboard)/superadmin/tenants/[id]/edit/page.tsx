@@ -15,12 +15,12 @@ export default async function EditTenantPage({
   const [{ data: tenant }, { data: plans }, { data: countries }, { data: currencies }] = await Promise.all([
     supabase
       .from('tenants')
-      .select('id, name, slug, plan, plan_id, plan_expires_at, is_active, country_code, currency_code, timezone')
+      .select('id, name, slug, plan, plan_id, plan_expires_at, is_active, country_code, currency_code, timezone, contracted_users, contracted_branches')
       .eq('id', id)
       .single(),
     supabase
       .from('license_plan')
-      .select('id, name, description, slug, max_branches, max_users, price_monthly, currency')
+      .select('id, name, description, slug, min_users, max_users, price_monthly, price_per_user, min_monthly, price_per_extra_branch, currency')
       .eq('is_active', true)
       .order('sort_order'),
     supabase

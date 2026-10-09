@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { FormattedNumber } from '@/components/numeric-input'
 import { getTranslations } from 'next-intl/server'
+import { formatUSD } from '@/lib/billing'
 
 export default async function LicensesPage() {
   const supabase = await createClient()
@@ -52,43 +53,49 @@ export default async function LicensesPage() {
               </div>
             </div>
 
-            <div className="mb-1">
-              {plan.price_monthly > 0 ? (
-                <>
-                  <div className="text-2xl font-bold text-gray-900">
-                    <FormattedNumber value={Number(plan.price_monthly)} prefix="$" />
-                    <span className="text-sm font-normal text-gray-400 ml-1">USD / {t('licenses.perMonth')}</span>
-                  </div>
-                  {copRate && (
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      ≈ <FormattedNumber value={Math.round(Number(plan.price_monthly) * copRate)} prefix="$" /> COP
-                    </div>
-                  )}
-                </>
-              ) : (
+            {/* Pricing */}
+            {plan.price_per_user ? (
+              <div className="mb-1">
+                <div className="text-2xl font-bold text-gray-900">
+                  {formatUSD(Number(plan.price_per_user))}
+                  <span className="text-sm font-normal text-gray-400 ml-1">{t('licenses.perUserMonth')}</span>
+                </div>
+                {plan.min_monthly && (
+                  <p className="text-xs text-gray-400 mt-0.5">{t('licenses.minMonthly')} {formatUSD(Number(plan.min_monthly))}</p>
+                )}
+                {copRate && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    ≈ {Math.round(Number(plan.price_per_user) * copRate).toLocaleString('es-CO')} COP/{t('licenses.userShort')}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="mb-1">
                 <span className="text-2xl font-bold text-gray-400">{t('licenses.noPrice')}</span>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500 flex items-center gap-1.5">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                  {t('licenses.branches')}
-                </span>
-                <span className="font-semibold text-gray-800">{plan.max_branches === 999 ? t('licenses.unlimited') : plan.max_branches}</span>
-              </div>
+              {/* User range */}
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500 flex items-center gap-1.5">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                   {t('licenses.users')}
                 </span>
-                <span className="font-semibold text-gray-800">{plan.max_users === 999 ? t('licenses.unlimitedUsers') : plan.max_users}</span>
+                <span className="font-semibold text-gray-800">
+                  {plan.min_users ? `${plan.min_users}–` : ''}{plan.max_users === 999 ? '∞' : plan.max_users}
+                </span>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">{t('licenses.currency')}</span>
-                <span className="font-semibold text-gray-800">USD</span>
-              </div>
+              {/* Extra branch price */}
+              {plan.price_per_extra_branch && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 flex items-center gap-1.5">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    {t('licenses.extraBranch')}
+                  </span>
+                  <span className="font-semibold text-gray-800">{formatUSD(Number(plan.price_per_extra_branch))}</span>
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -8,7 +8,7 @@ export default async function NewTenantPage() {
   const [{ data: plans }, { data: countries }, { data: currencies }] = await Promise.all([
     supabase
       .from('license_plan')
-      .select('id, name, description, max_branches, max_users, price_monthly, currency')
+      .select('id, name, description, min_users, max_users, price_monthly, price_per_user, min_monthly, price_per_extra_branch, currency')
       .eq('is_active', true)
       .order('sort_order'),
     supabase
