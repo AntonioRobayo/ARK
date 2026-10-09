@@ -864,6 +864,8 @@
           "step2Desc": "Change the plan or update the expiry date",
           "step2ExpiryLabel": "License expiry",
           "step2ExpiryHint": "Optional — empty = no expiry",
+          "step2ExpiryWithDate": "Set date",
+          "step2ExpiryNone": "No expiry",
           "step3Title": "Confirm changes",
           "step3Desc": "Review the changes before saving",
           "reviewSectionWorkshop": "Workshop",

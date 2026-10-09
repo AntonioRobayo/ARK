@@ -864,6 +864,8 @@
           "step2Desc": "Cambia el plan o actualiza la fecha de vencimiento",
           "step2ExpiryLabel": "Vencimiento de licencia",
           "step2ExpiryHint": "Opcional — vacío = sin vencimiento",
+          "step2ExpiryWithDate": "Con fecha",
+          "step2ExpiryNone": "Sin vencimiento",
           "step3Title": "Confirmar cambios",
           "step3Desc": "Revisa los cambios antes de guardar",
           "reviewSectionWorkshop": "Taller",

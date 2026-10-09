@@ -66,6 +66,7 @@ export function EditTenantWizard({
 
   // Step 2
   const [planId, setPlanId] = useState(tenant.plan_id ?? '')
+  const [noExpiry, setNoExpiry] = useState(!tenant.plan_expires_at)
   const [expiresAt, setExpiresAt] = useState(
     tenant.plan_expires_at
       ? new Date(tenant.plan_expires_at).toISOString().slice(0, 10)
@@ -73,6 +74,17 @@ export function EditTenantWizard({
   )
   const [contractedUsers, setContractedUsers] = useState(tenant.contracted_users ?? 1)
   const [contractedBranches, setContractedBranches] = useState(tenant.contracted_branches ?? 1)
+
+  function oneMonthFromToday() {
+    const d = new Date()
+    d.setMonth(d.getMonth() + 1)
+    return d.toISOString().slice(0, 10)
+  }
+
+  function handleNoExpiryToggle(value: boolean) {
+    setNoExpiry(value)
+    if (!value && !expiresAt) setExpiresAt(oneMonthFromToday())
+  }
 
   const STEPS = [
     { n: 1, label: t('steps.workshop') },
@@ -112,7 +124,7 @@ export function EditTenantWizard({
     fd.set('currency_code', currencyCode)
     fd.set('timezone', timezone)
     fd.set('plan_id', planId)
-    fd.set('plan_expires_at', expiresAt)
+    fd.set('plan_expires_at', noExpiry ? '' : expiresAt)
     fd.set('contracted_users', String(contractedUsers))
     fd.set('contracted_branches', String(contractedBranches))
 
@@ -303,12 +315,37 @@ export function EditTenantWizard({
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 {t('step2ExpiryLabel')}
-                <span className="ml-1.5 font-normal text-gray-400 text-xs">{t('step2ExpiryHint')}</span>
               </label>
-              <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => handleNoExpiryToggle(false)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                    !noExpiry
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-orange-300'
+                  }`}
+                >
+                  📅 {t('step2ExpiryWithDate')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNoExpiryToggle(true)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                    noExpiry
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-orange-300'
+                  }`}
+                >
+                  ∞ {t('step2ExpiryNone')}
+                </button>
+              </div>
+              {!noExpiry && (
+                <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
+              )}
             </div>
           </div>
         )}
@@ -335,9 +372,9 @@ export function EditTenantWizard({
                   <Row label={t('reviewPrice')} value={`${formatUSD(Number(selectedPlan.price_monthly))} ${tl('perMonth')}`} />
                 ) : null}
                 <Row label={t('reviewExpiry')} value={
-                  expiresAt
-                    ? new Date(expiresAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
-                    : t('noExpiry')
+                  noExpiry || !expiresAt
+                    ? t('noExpiry')
+                    : new Date(expiresAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
                 } />
               </div>
             </div>

@@ -59,11 +59,16 @@ export default async function SuperAdminPage({
     return sum + billing.total
   }, 0)
 
-  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+  const tomorrowStart = new Date(now)
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1)
+  tomorrowStart.setHours(0, 0, 0, 0)
+  const tomorrowEnd = new Date(tomorrowStart)
+  tomorrowEnd.setHours(23, 59, 59, 999)
+
   const expiringSoon = active.filter(t => {
     if (!t.plan_expires_at) return false
     const d = new Date(t.plan_expires_at)
-    return d >= now && d <= thirtyDaysFromNow
+    return d >= tomorrowStart && d <= tomorrowEnd
   })
 
   const gracePeriod = active.filter(t => {
@@ -139,7 +144,7 @@ export default async function SuperAdminPage({
           <p className="text-xs text-gray-400 mt-1">planes con pricing dinámico</p>
         </div>
         <Link href="#expiring" className="bg-white border border-gray-200 rounded-xl p-4 hover:border-amber-300 transition-colors">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Por vencer (30d)</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Por vencer (mañana)</p>
           <p className={`text-3xl font-bold mt-1 ${expiringSoon.length > 0 ? 'text-amber-500' : 'text-gray-900'}`}>
             {expiringSoon.length}
           </p>
@@ -187,7 +192,7 @@ export default async function SuperAdminPage({
           {expiringSoon.length > 0 && (
             <div id="expiring" className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-3">
-                ⏰ Licencias por vencer (próximos 30 días)
+                ⏰ Licencias que vencen mañana
               </p>
               <div className="space-y-2">
                 {expiringSoon.map(tenant => {
