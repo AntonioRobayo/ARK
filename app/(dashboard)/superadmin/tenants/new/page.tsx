@@ -2,7 +2,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { NewTenantWizard } from './wizard'
 
-export default async function NewTenantPage() {
+export default async function NewTenantPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const { error } = await searchParams
   const supabase = await createClient()
 
   const [{ data: plans }, { data: countries }, { data: currencies }] = await Promise.all([
@@ -34,6 +39,11 @@ export default async function NewTenantPage() {
         <h2 className="text-lg font-semibold text-gray-900">Nuevo taller</h2>
       </div>
 
+      {error && (
+        <div className="mb-4 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {decodeURIComponent(error)}
+        </div>
+      )}
       <NewTenantWizard plans={plans ?? []} countries={countries ?? []} currencies={currencies ?? []} />
     </div>
   )
