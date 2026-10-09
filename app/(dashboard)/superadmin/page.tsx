@@ -93,6 +93,12 @@ export default async function SuperAdminPage({
     return d < now && graceEnd >= now
   })
 
+  const blocked = all.filter(t => {
+    if (t.is_active || !t.plan_expires_at) return false
+    const graceEnd = new Date(new Date(t.plan_expires_at).getTime() + 3 * 24 * 60 * 60 * 1000)
+    return graceEnd < now
+  })
+
   // ─── Helpers de UI ───────────────────────────────────────────────────────────
 
   function QuickExtend({ tenantId, compact = false }: { tenantId: string; compact?: boolean }) {
@@ -147,7 +153,7 @@ export default async function SuperAdminPage({
       )}
 
       {/* ── KPI cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Talleres activos</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{active.length}</p>
@@ -172,10 +178,17 @@ export default async function SuperAdminPage({
           </p>
           <p className="text-xs text-gray-400 mt-1">vencidos, sin bloquear</p>
         </Link>
+        <Link href="#blocked" className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-400 transition-colors">
+          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Bloqueados</p>
+          <p className={`text-3xl font-bold mt-1 ${blocked.length > 0 ? 'text-gray-600' : 'text-gray-900'}`}>
+            {blocked.length}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">sin licencia activa</p>
+        </Link>
       </div>
 
       {/* ── Alertas ── */}
-      {(gracePeriod.length > 0 || expiringSoon.length > 0) && (
+      {(gracePeriod.length > 0 || expiringSoon.length > 0 || blocked.length > 0) && (
         <div className="space-y-3">
           {gracePeriod.length > 0 && (
             <div id="grace" className="bg-red-50 border border-red-200 rounded-xl p-4">
@@ -195,6 +208,33 @@ export default async function SuperAdminPage({
                         <QuickExtend tenantId={tenant.id} />
                         <Link href={`/superadmin/tenants/${tenant.id}/edit`}
                           className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors font-medium">
+                          Editar
+                        </Link>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          {blocked.length > 0 && (
+            <div id="blocked" className="bg-gray-50 border border-gray-300 rounded-xl p-4">
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">
+                🔐 Bloqueados — licencia vencida y fuera de gracia
+              </p>
+              <div className="space-y-2">
+                {blocked.map(tenant => {
+                  const daysExpired = Math.ceil((now.getTime() - new Date(tenant.plan_expires_at!).getTime()) / (1000 * 60 * 60 * 24))
+                  return (
+                    <div key={tenant.id} className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="text-sm font-semibold text-gray-700">{tenant.name}</span>
+                        <span className="text-xs text-gray-400 ml-2">vencida hace {daysExpired} día{daysExpired !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <QuickExtend tenantId={tenant.id} />
+                        <Link href={`/superadmin/tenants/${tenant.id}/edit`}
+                          className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors font-medium">
                           Editar
                         </Link>
                       </div>
