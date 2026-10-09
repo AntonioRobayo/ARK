@@ -27,8 +27,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     if (tenant) {
       if (!tenant.is_active) {
         licenseBlock = 'suspended'
-      } else if (tenant.plan_expires_at && new Date(tenant.plan_expires_at) < new Date()) {
-        licenseBlock = 'expired'
+      } else if (tenant.plan_expires_at) {
+          const gracePeriodEnd = new Date(tenant.plan_expires_at)
+          gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 3)
+          if (gracePeriodEnd < new Date()) licenseBlock = 'expired'
       }
     }
   }
