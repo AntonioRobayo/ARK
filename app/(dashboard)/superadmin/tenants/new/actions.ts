@@ -45,7 +45,10 @@ export async function createTenantAndInvite(formData: FormData) {
   })
 
   if (tenantError) {
-    redirect(`/superadmin/tenants/new?error=${encodeURIComponent(tenantError.message)}`)
+    const friendly = tenantError.message.includes('tenants_slug_key')
+      ? `Ya existe un taller con el nombre "${workshopName}". Usa un nombre diferente.`
+      : tenantError.message
+    redirect(`/superadmin/tenants/new?error=${encodeURIComponent(friendly)}`)
   }
 
   const tenantId = (tenantData as { tenant_id: string }).tenant_id
