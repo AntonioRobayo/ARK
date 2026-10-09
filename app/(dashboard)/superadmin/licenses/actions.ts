@@ -13,7 +13,7 @@ export async function createLicensePlan(formData: FormData) {
     max_branches:   Number(formData.get('max_branches')),
     max_users:      Number(formData.get('max_users')),
     price_monthly:  Number(formData.get('price_monthly')),
-    currency:       formData.get('currency') as string || 'COP',
+    currency:       'USD',
     is_active:      true,
     sort_order:     Number(formData.get('sort_order') || 99),
   }
@@ -32,7 +32,7 @@ export async function updateLicensePlan(id: string, formData: FormData) {
     max_branches:   Number(formData.get('max_branches')),
     max_users:      Number(formData.get('max_users')),
     price_monthly:  Number(formData.get('price_monthly')),
-    currency:       formData.get('currency') as string || 'COP',
+    currency:       'USD',
     is_active:      formData.get('is_active') === 'true',
     sort_order:     Number(formData.get('sort_order') || 99),
     updated_at:     new Date().toISOString(),

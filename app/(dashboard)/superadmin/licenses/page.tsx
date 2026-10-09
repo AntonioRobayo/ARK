@@ -6,10 +6,12 @@ import { getTranslations } from 'next-intl/server'
 export default async function LicensesPage() {
   const supabase = await createClient()
 
-  const { data: plans } = await supabase
-    .from('license_plan')
-    .select('*')
-    .order('sort_order')
+  const [{ data: plans }, { data: copCurrency }] = await Promise.all([
+    supabase.from('license_plan').select('*').order('sort_order'),
+    supabase.from('currencies').select('usd_rate').eq('code', 'COP').single(),
+  ])
+
+  const copRate: number | null = copCurrency?.usd_rate ? Number(copCurrency.usd_rate) : null
 
   const t = await getTranslations('superadmin')
 
@@ -50,10 +52,22 @@ export default async function LicensesPage() {
               </div>
             </div>
 
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {plan.price_monthly > 0
-                ? <><FormattedNumber value={Number(plan.price_monthly)} prefix="$" /><span className="text-sm font-normal text-gray-400 ml-1">{t('licenses.perMonth')}</span></>
-                : <span className="text-gray-400">{t('licenses.noPrice')}</span>}
+            <div className="mb-1">
+              {plan.price_monthly > 0 ? (
+                <>
+                  <div className="text-2xl font-bold text-gray-900">
+                    <FormattedNumber value={Number(plan.price_monthly)} prefix="$" />
+                    <span className="text-sm font-normal text-gray-400 ml-1">USD / {t('licenses.perMonth')}</span>
+                  </div>
+                  {copRate && (
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      ≈ <FormattedNumber value={Math.round(Number(plan.price_monthly) * copRate)} prefix="$" /> COP
+                    </div>
+                  )}
+                </>
+              ) : (
+                <span className="text-2xl font-bold text-gray-400">{t('licenses.noPrice')}</span>
+              )}
             </div>
 
             <div className="mt-4 space-y-2">
@@ -73,7 +87,7 @@ export default async function LicensesPage() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">{t('licenses.currency')}</span>
-                <span className="font-semibold text-gray-800">{plan.currency}</span>
+                <span className="font-semibold text-gray-800">USD</span>
               </div>
             </div>
           </div>

@@ -920,7 +920,7 @@
       "currencies": {
         "count": "{n} moedas",
         "addBtn": "+ Adicionar moeda",
-        "code": "Código", "name": "Nome", "status": "Status",
+        "code": "Código", "name": "Nome", "usdRate": "Taxa vs USD", "status": "Status",
         "active": "Ativa", "inactive": "Inativa",
         "activate": "Ativar", "deactivate": "Desativar",
         "empty": "Nenhuma moeda cadastrada",

@@ -1,17 +1,17 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getTranslations } from 'next-intl/server'
-import { toggleCountry, addCountry, toggleCurrency, addCurrency } from './actions'
+import { toggleCountry, addCountry, toggleCurrency, addCurrency, updateCurrencyRate } from './actions'
 
-type SearchParams = Promise<{ tab?: string; add?: string; error?: string }>
+type SearchParams = Promise<{ tab?: string; add?: string; edit_rate?: string; error?: string }>
 
 export default async function CatalogsPage({ searchParams }: { searchParams: SearchParams }) {
-  const { tab = 'countries', add, error } = await searchParams
+  const { tab = 'countries', add, edit_rate, error } = await searchParams
   const supabase = createAdminClient()
   const t = await getTranslations('superadmin.catalogs')
 
   const [{ data: countries }, { data: currencies }] = await Promise.all([
     supabase.from('countries').select('code, name, currency, timezone, is_active').order('sort_order'),
-    supabase.from('currencies').select('code, name, is_active').order('sort_order'),
+    supabase.from('currencies').select('code, name, is_active, usd_rate').order('sort_order'),
   ])
 
   const activeTab = tab === 'currencies' ? 'currencies' : 'countries'
@@ -176,6 +176,11 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties}
                     required />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('currencies.usdRate')} <span className="text-gray-400 font-normal">(opcional)</span></label>
+                  <input name="usd_rate" type="number" step="0.01" min="0" placeholder="ej. 4100"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                </div>
                 <div className="col-span-2 flex gap-3 justify-end">
                   <a href="/superadmin/catalogs?tab=currencies" className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50 transition-colors">
                     Cancelar
@@ -194,6 +199,7 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
                 <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('currencies.code')}</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('currencies.name')}</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('currencies.usdRate')}</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('currencies.status')}</th>
                   <th className="px-5 py-3" />
                 </tr>
@@ -203,6 +209,34 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
                   <tr key={c.code} className="hover:bg-gray-50 transition-colors" style={{ borderBottom: '1px solid #F9FAFB' }}>
                     <td className="px-5 py-3.5 font-mono text-xs font-semibold text-gray-700">{c.code}</td>
                     <td className="px-5 py-3.5 text-gray-900">{c.name}</td>
+                    <td className="px-5 py-3.5">
+                      {edit_rate === c.code ? (
+                        <form action={updateCurrencyRate.bind(null, c.code)} className="flex items-center gap-2">
+                          <input
+                            name="usd_rate"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            defaultValue={c.usd_rate ?? ''}
+                            placeholder="ej. 4100"
+                            className="w-28 px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1"
+                            style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties}
+                          />
+                          <button type="submit" className="text-xs font-semibold text-white px-2 py-1 rounded" style={{ backgroundColor: '#FF7316' }}>✓</button>
+                          <a href="/superadmin/catalogs?tab=currencies" className="text-xs text-gray-400 hover:text-gray-600">✕</a>
+                        </form>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-700">
+                            {c.usd_rate ? `${Number(c.usd_rate).toLocaleString('es-CO')}` : <span className="text-gray-300 text-xs">—</span>}
+                          </span>
+                          <a href={`/superadmin/catalogs?tab=currencies&edit_rate=${c.code}`}
+                            className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                            ✎
+                          </a>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
                         c.is_active

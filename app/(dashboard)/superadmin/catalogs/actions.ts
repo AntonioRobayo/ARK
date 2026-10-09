@@ -32,6 +32,18 @@ export async function addCountry(formData: FormData) {
 
 // ── Currencies ────────────────────────────────────────────────────────────────
 
+export async function updateCurrencyRate(code: string, formData: FormData) {
+  const supabase = createAdminClient()
+  const rate = formData.get('usd_rate')
+  const usd_rate = rate ? Number(rate) : null
+  const { error } = await supabase
+    .from('currencies')
+    .update({ usd_rate })
+    .eq('code', code)
+  if (error) redirect(`/superadmin/catalogs?tab=currencies&error=${encodeURIComponent(error.message)}`)
+  redirect('/superadmin/catalogs?tab=currencies')
+}
+
 export async function toggleCurrency(code: string, isActive: boolean) {
   const supabase = createAdminClient()
   const { error } = await supabase
@@ -45,11 +57,14 @@ export async function toggleCurrency(code: string, isActive: boolean) {
 export async function addCurrency(formData: FormData) {
   const supabase = createAdminClient()
   const code = (formData.get('code') as string).toUpperCase().trim()
+  const rateRaw = formData.get('usd_rate')
+  const usd_rate = rateRaw && String(rateRaw).trim() !== '' ? Number(rateRaw) : null
   const { error } = await supabase.from('currencies').insert({
     code,
     name:      formData.get('name') as string,
     is_active: true,
     sort_order: 99,
+    usd_rate,
   })
   if (error) redirect(`/superadmin/catalogs?tab=currencies&add=1&error=${encodeURIComponent(error.message)}`)
   redirect('/superadmin/catalogs?tab=currencies')

@@ -920,7 +920,7 @@
       "currencies": {
         "count": "{n} currencies",
         "addBtn": "+ Add currency",
-        "code": "Code", "name": "Name", "status": "Status",
+        "code": "Code", "name": "Name", "usdRate": "Rate vs USD", "status": "Status",
         "active": "Active", "inactive": "Inactive",
         "activate": "Activate", "deactivate": "Deactivate",
         "empty": "No currencies registered",

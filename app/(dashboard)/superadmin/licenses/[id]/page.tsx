@@ -80,16 +80,8 @@ export default async function EditLicensePlanPage({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.priceMonthly')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.priceMonthly')} <span className="font-normal text-gray-400">USD</span></label>
             <NumericInput name="price_monthly" defaultValue={Number(plan.price_monthly)} min={0} required className={cls} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.currency')}</label>
-            <select name="currency" defaultValue={plan.currency} className={cls}>
-              <option value="COP">COP</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('licenses.new.sortOrder')}</label>

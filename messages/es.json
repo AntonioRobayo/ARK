@@ -934,6 +934,7 @@
         "addBtn": "+ Agregar moneda",
         "code": "Código",
         "name": "Nombre",
+        "usdRate": "Tasa vs USD",
         "status": "Estado",
         "active": "Activa",
         "inactive": "Inactiva",
