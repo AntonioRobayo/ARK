@@ -206,7 +206,7 @@ export default async function TenantDetailPage({
           users={(profiles ?? []).map(p => ({
             id: p.id,
             email: emailMap.get(p.id) ?? '',
-            name: [p.first_name, p.last_name].filter(Boolean).join(' ') || emailMap.get(p.id) ?? p.id,
+            name: [p.first_name, p.last_name].filter(Boolean).join(' ') || (emailMap.get(p.id) ?? p.id),
           }))}
         />
       )}
