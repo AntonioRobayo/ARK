@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 
 export async function createWorkOrder(formData: FormData) {
@@ -32,6 +33,7 @@ export async function createWorkOrder(formData: FormData) {
   const batteryLevel     = formData.get('battery_level')
   const technicianId     = formData.get('technician_id') as string
   const estimatedAt      = formData.get('estimated_delivery_at') as string
+  const appointmentId    = (formData.get('appointment_id') as string) || null
 
   const { data: ot, error } = await supabase
     .from('work_order')
@@ -41,6 +43,7 @@ export async function createWorkOrder(formData: FormData) {
       number:                String(nextNum),
       customer_id:           formData.get('customer_id') as string,
       vehicle_id:            formData.get('vehicle_id') as string,
+      appointment_id:        appointmentId,
       status:                'received',
       priority:              (formData.get('priority') as string) || 'normal',
       reception_mileage:     receptionMileage ? Number(receptionMileage) : null,
@@ -66,6 +69,57 @@ export async function createWorkOrder(formData: FormData) {
     changed_by:    user.id,
     reason:        'Creación de orden',
   })
+
+  // Marcar cita como atendida
+  if (appointmentId) {
+    await supabase.from('appointment').update({ status: 'arrived' }).eq('id', appointmentId)
+  }
+
+  const adminClient = createAdminClient()
+
+  // Insertar objetos en custodia
+  const custodyRaw = formData.get('custody_items') as string
+  if (custodyRaw) {
+    const custodyItems: { description: string; location: string }[] = JSON.parse(custodyRaw)
+    if (custodyItems.length > 0) {
+      await adminClient.from('custody_item').insert(
+        custodyItems.map(item => ({
+          tenant_id:     profile.tenant_id,
+          work_order_id: ot.id,
+          description:   item.description,
+          location:      item.location || null,
+          received_by:   user.id,
+        }))
+      )
+    }
+  }
+
+  // Insertar checklist de recepción
+  const checklistRaw = formData.get('checklist_data') as string
+  if (checklistRaw) {
+    const checklistData: { templateId: string; responses: Record<string, string> } | null = JSON.parse(checklistRaw)
+    if (checklistData?.templateId) {
+      const { data: woc } = await adminClient.from('work_order_checklist').insert({
+        tenant_id:            profile.tenant_id,
+        work_order_id:        ot.id,
+        checklist_template_id: checklistData.templateId,
+        stage:                'reception',
+        completed_by:         user.id,
+        completed_at:         new Date().toISOString(),
+      }).select('id').single()
+
+      if (woc) {
+        const itemInserts = Object.entries(checklistData.responses).map(([templateItemId, status]) => ({
+          checklist_id:    woc.id,
+          template_item_id: templateItemId,
+          status,
+        }))
+        if (itemInserts.length > 0) {
+          await adminClient.from('work_order_checklist_item').insert(itemInserts)
+        }
+      }
+    }
+  }
 
   redirect(`/work-orders/${ot.id}`)
 }

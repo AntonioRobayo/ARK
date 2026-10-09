@@ -108,6 +108,26 @@ export default async function NewVehiclePage({
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.fuelType')}</label>
+            <select name="fuel_type"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
+              <option value="">{t('new.fuelTypeUnknown')}</option>
+              <option value="gasoline">{t('new.fuelTypes.gasoline')}</option>
+              <option value="electric">{t('new.fuelTypes.electric')}</option>
+              <option value="hybrid">{t('new.fuelTypes.hybrid')}</option>
+              <option value="diesel">{t('new.fuelTypes.diesel')}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.vin')}</label>
+            <input name="vin" type="text"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+              placeholder="VIN123456789" />
+          </div>
+        </div>
+
         {/* Si no viene con customer_id, buscar cliente */}
         {!customer_id && (
           <div>

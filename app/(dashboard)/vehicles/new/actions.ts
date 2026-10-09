@@ -26,6 +26,9 @@ export async function createVehicle(formData: FormData) {
   const cc     = formData.get('engine_cc') ? Number(formData.get('engine_cc')) : null
   const km     = formData.get('current_mileage') ? Number(formData.get('current_mileage')) : null
 
+  const fuelType = (formData.get('fuel_type') as string)?.trim() || null
+  const vin      = (formData.get('vin') as string)?.trim().toUpperCase() || null
+
   const { data: vehicle, error } = await supabase
     .from('vehicle')
     .insert({
@@ -39,6 +42,8 @@ export async function createVehicle(formData: FormData) {
       engine_cc:       cc,
       vehicle_type:    (formData.get('vehicle_type') as string) || 'motorcycle',
       current_mileage: km,
+      fuel_type:       fuelType,
+      vin,
       notes:           (formData.get('notes') as string)?.trim() || null,
     })
     .select('id')

@@ -110,7 +110,19 @@
       "estimatedDelivery": "Entrega estimada",
       "observations": "Observaciones de recepción",
       "observationsPlaceholder": "Rayones, daños previos, solicitud del cliente...",
-      "create": "Crear Orden de Trabajo"
+      "create": "Crear Orden de Trabajo",
+      "appointmentsToday": "Citas confirmadas para hoy",
+      "appointmentNoNotes": "Sin observaciones",
+      "appointmentsOrChoose": "O selecciona un vehículo directamente:",
+      "appointmentLinked": "Esta OT se vinculará a la cita agendada.",
+      "custodyTitle": "Objetos en custodia",
+      "custodyAdd": "+ Agregar objeto",
+      "custodyEmpty": "Sin objetos registrados",
+      "custodyDescPlaceholder": "Descripción (ej. casco)",
+      "custodyLocPlaceholder": "Ubicación (ej. compartimiento)",
+      "checkOk": "OK",
+      "checkIssue": "Novedad",
+      "checkNa": "N/A"
     },
     "detail": {
       "backToOTs": "← OTs",
@@ -282,6 +294,15 @@
       "color": "Color",
       "engineCC": "Cilindraje (cc)",
       "mileage": "Kilometraje actual",
+      "fuelType": "Tipo de combustible",
+      "fuelTypeUnknown": "Desconocido",
+      "fuelTypes": {
+        "gasoline": "Gasolina",
+        "electric": "Eléctrico",
+        "hybrid": "Híbrido",
+        "diesel": "Diésel"
+      },
+      "vin": "VIN / N° de serie",
       "customerId": "ID del cliente (opcional)",
       "customerIdPlaceholder": "Dejar vacío si se registra sin cliente",
       "createCustomerFirst": "O primero crea el cliente en Clientes",

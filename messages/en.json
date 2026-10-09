@@ -110,7 +110,19 @@
       "estimatedDelivery": "Estimated delivery",
       "observations": "Reception observations",
       "observationsPlaceholder": "Scratches, previous damage, customer request...",
-      "create": "Create Work Order"
+      "create": "Create Work Order",
+      "appointmentsToday": "Confirmed appointments for today",
+      "appointmentNoNotes": "No notes",
+      "appointmentsOrChoose": "Or select a vehicle directly:",
+      "appointmentLinked": "This work order will be linked to the scheduled appointment.",
+      "custodyTitle": "Items in custody",
+      "custodyAdd": "+ Add item",
+      "custodyEmpty": "No items registered",
+      "custodyDescPlaceholder": "Description (e.g. helmet)",
+      "custodyLocPlaceholder": "Location (e.g. compartment)",
+      "checkOk": "OK",
+      "checkIssue": "Issue",
+      "checkNa": "N/A"
     },
     "detail": {
       "backToOTs": "← WOs",
@@ -282,6 +294,15 @@
       "color": "Color",
       "engineCC": "Engine (cc)",
       "mileage": "Current mileage",
+      "fuelType": "Fuel type",
+      "fuelTypeUnknown": "Unknown",
+      "fuelTypes": {
+        "gasoline": "Gasoline",
+        "electric": "Electric",
+        "hybrid": "Hybrid",
+        "diesel": "Diesel"
+      },
+      "vin": "VIN / Serial number",
       "customerId": "Customer ID (optional)",
       "customerIdPlaceholder": "Leave empty if no customer",
       "createCustomerFirst": "Or create the customer in Customers first",
