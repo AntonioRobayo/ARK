@@ -44,6 +44,40 @@ export async function updateTenant(id: string, formData: FormData) {
   redirect('/superadmin?success=Taller actualizado correctamente')
 }
 
+export async function extendLicense(formData: FormData) {
+  const adminClient = createAdminClient()
+  const id   = formData.get('id') as string
+  const days = parseInt(formData.get('days') as string, 10)
+
+  if (!id || isNaN(days) || days <= 0) {
+    redirect(`/superadmin?error=Datos inválidos`)
+  }
+
+  // Fetch current expiry; if expired (or null), extend from today
+  const { data: tenant } = await adminClient
+    .from('tenants')
+    .select('plan_expires_at')
+    .eq('id', id)
+    .single()
+
+  const base = tenant?.plan_expires_at && new Date(tenant.plan_expires_at) > new Date()
+    ? new Date(tenant.plan_expires_at)
+    : new Date()
+
+  base.setDate(base.getDate() + days)
+  const newExpiry = base.toISOString()
+
+  const { error } = await adminClient
+    .from('tenants')
+    .update({ plan_expires_at: newExpiry, is_active: true })
+    .eq('id', id)
+
+  if (error) {
+    redirect(`/superadmin?error=${encodeURIComponent(error.message)}`)
+  }
+  redirect(`/superadmin?success=${encodeURIComponent(`Licencia extendida +${days} días`)}`)
+}
+
 export async function toggleTenantStatus(formData: FormData) {
   const adminClient = createAdminClient()
   const id        = formData.get('id') as string

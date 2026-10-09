@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { toggleTenantStatus } from './tenants/[id]/actions'
+import { toggleTenantStatus, extendLicense } from './tenants/[id]/actions'
 import { getTranslations } from 'next-intl/server'
 import { calculateMonthly, formatUSD } from '@/lib/billing'
 
@@ -75,6 +75,26 @@ export default async function SuperAdminPage({
 
   // ─── Helpers de UI ───────────────────────────────────────────────────────────
 
+  function QuickExtend({ tenantId, compact = false }: { tenantId: string; compact?: boolean }) {
+    const opts = compact
+      ? [{ days: 30, label: '+30d' }, { days: 90, label: '+90d' }, { days: 365, label: '+1a' }]
+      : [{ days: 30, label: '+30 días' }, { days: 90, label: '+90 días' }, { days: 365, label: '+1 año' }]
+    return (
+      <div className="flex items-center gap-1">
+        {opts.map(({ days, label }) => (
+          <form key={days} action={extendLicense}>
+            <input type="hidden" name="id" value={tenantId} />
+            <input type="hidden" name="days" value={String(days)} />
+            <button type="submit"
+              className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-orange-300 text-orange-700 hover:bg-orange-50 transition-colors whitespace-nowrap">
+              {label}
+            </button>
+          </form>
+        ))}
+      </div>
+    )
+  }
+
   function ExpiryBadge({ expiresAt }: { expiresAt: string | null }) {
     if (!expiresAt) return <span className="text-xs text-gray-400">{t('workshops.noExpiry')}</span>
     const date = new Date(expiresAt)
@@ -146,15 +166,18 @@ export default async function SuperAdminPage({
                 {gracePeriod.map(tenant => {
                   const daysExpired = Math.abs(Math.ceil((new Date(tenant.plan_expires_at!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
                   return (
-                    <div key={tenant.id} className="flex items-center justify-between">
-                      <div>
+                    <div key={tenant.id} className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
                         <span className="text-sm font-semibold text-red-900">{tenant.name}</span>
                         <span className="text-xs text-red-500 ml-2">vencida hace {daysExpired} día{daysExpired !== 1 ? 's' : ''}</span>
                       </div>
-                      <Link href={`/superadmin/tenants/${tenant.id}/edit`}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-red-300 text-red-700 hover:bg-red-100 transition-colors font-medium">
-                        Renovar
-                      </Link>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <QuickExtend tenantId={tenant.id} />
+                        <Link href={`/superadmin/tenants/${tenant.id}/edit`}
+                          className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors font-medium">
+                          Editar
+                        </Link>
+                      </div>
                     </div>
                   )
                 })}
@@ -170,15 +193,18 @@ export default async function SuperAdminPage({
                 {expiringSoon.map(tenant => {
                   const daysLeft = Math.ceil((new Date(tenant.plan_expires_at!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
                   return (
-                    <div key={tenant.id} className="flex items-center justify-between">
-                      <div>
+                    <div key={tenant.id} className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
                         <span className="text-sm font-semibold text-amber-900">{tenant.name}</span>
                         <span className="text-xs text-amber-600 ml-2">vence en {daysLeft} día{daysLeft !== 1 ? 's' : ''}</span>
                       </div>
-                      <Link href={`/superadmin/tenants/${tenant.id}/edit`}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors font-medium">
-                        Renovar
-                      </Link>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <QuickExtend tenantId={tenant.id} />
+                        <Link href={`/superadmin/tenants/${tenant.id}/edit`}
+                          className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors font-medium">
+                          Editar
+                        </Link>
+                      </div>
                     </div>
                   )
                 })}
@@ -253,7 +279,8 @@ export default async function SuperAdminPage({
                       {new Date(tenant.created_at).toLocaleDateString('es-CO')}
                     </td>
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2 justify-end">
+                      <div className="flex items-center gap-2 justify-end flex-wrap">
+                        <QuickExtend tenantId={tenant.id} compact />
                         <Link
                           href={`/superadmin/tenants/${tenant.id}/edit`}
                           className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors"
