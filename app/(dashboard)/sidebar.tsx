@@ -25,8 +25,11 @@ function LocaleSwitcher({ current }: { current: string }) {
           <button
             type="submit"
             title={code.toUpperCase()}
-            className="w-7 h-7 rounded flex items-center justify-center text-base transition-colors hover:bg-white/15"
-            style={{ opacity: current === code ? 1 : 0.35 }}
+            className="w-7 h-7 rounded flex items-center justify-center text-base transition-colors"
+            style={{
+              opacity: current === code ? 1 : 0.55,
+              backgroundColor: current === code ? 'rgba(255,255,255,0.15)' : 'transparent',
+            }}
           >
             {flag}
           </button>
