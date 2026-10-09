@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import { toggleTenantStatus, extendLicense } from './tenants/[id]/actions'
 import { getTranslations } from 'next-intl/server'
@@ -47,9 +48,23 @@ export default async function SuperAdminPage({
   const t = await getTranslations('superadmin')
   const now = new Date()
 
+  // ─── Auto-desactivar talleres que superaron el período de gracia ────────────
+
+  const allRaw = (tenants ?? []) as Tenant[]
+  const pastGrace = allRaw.filter(t => {
+    if (!t.is_active || !t.plan_expires_at) return false
+    const graceEnd = new Date(new Date(t.plan_expires_at).getTime() + 3 * 24 * 60 * 60 * 1000)
+    return graceEnd < now
+  })
+  if (pastGrace.length > 0) {
+    const adminClient = createAdminClient()
+    await adminClient.from('tenants').update({ is_active: false }).in('id', pastGrace.map(t => t.id))
+    pastGrace.forEach(t => { t.is_active = false })
+  }
+
   // ─── Métricas ────────────────────────────────────────────────────────────────
 
-  const all = (tenants ?? []) as Tenant[]
+  const all = allRaw
   const active = all.filter(t => t.is_active)
 
   const estimatedMRR = active.reduce((sum, tenant) => {
