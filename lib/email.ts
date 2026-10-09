@@ -135,6 +135,52 @@ export async function sendPasswordResetEmail({
   await sendEmail({ to, subject: 'Restablecer contraseña — ARK Workshop', html })
 }
 
+export async function sendLicenseExpiryTodayEmail({
+  to,
+  workshopName,
+  planName,
+}: {
+  to: string
+  workshopName: string
+  planName: string
+}) {
+  const html = arkEmailLayout('Tu licencia vence hoy', `
+    <p>Hola,</p>
+    <p>Te informamos que la licencia <strong>${planName}</strong> del taller <strong>${workshopName}</strong> vence <strong>hoy</strong>.</p>
+    <div class="warn">
+      ⚠️ Si no renuevas tu licencia, mañana no podrás acceder a la plataforma.
+    </div>
+    <p>Para renovar o ampliar tu plan, comunícate con nuestro equipo de soporte:</p>
+    <a href="mailto:${process.env.EMAIL_FROM_EMAIL}" class="btn">Contactar soporte →</a>
+    <p style="color:#64748b; font-size:13px;">Gracias por confiar en ARK Workshop.</p>
+  `)
+
+  await sendEmail({ to, subject: `⚠️ Tu licencia ARK Workshop vence hoy — ${workshopName}`, html })
+}
+
+export async function sendLicenseExpiredEmail({
+  to,
+  workshopName,
+  planName,
+}: {
+  to: string
+  workshopName: string
+  planName: string
+}) {
+  const html = arkEmailLayout('Tu licencia ha vencido', `
+    <p>Hola,</p>
+    <p>La licencia <strong>${planName}</strong> del taller <strong>${workshopName}</strong> <strong>venció ayer</strong> y el acceso a la plataforma ha sido bloqueado.</p>
+    <div class="warn">
+      🔒 Tu taller no puede acceder a ARK Workshop hasta que se renueve la licencia.
+    </div>
+    <p>Para reactivar tu cuenta, comunícate con nuestro equipo de soporte a la brevedad:</p>
+    <a href="mailto:${process.env.EMAIL_FROM_EMAIL}" class="btn">Reactivar mi cuenta →</a>
+    <p style="color:#64748b; font-size:13px;">Gracias por confiar en ARK Workshop.</p>
+  `)
+
+  await sendEmail({ to, subject: `🔒 Licencia vencida — ${workshopName}`, html })
+}
+
 export async function sendOtStatusEmail({
   to,
   customerName,
