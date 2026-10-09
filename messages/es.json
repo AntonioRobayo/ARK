@@ -697,7 +697,8 @@
       "users": "Usuarios",
       "catalogs": "Catálogos",
       "settings": "Configuración",
-      "announcements": "Anuncios"
+      "announcements": "Anuncios",
+      "ads": "Publicidad"
     },
     "workshops": {
       "count": "{n} talleres registrados",
@@ -1043,6 +1044,65 @@
         "fieldEndsAt": "Visible hasta (opcional)",
         "submitBtn": "Publicar anuncio",
         "savedOk": "Anuncio publicado"
+      }
+    },
+    "ads": {
+      "title": "Publicidad",
+      "tabCampaigns": "Campañas",
+      "tabPlacements": "Espacios",
+      "campaigns": {
+        "count": "{n} campañas",
+        "newBtn": "Nueva campaña",
+        "table": { "ad": "Anuncio", "placement": "Espacio", "advertiser": "Anunciante", "dates": "Vigencia", "price": "Precio", "status": "Estado" },
+        "active": "Activo", "inactive": "Inactivo", "scheduled": "Programado", "expired": "Vencido",
+        "deactivate": "Desactivar", "activate": "Activar",
+        "empty": "No hay campañas publicitarias creadas",
+        "new": {
+          "title": "Nueva campaña",
+          "sectionAd": "Creatividad del anuncio",
+          "sectionAdvertiser": "Anunciante",
+          "sectionBilling": "Precio y fechas",
+          "fieldPlacement": "Espacio publicitario *",
+          "fieldTitle": "Título del anuncio (interno) *",
+          "fieldImageUrl": "URL de imagen *",
+          "fieldImageUrlHint": "Enlace directo a la imagen del anuncio (alojada externamente)",
+          "fieldLinkUrl": "URL de destino",
+          "fieldLinkUrlHint": "A dónde van los usuarios al hacer clic en el anuncio",
+          "fieldAdvertiserName": "Nombre del anunciante *",
+          "fieldAdvertiserContact": "Contacto (email / teléfono)",
+          "fieldPrice": "Precio cobrado *",
+          "fieldCurrency": "Moneda",
+          "fieldStartsAt": "Fecha de inicio *",
+          "fieldEndsAt": "Fecha de fin *",
+          "fieldNotes": "Notas internas",
+          "submitBtn": "Publicar campaña",
+          "savedOk": "Campaña publicada"
+        }
+      },
+      "placements": {
+        "count": "{n} espacios",
+        "newBtn": "Nuevo espacio",
+        "table": { "placement": "Espacio", "dimensions": "Dimensiones", "price": "Precios", "status": "Estado" },
+        "active": "Activo", "inactive": "Inactivo",
+        "deactivate": "Desactivar", "activate": "Activar",
+        "empty": "No hay espacios publicitarios definidos",
+        "specsTitle": "Especificaciones para el anunciante",
+        "new": {
+          "title": "Nuevo espacio publicitario",
+          "fieldName": "Nombre *",
+          "fieldSlug": "Slug (clave única) *",
+          "fieldSlugHint": "Minúsculas, sin espacios. Se usa en el código para identificar el espacio.",
+          "fieldDescription": "Descripción",
+          "fieldLocationHint": "Ubicación en la app",
+          "fieldWidth": "Ancho (px) *",
+          "fieldHeight": "Alto (px) *",
+          "fieldFormats": "Formatos aceptados",
+          "fieldMaxSize": "Tamaño máximo (KB)",
+          "fieldPriceWeek": "Precio / semana (USD)",
+          "fieldPriceMonth": "Precio / mes (USD)",
+          "submitBtn": "Guardar espacio",
+          "savedOk": "Espacio creado"
+        }
       }
     }
   },

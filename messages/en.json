@@ -695,7 +695,10 @@
       "workshops": "Workshops",
       "licenses": "Licenses",
       "users": "Users",
-      "catalogs": "Catalogs"
+      "catalogs": "Catalogs",
+      "settings": "Settings",
+      "announcements": "Announcements",
+      "ads": "Advertising"
     },
     "workshops": {
       "count": "{n} registered workshops",
@@ -948,6 +951,98 @@
           "code": "ISO code (3 letters) *", "codePlaceholder": "USD",
           "name": "Name *", "namePlaceholder": "US Dollar",
           "submit": "Save currency"
+        }
+      }
+    },
+    "tenantDetail": {
+      "tabUsers": "Users", "tabActivity": "Activity", "tabImpersonate": "Impersonate",
+      "users": {
+        "count": "{n} users", "table": { "user": "User", "email": "Email", "role": "Role" },
+        "resetPassword": "Reset password", "resetSent": "Reset email sent to {email}",
+        "noUsers": "This workshop has no registered users"
+      },
+      "activity": {
+        "empty": "No activity recorded",
+        "events": { "tenant_created": "Workshop created", "plan_updated": "Plan updated", "license_extended": "License extended", "status_changed": "Status changed" }
+      },
+      "impersonate": {
+        "title": "Support access", "description": "Generate a temporary access link to view the workshop as its admin. Open in a private window to avoid affecting your current session.",
+        "warning": "This link signs in as the workshop user. Use only for support.",
+        "noAdmin": "This workshop has no registered admin.", "selectAdmin": "Select user",
+        "generateBtn": "Generate access link", "copyBtn": "Copy link", "openBtn": "Open in new tab",
+        "copied": "Link copied", "generatedFor": "Link generated for {email}"
+      }
+    },
+    "settings": {
+      "title": "Platform settings", "description": "Global variables for the ARK Workshop platform.",
+      "saveBtn": "Save changes", "savedOk": "Settings saved",
+      "keys": { "support_email": "Support email", "platform_name": "Platform name", "terms_url": "Terms URL", "maintenance_mode": "Maintenance mode" },
+      "descriptions": { "support_email": "Email shown on blocked screens and notifications", "platform_name": "Name shown in emails and public UI", "terms_url": "Link to terms and conditions", "maintenance_mode": "Type 'true' to block all tenant access" }
+    },
+    "announcements": {
+      "title": "Announcements", "count": "{n} announcements", "newBtn": "New announcement",
+      "table": { "title": "Title", "type": "Type", "status": "Status", "dates": "Period" },
+      "active": "Active", "inactive": "Inactive", "deactivate": "Deactivate", "activate": "Activate",
+      "empty": "No announcements configured",
+      "types": { "info": "Info", "warning": "Warning", "maintenance": "Maintenance" },
+      "new": { "title": "New announcement", "fieldTitle": "Title *", "fieldBody": "Message *", "fieldType": "Type", "fieldStartsAt": "Visible from", "fieldEndsAt": "Visible until (optional)", "submitBtn": "Publish announcement", "savedOk": "Announcement published" }
+    },
+    "ads": {
+      "title": "Advertising",
+      "tabCampaigns": "Campaigns",
+      "tabPlacements": "Placements",
+      "campaigns": {
+        "count": "{n} campaigns",
+        "newBtn": "New campaign",
+        "table": { "ad": "Ad", "placement": "Placement", "advertiser": "Advertiser", "dates": "Dates", "price": "Price", "status": "Status" },
+        "active": "Active", "inactive": "Inactive", "scheduled": "Scheduled", "expired": "Expired",
+        "deactivate": "Deactivate", "activate": "Activate",
+        "empty": "No ad campaigns created",
+        "new": {
+          "title": "New campaign",
+          "sectionAd": "Ad creative",
+          "sectionAdvertiser": "Advertiser",
+          "sectionBilling": "Pricing & dates",
+          "fieldPlacement": "Placement *",
+          "fieldTitle": "Ad title (internal) *",
+          "fieldImageUrl": "Image URL *",
+          "fieldImageUrlHint": "Direct link to the ad image (hosted externally)",
+          "fieldLinkUrl": "Destination URL",
+          "fieldLinkUrlHint": "Where users go when they click the ad",
+          "fieldAdvertiserName": "Advertiser name *",
+          "fieldAdvertiserContact": "Contact (email / phone)",
+          "fieldPrice": "Price paid *",
+          "fieldCurrency": "Currency",
+          "fieldStartsAt": "Start date *",
+          "fieldEndsAt": "End date *",
+          "fieldNotes": "Internal notes",
+          "submitBtn": "Publish campaign",
+          "savedOk": "Campaign published"
+        }
+      },
+      "placements": {
+        "count": "{n} placements",
+        "newBtn": "New placement",
+        "table": { "placement": "Placement", "dimensions": "Dimensions", "price": "Pricing", "status": "Status" },
+        "active": "Active", "inactive": "Inactive",
+        "deactivate": "Deactivate", "activate": "Activate",
+        "empty": "No placements defined",
+        "specsTitle": "Specs for advertiser",
+        "new": {
+          "title": "New placement",
+          "fieldName": "Name *",
+          "fieldSlug": "Slug (unique key) *",
+          "fieldSlugHint": "Lowercase, no spaces. Used in code to identify the slot.",
+          "fieldDescription": "Description",
+          "fieldLocationHint": "Location in app",
+          "fieldWidth": "Width (px) *",
+          "fieldHeight": "Height (px) *",
+          "fieldFormats": "Accepted formats",
+          "fieldMaxSize": "Max file size (KB)",
+          "fieldPriceWeek": "Price / week (USD)",
+          "fieldPriceMonth": "Price / month (USD)",
+          "submitBtn": "Save placement",
+          "savedOk": "Placement created"
         }
       }
     }

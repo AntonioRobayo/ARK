@@ -697,7 +697,8 @@
       "users": "Usuários",
       "catalogs": "Catálogos",
       "settings": "Configurações",
-      "announcements": "Avisos"
+      "announcements": "Avisos",
+      "ads": "Publicidade"
     },
     "workshops": {
       "count": "{n} oficinas cadastradas",
@@ -1024,6 +1025,65 @@
         "fieldEndsAt": "Visível até (opcional)",
         "submitBtn": "Publicar aviso",
         "savedOk": "Aviso publicado"
+      }
+    },
+    "ads": {
+      "title": "Publicidade",
+      "tabCampaigns": "Campanhas",
+      "tabPlacements": "Espaços",
+      "campaigns": {
+        "count": "{n} campanhas",
+        "newBtn": "Nova campanha",
+        "table": { "ad": "Anúncio", "placement": "Espaço", "advertiser": "Anunciante", "dates": "Vigência", "price": "Preço", "status": "Status" },
+        "active": "Ativo", "inactive": "Inativo", "scheduled": "Agendado", "expired": "Vencido",
+        "deactivate": "Desativar", "activate": "Ativar",
+        "empty": "Nenhuma campanha publicitária criada",
+        "new": {
+          "title": "Nova campanha",
+          "sectionAd": "Criativo do anúncio",
+          "sectionAdvertiser": "Anunciante",
+          "sectionBilling": "Preço e datas",
+          "fieldPlacement": "Espaço publicitário *",
+          "fieldTitle": "Título do anúncio (interno) *",
+          "fieldImageUrl": "URL da imagem *",
+          "fieldImageUrlHint": "Link direto para a imagem do anúncio (hospedada externamente)",
+          "fieldLinkUrl": "URL de destino",
+          "fieldLinkUrlHint": "Para onde os usuários vão ao clicar no anúncio",
+          "fieldAdvertiserName": "Nome do anunciante *",
+          "fieldAdvertiserContact": "Contato (email / telefone)",
+          "fieldPrice": "Preço cobrado *",
+          "fieldCurrency": "Moeda",
+          "fieldStartsAt": "Data de início *",
+          "fieldEndsAt": "Data de fim *",
+          "fieldNotes": "Notas internas",
+          "submitBtn": "Publicar campanha",
+          "savedOk": "Campanha publicada"
+        }
+      },
+      "placements": {
+        "count": "{n} espaços",
+        "newBtn": "Novo espaço",
+        "table": { "placement": "Espaço", "dimensions": "Dimensões", "price": "Preços", "status": "Status" },
+        "active": "Ativo", "inactive": "Inativo",
+        "deactivate": "Desativar", "activate": "Ativar",
+        "empty": "Nenhum espaço publicitário definido",
+        "specsTitle": "Especificações para o anunciante",
+        "new": {
+          "title": "Novo espaço publicitário",
+          "fieldName": "Nome *",
+          "fieldSlug": "Slug (chave única) *",
+          "fieldSlugHint": "Minúsculas, sem espaços. Usado no código para identificar o espaço.",
+          "fieldDescription": "Descrição",
+          "fieldLocationHint": "Localização no app",
+          "fieldWidth": "Largura (px) *",
+          "fieldHeight": "Altura (px) *",
+          "fieldFormats": "Formatos aceitos",
+          "fieldMaxSize": "Tamanho máximo (KB)",
+          "fieldPriceWeek": "Preço / semana (USD)",
+          "fieldPriceMonth": "Preço / mês (USD)",
+          "submitBtn": "Salvar espaço",
+          "savedOk": "Espaço criado"
+        }
       }
     }
   },

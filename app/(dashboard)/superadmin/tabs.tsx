@@ -13,6 +13,7 @@ export function SuperAdminTabs() {
     { href: '/superadmin/licenses',       label: t('tabs.licenses') },
     { href: '/superadmin/users',          label: t('tabs.users') },
     { href: '/superadmin/catalogs',       label: t('tabs.catalogs') },
+    { href: '/superadmin/ads',            label: t('tabs.ads') },
     { href: '/superadmin/announcements',  label: t('tabs.announcements') },
     { href: '/superadmin/settings',       label: t('tabs.settings') },
   ]
