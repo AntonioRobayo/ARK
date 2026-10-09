@@ -120,6 +120,37 @@ export async function generateImpersonateLink(email: string): Promise<{ url?: st
   return { url: data.properties?.action_link ?? '' }
 }
 
+export async function inviteAdmin(formData: FormData) {
+  const adminClient = createAdminClient()
+  const tenantId = formData.get('tenant_id') as string
+  const email    = (formData.get('email') as string)?.trim().toLowerCase()
+
+  if (!email || !tenantId) {
+    redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent('Email requerido')}`)
+  }
+
+  // If user already exists unconfirmed, delete so the invite can be resent
+  const { data: existing } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+  const existingUser = existing?.users.find(u => u.email === email)
+  if (existingUser && !existingUser.confirmed_at) {
+    await adminClient.auth.admin.deleteUser(existingUser.id)
+  } else if (existingUser) {
+    redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent('El usuario ya tiene cuenta activa')}`)
+  }
+
+  const onboardingNext = encodeURIComponent(`/onboarding?tenant_id=${tenantId}`)
+  const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${onboardingNext}`,
+    data: { tenant_id: tenantId, role: 'admin' },
+  })
+
+  if (inviteError) {
+    redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(inviteError.message)}`)
+  }
+  await logEvent(tenantId, 'admin_invited', { email })
+  redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent(`Invitación enviada a ${email}`)}`)
+}
+
 export async function toggleTenantStatus(formData: FormData) {
   const adminClient = createAdminClient()
   const id        = formData.get('id') as string

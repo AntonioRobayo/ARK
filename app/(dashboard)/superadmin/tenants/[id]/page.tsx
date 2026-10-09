@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { ImpersonatePanel } from './impersonate-panel'
-import { resetUserPassword } from './actions'
+import { resetUserPassword, inviteAdmin } from './actions'
 
 export default async function TenantDetailPage({
   params,
@@ -104,7 +104,23 @@ export default async function TenantDetailPage({
       {/* ── USERS TAB ── */}
       {tab === 'users' && (
         <div>
-          <p className="text-sm text-gray-500 mb-3">{t('users.count', { n: profiles?.length ?? 0 })}</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-500">{t('users.count', { n: profiles?.length ?? 0 })}</p>
+            <form action={inviteAdmin} className="flex gap-2">
+              <input type="hidden" name="tenant_id" value={id} />
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="email@taller.com"
+                className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 w-52"
+              />
+              <button type="submit"
+                className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 transition-colors whitespace-nowrap">
+                Invitar admin
+              </button>
+            </form>
+          </div>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>

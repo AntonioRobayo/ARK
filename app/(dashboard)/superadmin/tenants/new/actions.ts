@@ -58,9 +58,10 @@ export async function createTenantAndInvite(formData: FormData) {
   }).eq('id', tenantId)
 
   // 2. Invitar al admin por email usando service role
-  // El link de invitación redirige a /onboarding?tenant_id=...
+  // redirectTo must go through /auth/callback so the PKCE code is exchanged before reaching /onboarding
+  const onboardingNext = encodeURIComponent(`/onboarding?tenant_id=${tenantId}`)
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(adminEmail, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?tenant_id=${tenantId}`,
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${onboardingNext}`,
     data: { tenant_id: tenantId, role: 'admin', ...(adminFirstName ? { first_name: adminFirstName } : {}) },
   })
 
