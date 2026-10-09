@@ -54,96 +54,65 @@ export function arkEmailLayout(title: string, bodyHtml: string, icon = '📬') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
-  <title>${title}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#F3F4F6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-    style="background-color:#F3F4F6;padding:40px 16px;">
-    <tr>
-      <td align="center">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F4F6;padding:40px 16px;">
+    <tr><td align="center">
 
-        <!-- Cabecera con logo -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-          style="max-width:560px;">
-          <tr>
-            <td align="center"
-              style="background-color:#1F2937;border-radius:16px 16px 0 0;padding:28px 40px;">
-              <img src="${LOGO_URL}" alt="ARK Workshop" width="200"
-                style="display:block;margin:0 auto;width:200px;max-width:100%;height:auto;border:0;" />
-            </td>
-          </tr>
-        </table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+        <tr>
+          <td style="background-color:#1F2937;border-radius:16px 16px 0 0;padding:28px 40px;text-align:center;">
+            <img src="${LOGO_URL}" alt="ARK Workshop" width="200"
+              style="display:block;margin:0 auto;height:auto;" />
+          </td>
+        </tr>
+      </table>
 
-        <!-- Tarjeta principal -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-          style="max-width:560px;background-color:#FFFFFF;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+      <table width="100%" cellpadding="0" cellspacing="0"
+        style="max-width:560px;background-color:#ffffff;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <tr><td height="4" style="background-color:#FF7316;font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr>
+          <td style="padding:40px 40px 36px;">
+            <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td width="56" height="56"
+                  style="background-color:#FFF7ED;border-radius:28px;text-align:center;vertical-align:middle;font-size:24px;line-height:56px;">
+                  ${icon}
+                </td>
+              </tr>
+            </table>
+            <h1 style="margin:0 0 10px;font-size:22px;font-weight:700;color:#1F2937;line-height:1.3;">${title}</h1>
+            ${bodyHtml}
+          </td>
+        </tr>
+        <tr>
+          <td style="border-top:1px solid #F3F4F6;padding:22px 40px;background-color:#FAFAFA;border-radius:0 0 16px 16px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td valign="middle">
+                  <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#1F2937;">ARK Workshop</p>
+                  <p style="margin:0;font-size:11px;color:#9CA3AF;font-style:italic;">Todo tu taller. En un solo lugar.</p>
+                </td>
+                <td align="right" valign="middle">
+                  <p style="margin:0 0 4px;font-size:9px;color:#D1D5DB;text-transform:uppercase;letter-spacing:0.1em;">A product by</p>
+                  <img src="${DA_LOGO_URL}" alt="Developing Assets" width="88"
+                    style="display:block;height:auto;opacity:0.45;" />
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 
-          <!-- Línea de acento naranja -->
-          <tr>
-            <td height="4" style="background-color:#FF7316;font-size:0;line-height:0;height:4px;">&nbsp;</td>
-          </tr>
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin-top:18px;">
+        <tr><td align="center">
+          <p style="margin:0;font-size:11px;color:#9CA3AF;">
+            Enviado desde <strong style="color:#6B7280;">${SUPPORT_EMAIL()}</strong>
+          </p>
+        </td></tr>
+      </table>
 
-          <tr>
-            <td style="padding:40px 40px 36px;">
-
-              <!-- Ícono -->
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0"
-                style="margin-bottom:24px;">
-                <tr>
-                  <td width="56" height="56" align="center" valign="middle"
-                    style="width:56px;height:56px;background-color:#FFF7ED;border-radius:28px;font-size:26px;line-height:56px;">
-                    ${icon}
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Título -->
-              <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#1F2937;line-height:1.3;">
-                ${title}
-              </h1>
-
-              <!-- Contenido -->
-              ${bodyHtml}
-
-            </td>
-          </tr>
-
-          <!-- Pie -->
-          <tr>
-            <td style="border-top:1px solid #F3F4F6;padding:22px 40px;background-color:#FAFAFA;border-radius:0 0 16px 16px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td valign="middle">
-                    <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#1F2937;">ARK Workshop</p>
-                    <p style="margin:0;font-size:11px;color:#9CA3AF;font-style:italic;">Todo tu taller. En un solo lugar.</p>
-                  </td>
-                  <td align="right" valign="middle">
-                    <p style="margin:0 0 4px;font-size:9px;color:#D1D5DB;text-transform:uppercase;letter-spacing:0.1em;">A product by</p>
-                    <img src="${DA_LOGO_URL}" alt="Developing Assets" width="88"
-                      style="display:block;width:88px;max-width:100%;height:auto;border:0;opacity:0.45;" />
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Remitente -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-          style="max-width:560px;margin-top:18px;">
-          <tr>
-            <td align="center">
-              <p style="margin:0;font-size:11px;color:#9CA3AF;">
-                Enviado desde <strong style="color:#6B7280;">${SUPPORT_EMAIL()}</strong>
-              </p>
-            </td>
-          </tr>
-        </table>
-
-      </td>
-    </tr>
+    </td></tr>
   </table>
 </body>
 </html>`
