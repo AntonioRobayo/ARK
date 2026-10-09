@@ -12,13 +12,25 @@ export default async function NewAnnouncementPage({
 
   return (
     <div className="max-w-lg">
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-5 flex items-center gap-3">
         <Link href="/superadmin/announcements" className="text-gray-400 hover:text-gray-600 transition-colors">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </Link>
-        <h2 className="text-base font-semibold text-gray-900">{t('title')}</h2>
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">{t('title')}</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Los comunicados aparecen como banners en el dashboard de todos los talleres.</p>
+        </div>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-5 text-sm text-blue-700 space-y-1">
+        <p className="font-semibold">Ejemplos de uso:</p>
+        <ul className="list-disc list-inside space-y-0.5 text-xs text-blue-600">
+          <li><strong>Información:</strong> "Nueva función disponible: módulo de inventario"</li>
+          <li><strong>Aviso:</strong> "Actualización de términos de uso a partir del 1 de noviembre"</li>
+          <li><strong>Mantenimiento:</strong> "El sábado 25 de octubre de 2am a 4am el sistema estará en mantenimiento"</li>
+        </ul>
       </div>
 
       {error && (

@@ -697,7 +697,7 @@
       "users": "Usuários",
       "catalogs": "Catálogos",
       "settings": "Configurações",
-      "announcements": "Avisos",
+      "announcements": "Comunicados",
       "ads": "Publicidade"
     },
     "workshops": {
@@ -1006,25 +1006,25 @@
       }
     },
     "announcements": {
-      "title": "Avisos",
-      "count": "{n} avisos",
-      "newBtn": "Novo aviso",
+      "title": "Comunicados",
+      "count": "{n} comunicados",
+      "newBtn": "Novo comunicado",
       "table": { "title": "Título", "type": "Tipo", "status": "Status", "dates": "Vigência" },
       "active": "Ativo",
       "inactive": "Inativo",
       "deactivate": "Desativar",
       "activate": "Ativar",
-      "empty": "Nenhum aviso configurado",
+      "empty": "Nenhum comunicado configurado",
       "types": { "info": "Informação", "warning": "Aviso", "maintenance": "Manutenção" },
       "new": {
-        "title": "Novo aviso",
+        "title": "Novo comunicado",
         "fieldTitle": "Título *",
         "fieldBody": "Mensagem *",
         "fieldType": "Tipo",
         "fieldStartsAt": "Visível a partir de",
         "fieldEndsAt": "Visível até (opcional)",
-        "submitBtn": "Publicar aviso",
-        "savedOk": "Aviso publicado"
+        "submitBtn": "Publicar comunicado",
+        "savedOk": "Comunicado publicado"
       }
     },
     "ads": {
