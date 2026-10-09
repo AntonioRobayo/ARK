@@ -72,6 +72,10 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
   const [planId, setPlanId] = useState('')
   const [contractedUsers, setContractedUsers] = useState(1)
   const [contractedBranches, setContractedBranches] = useState(1)
+  const [noExpiry, setNoExpiry] = useState(false)
+  const [expiresAt, setExpiresAt] = useState(() => {
+    const d = new Date(); d.setMonth(d.getMonth() + 1); return d.toISOString().slice(0, 10)
+  })
 
   // Step 3
   const [adminEmail, setAdminEmail] = useState('')
@@ -159,6 +163,7 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
     fd.set('plan_id', planId)
     fd.set('contracted_users', String(contractedUsers))
     fd.set('contracted_branches', String(contractedBranches))
+    fd.set('plan_expires_at', noExpiry ? '' : expiresAt)
     fd.set('admin_email', adminEmail)
     fd.set('admin_first_name', adminFirstName)
 
@@ -323,6 +328,27 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
               </div>
             )}
 
+            {/* Expiry date */}
+            <div className="p-4 bg-gray-50 rounded-xl space-y-3">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('step2ExpiryLabel')}</p>
+              <div className="flex gap-2">
+                {[false, true].map(isNone => (
+                  <button key={String(isNone)} type="button"
+                    onClick={() => setNoExpiry(isNone)}
+                    className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-colors
+                      ${noExpiry === isNone
+                        ? 'bg-orange-500 text-white border-orange-500'
+                        : 'bg-white text-gray-600 border-gray-300 hover:border-orange-300'}`}>
+                    {isNone ? `∞ ${t('step2ExpiryNone')}` : `📅 ${t('step2ExpiryWithDate')}`}
+                  </button>
+                ))}
+              </div>
+              {!noExpiry && (
+                <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              )}
+            </div>
+
             {/* Contracted users / branches + calculator */}
             {selectedPlan?.price_per_user && (
               <div className="mt-4 p-4 bg-gray-50 rounded-xl space-y-4">
@@ -426,6 +452,7 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
                     })() : (
                       <Row label={t('reviewPrice')} value={t('noPrice')} />
                     )}
+                    <Row label={t('step2ExpiryLabel')} value={noExpiry ? t('step2ExpiryNone') : expiresAt} />
                   </>
                 )}
               </div>

@@ -26,6 +26,7 @@ export async function createTenantAndInvite(formData: FormData) {
   const contractedBranches = Number(formData.get('contracted_branches') || 1)
   const adminEmail         = formData.get('admin_email') as string
   const adminFirstName     = (formData.get('admin_first_name') as string) || undefined
+  const planExpiresAt      = (formData.get('plan_expires_at') as string) || null
 
   // Obtener el slug del plan seleccionado
   const { data: planData } = await supabase
@@ -58,6 +59,7 @@ export async function createTenantAndInvite(formData: FormData) {
     plan_id: planId,
     contracted_users: contractedUsers,
     contracted_branches: contractedBranches,
+    plan_expires_at: planExpiresAt || null,
   }).eq('id', tenantId)
 
   // 2. Invitar al admin por email usando service role
