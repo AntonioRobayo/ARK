@@ -5,9 +5,10 @@ import { getTranslations } from 'next-intl/server'
 export default async function UpdatePasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; from?: string }>
+  searchParams: Promise<{ error?: string; from?: string; next?: string }>
 }) {
-  const { error, from } = await searchParams
+  const { error, from, next } = await searchParams
+  const isInviteFlow = !!next && !from
   const backHref = from === 'settings' ? '/settings' : '/dashboard'
   const t = await getTranslations('auth')
 
@@ -24,14 +25,20 @@ export default async function UpdatePasswordPage({
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href={backHref} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label={t('updatePassword.back')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-        </Link>
+        {!isInviteFlow && (
+          <Link href={backHref} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label={t('updatePassword.back')}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </Link>
+        )}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 leading-tight">{t('updatePassword.title')}</h2>
-          <p className="text-gray-500 text-sm">{t('updatePassword.subtitle')}</p>
+          <h2 className="text-xl font-semibold text-gray-900 leading-tight">
+            {isInviteFlow ? 'Crea tu contraseña' : t('updatePassword.title')}
+          </h2>
+          <p className="text-gray-500 text-sm">
+            {isInviteFlow ? 'Elige una contraseña para acceder a tu cuenta' : t('updatePassword.subtitle')}
+          </p>
         </div>
       </div>
 
@@ -42,6 +49,8 @@ export default async function UpdatePasswordPage({
       )}
 
       <form action={updatePassword} className="space-y-4" noValidate>
+        {next && <input type="hidden" name="next" value={next} />}
+
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
             {t('updatePassword.newPassword')}
@@ -74,7 +83,7 @@ export default async function UpdatePasswordPage({
           type="submit"
           className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors"
         >
-          {t('updatePassword.submit')}
+          {isInviteFlow ? 'Continuar →' : t('updatePassword.submit')}
         </button>
       </form>
     </div>

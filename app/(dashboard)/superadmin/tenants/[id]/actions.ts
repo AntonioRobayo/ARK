@@ -176,9 +176,10 @@ export async function inviteAdmin(formData: FormData) {
     await adminClient.auth.admin.deleteUser(existingUser.id)
   }
 
-  const onboardingNext = encodeURIComponent(`/onboarding?tenant_id=${tenantId}`)
+  const onboardingUrl = `/onboarding?tenant_id=${tenantId}`
+  const passwordNext  = `/auth/update-password?next=${encodeURIComponent(onboardingUrl)}`
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${onboardingNext}`,
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(passwordNext)}`,
     data: { tenant_id: tenantId, role: 'admin' },
   })
 
@@ -207,9 +208,10 @@ export async function resendInvite(formData: FormData) {
 
   await adminClient.auth.admin.deleteUser(userId)
 
-  const onboardingNext = encodeURIComponent(`/onboarding?tenant_id=${tenantId}`)
+  const onboardingUrl = `/onboarding?tenant_id=${tenantId}`
+  const passwordNext  = `/auth/update-password?next=${encodeURIComponent(onboardingUrl)}`
   const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${onboardingNext}`,
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(passwordNext)}`,
     data: { tenant_id: tenantId, role: 'admin' },
   })
 
