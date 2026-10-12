@@ -353,20 +353,23 @@ export default async function SuperAdminPage({
                         >
                           {t('workshops.editBtn')}
                         </Link>
-                        <form action={toggleTenantStatus}>
-                          <input type="hidden" name="id" value={tenant.id} />
-                          <input type="hidden" name="is_active" value={String(tenant.is_active)} />
-                          <button
-                            type="submit"
-                            className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                              tenant.is_active
-                                ? 'border-red-200 text-red-600 hover:bg-red-50'
-                                : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
-                            }`}
-                          >
-                            {tenant.is_active ? t('workshops.deactivate') : t('workshops.activate')}
-                          </button>
-                        </form>
+                        {/* Only show Activate for manually-suspended tenants; blocked ones must use QuickExtend */}
+                        {(tenant.is_active || !blocked.some(b => b.id === tenant.id)) && (
+                          <form action={toggleTenantStatus}>
+                            <input type="hidden" name="id" value={tenant.id} />
+                            <input type="hidden" name="is_active" value={String(tenant.is_active)} />
+                            <button
+                              type="submit"
+                              className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                                tenant.is_active
+                                  ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                  : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                            >
+                              {tenant.is_active ? t('workshops.deactivate') : t('workshops.activate')}
+                            </button>
+                          </form>
+                        )}
                       </div>
                     </td>
                   </tr>

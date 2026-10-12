@@ -129,13 +129,30 @@ export async function inviteAdmin(formData: FormData) {
     redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent('Email requerido')}`)
   }
 
-  // If user already exists unconfirmed, delete so the invite can be resent
   const { data: existing } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const existingUser = existing?.users.find(u => u.email === email)
+
+  if (existingUser?.confirmed_at) {
+    // User already has an active account — assign them to this tenant directly
+    const { error: profileError } = await adminClient
+      .from('user_profile')
+      .upsert({
+        id: existingUser.id,
+        tenant_id: tenantId,
+        role: 'admin',
+        is_active: true,
+      }, { onConflict: 'id' })
+
+    if (profileError) {
+      redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(profileError.message)}`)
+    }
+    await logEvent(tenantId, 'admin_assigned', { email, user_id: existingUser.id })
+    redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent(`${email} asignado como admin del taller`)}`)
+  }
+
+  // Unconfirmed invite exists — delete it so we can resend
   if (existingUser && !existingUser.confirmed_at) {
     await adminClient.auth.admin.deleteUser(existingUser.id)
-  } else if (existingUser) {
-    redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent('El usuario ya tiene cuenta activa')}`)
   }
 
   const onboardingNext = encodeURIComponent(`/onboarding?tenant_id=${tenantId}`)
