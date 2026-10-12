@@ -25,7 +25,7 @@ export default async function SuperAdminUsersPage() {
   const pendingInvites = authUsers
     .filter(u => u.invited_at && !u.confirmed_at)
     .map(u => {
-      const meta = u.raw_user_meta_data as Record<string, unknown> | null
+      const meta = u.user_metadata as Record<string, unknown> | null
       const tenantId = (meta?.tenant_id as string) ?? null
       const invitedAt = new Date(u.invited_at!)
       const hoursAgo = (now.getTime() - invitedAt.getTime()) / 3_600_000

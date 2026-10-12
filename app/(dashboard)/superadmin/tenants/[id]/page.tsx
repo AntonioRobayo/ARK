@@ -44,7 +44,7 @@ export default async function TenantDetailPage({
   const now = new Date()
   const pendingInvites = authUsers.filter(u => {
     if (!u.invited_at || u.confirmed_at) return false
-    const meta = u.raw_user_meta_data as Record<string, unknown> | null
+    const meta = u.user_metadata as Record<string, unknown> | null
     return meta?.tenant_id === id
   }).map(u => {
     const invitedAt = new Date(u.invited_at!)
