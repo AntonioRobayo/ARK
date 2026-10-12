@@ -21,6 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   // License check — skip for platform admins
   let licenseBlock: 'suspended' | 'expired' | null = null
+  let tenantName: string | null = null
   if (!profile?.is_platform_admin && profile?.tenant_id) {
     const { data: tenant } = await supabase
       .from('tenants')
@@ -29,6 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .single()
 
     if (tenant) {
+      tenantName = tenant.name ?? null
       if (!tenant.is_active) {
         licenseBlock = 'suspended'
       } else if (tenant.plan_expires_at) {
@@ -68,6 +70,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         email={user.email}
         isSuperadmin={profile?.is_platform_admin === true}
         locale={cookieLocale}
+        tenantName={tenantName}
       />
 
       {/* Main — pt-14 on mobile for the fixed header */}

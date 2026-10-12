@@ -41,7 +41,7 @@ export default async function UpdatePasswordPage({
         </div>
       )}
 
-      <form action={updatePassword} className="space-y-4">
+      <form action={updatePassword} className="space-y-4" noValidate>
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
             {t('updatePassword.newPassword')}
@@ -50,8 +50,6 @@ export default async function UpdatePasswordPage({
             id="password"
             name="password"
             type="password"
-            required
-            minLength={8}
             autoComplete="new-password"
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
             placeholder={t('updatePassword.newPasswordPlaceholder')}
@@ -66,8 +64,6 @@ export default async function UpdatePasswordPage({
             id="confirm"
             name="confirm"
             type="password"
-            required
-            minLength={8}
             autoComplete="new-password"
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
             placeholder={t('updatePassword.confirmPasswordPlaceholder')}

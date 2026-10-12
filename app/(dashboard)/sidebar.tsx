@@ -48,9 +48,10 @@ interface SidebarProps {
   email?: string | null
   isSuperadmin: boolean
   locale?: string
+  tenantName?: string | null
 }
 
-function UserInfo({ firstName, lastName, email, isSuperadmin, locale = 'es' }: SidebarProps) {
+function UserInfo({ firstName, lastName, email, isSuperadmin, locale = 'es', tenantName }: SidebarProps) {
   const t = useTranslations('sidebar')
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || email || 'Usuario'
   const initials = firstName ? firstName[0].toUpperCase() : (email?.[0]?.toUpperCase() ?? 'U')
@@ -66,9 +67,12 @@ function UserInfo({ firstName, lastName, email, isSuperadmin, locale = 'es' }: S
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>{displayName}</p>
-          {isSuperadmin && (
-            <span className="text-xs font-semibold" style={{ color: '#FF7316' }}>{t('superadminBadge')}</span>
-          )}
+          {isSuperadmin
+            ? <span className="text-xs font-semibold" style={{ color: '#FF7316' }}>{t('superadminBadge')}</span>
+            : tenantName
+              ? <span className="text-xs truncate block" style={{ color: 'rgba(255,255,255,0.4)' }}>{tenantName}</span>
+              : null
+          }
         </div>
         <Link
           href="/settings"
@@ -109,14 +113,14 @@ function LogoutButton() {
   )
 }
 
-export function Sidebar({ firstName, lastName, email, isSuperadmin, locale }: SidebarProps) {
+export function Sidebar({ firstName, lastName, email, isSuperadmin, locale, tenantName }: SidebarProps) {
   const [open, setOpen] = useState(false)
   const t = useTranslations('sidebar')
 
   const navContent = (
     <>
       <NavLinks isSuperadmin={isSuperadmin} onNavClick={() => setOpen(false)} />
-      <UserInfo firstName={firstName} lastName={lastName} email={email} isSuperadmin={isSuperadmin} locale={locale} />
+      <UserInfo firstName={firstName} lastName={lastName} email={email} isSuperadmin={isSuperadmin} locale={locale} tenantName={tenantName} />
       <LogoutButton />
     </>
   )

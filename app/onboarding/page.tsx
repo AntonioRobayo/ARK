@@ -46,7 +46,7 @@ export default async function OnboardingPage({
             </div>
           )}
 
-          <form action={completeOnboarding} className="space-y-4">
+          <form action={completeOnboarding} className="space-y-4" noValidate>
             <input type="hidden" name="tenant_id" value={tenant_id} />
 
             <div className="grid grid-cols-2 gap-3">
