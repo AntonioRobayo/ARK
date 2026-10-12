@@ -19,6 +19,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
+  // No profile means onboarding was never completed — redirect back
+  if (!profile) {
+    const tenantId = user.user_metadata?.tenant_id as string | undefined
+    if (tenantId) {
+      redirect(`/onboarding?tenant_id=${tenantId}`)
+    } else {
+      redirect('/auth/login')
+    }
+  }
+
   // License check — skip for platform admins
   let licenseBlock: 'suspended' | 'expired' | null = null
   let tenantName: string | null = null
