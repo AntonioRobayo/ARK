@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import { revokeInvite, resendInvite } from '../tenants/[id]/actions'
 
 export default async function SuperAdminUsersPage() {
   const supabase = await createClient()
@@ -12,16 +13,113 @@ export default async function SuperAdminUsersPage() {
     .select('id, first_name, last_name, is_platform_admin, tenant_id, tenants(name, slug)')
     .order('is_platform_admin', { ascending: false })
 
-  const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 200 })
+  const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const authUsers = usersData?.users ?? []
   const emailMap: Record<string, string> = Object.fromEntries(
     authUsers.map(u => [u.id, u.email ?? ''])
   )
 
+  // All pending invites across all tenants
+  const INVITE_EXPIRY_HOURS = 24
+  const now = new Date()
+  const pendingInvites = authUsers
+    .filter(u => u.invited_at && !u.confirmed_at)
+    .map(u => {
+      const meta = u.raw_user_meta_data as Record<string, unknown> | null
+      const tenantId = (meta?.tenant_id as string) ?? null
+      const invitedAt = new Date(u.invited_at!)
+      const hoursAgo = (now.getTime() - invitedAt.getTime()) / 3_600_000
+      return { id: u.id, email: u.email ?? '', invitedAt, expired: hoursAgo > INVITE_EXPIRY_HOURS, tenantId }
+    })
+
+  // Fetch tenant names for pending invites
+  const tenantIds = [...new Set(pendingInvites.map(i => i.tenantId).filter(Boolean))]
+  const { data: tenants } = tenantIds.length > 0
+    ? await adminClient.from('tenants').select('id, name').in('id', tenantIds)
+    : { data: [] }
+  const tenantNameMap = new Map((tenants ?? []).map(t => [t.id, t.name]))
+
   const t = await getTranslations('superadmin')
 
   return (
-    <div>
+    <div className="space-y-6">
+      {/* Pending invites section */}
+      {pendingInvites.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+            </svg>
+            Invitaciones pendientes
+            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">{pendingInvites.length}</span>
+          </h3>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom: '1px solid #FDE68A' }}>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-amber-600 uppercase tracking-wide">Email</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-amber-600 uppercase tracking-wide">Taller</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-amber-600 uppercase tracking-wide">Enviada</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-amber-600 uppercase tracking-wide">Estado</th>
+                  <th className="px-5 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {pendingInvites.map(inv => (
+                  <tr key={inv.id} className="border-b border-amber-100 last:border-0 hover:bg-amber-100/40 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-amber-200 flex items-center justify-center text-xs font-bold text-amber-700 flex-shrink-0">
+                          {inv.email[0].toUpperCase()}
+                        </div>
+                        <span className="text-sm font-medium text-gray-800">{inv.email}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {inv.tenantId
+                        ? <Link href={`/superadmin/tenants/${inv.tenantId}?tab=users`} className="text-xs text-gray-600 hover:text-orange-600 transition-colors">{tenantNameMap.get(inv.tenantId) ?? inv.tenantId}</Link>
+                        : <span className="text-xs text-gray-400">—</span>
+                      }
+                    </td>
+                    <td className="px-5 py-3.5 text-xs text-gray-500">
+                      {inv.invitedAt.toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {inv.expired
+                        ? <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block"/>Expirada</span>
+                        : <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600"><span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"/>Pendiente</span>
+                      }
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      {inv.tenantId && (
+                        <div className="flex items-center gap-2 justify-end">
+                          <form action={resendInvite}>
+                            <input type="hidden" name="user_id" value={inv.id} />
+                            <input type="hidden" name="email" value={inv.email} />
+                            <input type="hidden" name="tenant_id" value={inv.tenantId} />
+                            <button type="submit" className="text-xs font-medium px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors">
+                              Reenviar
+                            </button>
+                          </form>
+                          <form action={revokeInvite}>
+                            <input type="hidden" name="user_id" value={inv.id} />
+                            <input type="hidden" name="tenant_id" value={inv.tenantId} />
+                            <button type="submit" className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+                              Revocar
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div>
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-500">{t('users.count', { n: profiles?.length ?? 0 })}</p>
       </div>
@@ -94,6 +192,7 @@ export default async function SuperAdminUsersPage() {
             )}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   )

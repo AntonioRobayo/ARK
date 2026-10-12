@@ -168,6 +168,37 @@ export async function inviteAdmin(formData: FormData) {
   redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent(`Invitación enviada a ${email}`)}`)
 }
 
+export async function revokeInvite(formData: FormData) {
+  const adminClient = createAdminClient()
+  const userId   = formData.get('user_id') as string
+  const tenantId = formData.get('tenant_id') as string
+
+  await adminClient.auth.admin.deleteUser(userId)
+  await logEvent(tenantId, 'invite_revoked', { user_id: userId })
+  redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent('Invitación revocada')}`)
+}
+
+export async function resendInvite(formData: FormData) {
+  const adminClient = createAdminClient()
+  const userId   = formData.get('user_id') as string
+  const email    = formData.get('email') as string
+  const tenantId = formData.get('tenant_id') as string
+
+  await adminClient.auth.admin.deleteUser(userId)
+
+  const onboardingNext = encodeURIComponent(`/onboarding?tenant_id=${tenantId}`)
+  const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${onboardingNext}`,
+    data: { tenant_id: tenantId, role: 'admin' },
+  })
+
+  if (error) {
+    redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(error.message)}`)
+  }
+  await logEvent(tenantId, 'invite_resent', { email })
+  redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent(`Invitación reenviada a ${email}`)}`)
+}
+
 export async function toggleTenantStatus(formData: FormData) {
   const adminClient = createAdminClient()
   const id        = formData.get('id') as string
