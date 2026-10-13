@@ -13,6 +13,19 @@ export default async function SuperAdminUsersPage() {
     .select('id, first_name, last_name, is_platform_admin, tenant_id, tenants(name, slug)')
     .order('is_platform_admin', { ascending: false })
 
+  // All memberships grouped by user for multi-tenant display
+  const { data: allMemberships } = await adminClient
+    .from('user_tenant_membership')
+    .select('user_id, tenant_id, tenants(name)')
+    .eq('is_active', true)
+
+  const membershipsByUser = new Map<string, { tenant_id: string; name: string }[]>()
+  for (const m of allMemberships ?? []) {
+    const t = m.tenants as unknown as { name: string } | null
+    if (!membershipsByUser.has(m.user_id)) membershipsByUser.set(m.user_id, [])
+    membershipsByUser.get(m.user_id)!.push({ tenant_id: m.tenant_id, name: t?.name ?? m.tenant_id })
+  }
+
   const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const authUsers = usersData?.users ?? []
   const emailMap: Record<string, string> = Object.fromEntries(
@@ -154,15 +167,26 @@ export default async function SuperAdminUsersPage() {
                   </td>
                   <td className="px-5 py-3.5 text-gray-500 text-xs">{email || '—'}</td>
                   <td className="px-5 py-3.5">
-                    {tenant && p.tenant_id
-                      ? (
-                        <Link href={`/superadmin/tenants/${p.tenant_id}`}
-                          className="text-sm text-gray-700 hover:text-orange-600 transition-colors">
-                          {tenant.name}
-                        </Link>
+                    {(() => {
+                      const userMemberships = membershipsByUser.get(p.id) ?? []
+                      if (userMemberships.length === 0) {
+                        return <span className="text-gray-300 text-xs">{t('users.noWorkshop')}</span>
+                      }
+                      return (
+                        <div className="flex flex-wrap gap-1">
+                          {userMemberships.map(m => (
+                            <Link key={m.tenant_id} href={`/superadmin/tenants/${m.tenant_id}`}
+                              className={`text-xs px-2 py-0.5 rounded-full transition-colors ${
+                                m.tenant_id === p.tenant_id
+                                  ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium'
+                                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              }`}>
+                              {m.name}
+                            </Link>
+                          ))}
+                        </div>
                       )
-                      : <span className="text-gray-300 text-xs">{t('users.noWorkshop')}</span>
-                    }
+                    })()}
                   </td>
                   <td className="px-5 py-3.5">
                     {p.is_platform_admin

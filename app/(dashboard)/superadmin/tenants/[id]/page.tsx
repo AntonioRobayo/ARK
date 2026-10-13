@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { ImpersonatePanel } from './impersonate-panel'
-import { resetUserPassword, inviteAdmin, revokeInvite, resendInvite } from './actions'
+import { resetUserPassword, inviteAdmin, revokeInvite, resendInvite, removeMember } from './actions'
 
 export default async function TenantDetailPage({
   params,
@@ -29,15 +29,31 @@ export default async function TenantDetailPage({
 
   const t = await getTranslations('superadmin.tenantDetail')
 
-  // ── Users ─────────────────────────────────────────────────────────────────
-  const { data: profiles } = await adminClient
-    .from('user_profile')
-    .select('id, first_name, last_name, is_platform_admin')
+  // ── Users (from membership table) ─────────────────────────────────────────
+  const { data: members } = await adminClient
+    .from('user_tenant_membership')
+    .select('user_id, role, user_profile(id, first_name, last_name, is_platform_admin, tenant_id)')
     .eq('tenant_id', id)
+    .eq('is_active', true)
 
   const { data: authData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const authUsers = authData?.users ?? []
   const emailMap = new Map(authUsers.map(u => [u.id, u.email ?? '']))
+
+  // Normalise membership rows into a flat list
+  const profiles = (members ?? []).map(m => {
+    const p = m.user_profile as unknown as {
+      id: string; first_name: string; last_name: string | null
+      is_platform_admin: boolean; tenant_id: string | null
+    } | null
+    return {
+      id: m.user_id,
+      first_name: p?.first_name ?? '',
+      last_name: p?.last_name ?? '',
+      is_platform_admin: p?.is_platform_admin ?? false,
+      activeHere: p?.tenant_id === id,
+    }
+  })
 
   // Pending invites for this tenant (invited but not yet confirmed)
   const INVITE_EXPIRY_HOURS = 24
@@ -197,12 +213,12 @@ export default async function TenantDetailPage({
                 <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.user')}</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.email')}</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.role')}</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Estado</th>
                   <th className="px-5 py-3" />
                 </tr>
               </thead>
               <tbody>
-                {profiles?.map(p => {
+                {profiles.map(p => {
                   const email = emailMap.get(p.id) ?? '—'
                   const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ') || '—'
                   return (
@@ -218,25 +234,40 @@ export default async function TenantDetailPage({
                       </td>
                       <td className="px-5 py-3.5 text-gray-500 text-xs">{email}</td>
                       <td className="px-5 py-3.5">
-                        <span className="text-xs font-medium text-gray-500">
-                          {p.is_platform_admin ? 'Superadmin' : 'Admin'}
-                        </span>
+                        {p.activeHere
+                          ? <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />Activo aquí
+                            </span>
+                          : <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block" />Otro taller activo
+                            </span>
+                        }
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <form action={resetUserPassword}>
-                          <input type="hidden" name="user_id" value={p.id} />
-                          <input type="hidden" name="email" value={email} />
-                          <input type="hidden" name="tenant_id" value={id} />
-                          <button type="submit"
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                            {t('users.resetPassword')}
-                          </button>
-                        </form>
+                        <div className="flex items-center gap-2 justify-end">
+                          <form action={resetUserPassword}>
+                            <input type="hidden" name="user_id" value={p.id} />
+                            <input type="hidden" name="email" value={email} />
+                            <input type="hidden" name="tenant_id" value={id} />
+                            <button type="submit"
+                              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                              {t('users.resetPassword')}
+                            </button>
+                          </form>
+                          <form action={removeMember}>
+                            <input type="hidden" name="user_id" value={p.id} />
+                            <input type="hidden" name="tenant_id" value={id} />
+                            <button type="submit"
+                              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+                              Quitar
+                            </button>
+                          </form>
+                        </div>
                       </td>
                     </tr>
                   )
                 })}
-                {(!profiles || profiles.length === 0) && (
+                {profiles.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-5 py-12 text-center text-sm text-gray-400">
                       {t('users.noUsers')}

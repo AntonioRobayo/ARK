@@ -230,6 +230,29 @@ export async function resendInvite(formData: FormData) {
   redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent(`Invitación reenviada a ${email}`)}`)
 }
 
+export async function removeMember(formData: FormData) {
+  const adminClient = createAdminClient()
+  const userId   = formData.get('user_id') as string
+  const tenantId = formData.get('tenant_id') as string
+
+  // Deactivate membership
+  await adminClient
+    .from('user_tenant_membership')
+    .update({ is_active: false })
+    .eq('user_id', userId)
+    .eq('tenant_id', tenantId)
+
+  // If this was their active tenant, clear it
+  await adminClient
+    .from('user_profile')
+    .update({ tenant_id: null })
+    .eq('id', userId)
+    .eq('tenant_id', tenantId)
+
+  await logEvent(tenantId, 'member_removed', { user_id: userId })
+  redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent('Usuario removido del taller')}`)
+}
+
 export async function toggleTenantStatus(formData: FormData) {
   const adminClient = createAdminClient()
   const id        = formData.get('id') as string
