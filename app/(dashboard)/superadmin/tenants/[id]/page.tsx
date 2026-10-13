@@ -32,22 +32,31 @@ export default async function TenantDetailPage({
   // ── Users (from membership table) ─────────────────────────────────────────
   const { data: members } = await adminClient
     .from('user_tenant_membership')
-    .select('user_id, role, user_profile(id, first_name, last_name, is_platform_admin, tenant_id)')
+    .select('user_id, role')
     .eq('tenant_id', id)
     .eq('is_active', true)
+
+  const memberUserIds = (members ?? []).map(m => m.user_id)
 
   const { data: authData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const authUsers = authData?.users ?? []
   const emailMap = new Map(authUsers.map(u => [u.id, u.email ?? '']))
 
+  // Fetch profiles separately to avoid PostgREST cross-schema FK join issues
+  const { data: profileRows } = memberUserIds.length > 0
+    ? await adminClient
+        .from('user_profile')
+        .select('id, first_name, last_name, is_platform_admin, tenant_id')
+        .in('id', memberUserIds)
+    : { data: [] }
+
+  const profileMap = new Map((profileRows ?? []).map(p => [p.id, p]))
+
   // Normalise membership rows into a flat list
-  const profiles = (members ?? []).map(m => {
-    const p = m.user_profile as unknown as {
-      id: string; first_name: string; last_name: string | null
-      is_platform_admin: boolean; tenant_id: string | null
-    } | null
+  const profiles = memberUserIds.map(userId => {
+    const p = profileMap.get(userId)
     return {
-      id: m.user_id,
+      id: userId,
       first_name: p?.first_name ?? '',
       last_name: p?.last_name ?? '',
       is_platform_admin: p?.is_platform_admin ?? false,
