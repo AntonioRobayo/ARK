@@ -551,10 +551,22 @@
       "paymentMethodsDesc": "Cash, transfer, card, etc.",
       "cashRegisters": "Cash registers",
       "cashRegistersDesc": "Cash register points for payment recording",
+      "profile": "My profile",
+      "profileDesc": "Name, last name and contact phone",
       "password": "Change password",
       "passwordDesc": "Update your account password",
       "language": "Language",
       "languageDesc": "Change the interface language"
+    },
+    "profile": {
+      "title": "My profile",
+      "subtitle": "Personal information for your account",
+      "email": "Email address",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Phone",
+      "save": "Save changes",
+      "saved": "Profile updated successfully"
     },
     "services": {
       "back": "← Settings",

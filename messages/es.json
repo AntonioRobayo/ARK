@@ -551,10 +551,22 @@
       "paymentMethodsDesc": "Efectivo, transferencia, tarjeta, etc.",
       "cashRegisters": "Cajas",
       "cashRegistersDesc": "Puntos de caja para registro de pagos",
+      "profile": "Mi perfil",
+      "profileDesc": "Nombre, apellido y teléfono de contacto",
       "password": "Cambiar contraseña",
       "passwordDesc": "Actualiza la contraseña de tu cuenta",
       "language": "Idioma",
       "languageDesc": "Cambia el idioma de la interfaz"
+    },
+    "profile": {
+      "title": "Mi perfil",
+      "subtitle": "Información personal de tu cuenta",
+      "email": "Correo electrónico",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "phone": "Teléfono",
+      "save": "Guardar cambios",
+      "saved": "Perfil actualizado correctamente"
     },
     "services": {
       "back": "← Configuración",

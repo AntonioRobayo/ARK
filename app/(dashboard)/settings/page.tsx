@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 export default async function SettingsPage() {
   const t = await getTranslations('settings')
   const sections = [
+    { href: '/settings/profile',                 title: t('cards.profile'),        description: t('cards.profileDesc'),        icon: '👤' },
     { href: '/settings/services',                title: t('cards.services'),       description: t('cards.servicesDesc'),       icon: '🔧' },
     { href: '/settings/taxes',                   title: t('cards.taxes'),          description: t('cards.taxesDesc'),          icon: '📊' },
     { href: '/settings/payment-methods',         title: t('cards.paymentMethods'), description: t('cards.paymentMethodsDesc'), icon: '💳' },
