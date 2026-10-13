@@ -3,8 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { revokeInvite, resendInvite } from '../tenants/[id]/actions'
+import { sendRecoveryLink } from './actions'
 
-export default async function SuperAdminUsersPage() {
+export default async function SuperAdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; error?: string }>
+}) {
+  const { success, error: pageError } = await searchParams
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
@@ -56,6 +62,17 @@ export default async function SuperAdminUsersPage() {
 
   return (
     <div className="space-y-6">
+      {success && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
+          {decodeURIComponent(success)}
+        </div>
+      )}
+      {pageError && (
+        <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {decodeURIComponent(pageError)}
+        </div>
+      )}
+
       {/* Pending invites section */}
       {pendingInvites.length > 0 && (
         <div>
@@ -145,6 +162,7 @@ export default async function SuperAdminUsersPage() {
               <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.email')}</th>
               <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.workshop')}</th>
               <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('users.table.role')}</th>
+              <th className="px-5 py-3" />
             </tr>
           </thead>
           <tbody>
@@ -204,12 +222,23 @@ export default async function SuperAdminUsersPage() {
                       : <span className="text-xs font-medium text-gray-500">{t('users.roleAdmin')}</span>
                     }
                   </td>
+                  <td className="px-5 py-3.5 text-right">
+                    {!p.is_platform_admin && (
+                      <form action={sendRecoveryLink}>
+                        <input type="hidden" name="email" value={emailMap[p.id] ?? ''} />
+                        <button type="submit"
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap">
+                          Recuperar contraseña
+                        </button>
+                      </form>
+                    )}
+                  </td>
                 </tr>
               )
             })}
             {(!profiles || profiles.length === 0) && (
               <tr>
-                <td colSpan={4} className="px-5 py-12 text-center">
+                <td colSpan={5} className="px-5 py-12 text-center">
                   <p className="text-sm text-gray-400">{t('users.empty')}</p>
                 </td>
               </tr>
