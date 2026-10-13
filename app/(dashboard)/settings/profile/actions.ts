@@ -27,3 +27,30 @@ export async function updateProfile(formData: FormData) {
 
   redirect('/settings/profile?success=1')
 }
+
+export async function switchTenant(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const tenantId = formData.get('tenant_id') as string
+
+  // Verify the user actually has an active membership in this tenant
+  const { data: membership } = await supabase
+    .from('user_tenant_membership')
+    .select('is_active')
+    .eq('user_id', user.id)
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
+
+  if (!membership?.is_active) {
+    redirect('/settings/profile?error=' + encodeURIComponent('No tienes acceso a ese taller'))
+  }
+
+  await supabase
+    .from('user_profile')
+    .update({ tenant_id: tenantId })
+    .eq('id', user.id)
+
+  redirect('/dashboard')
+}

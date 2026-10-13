@@ -133,23 +133,32 @@ export async function inviteAdmin(formData: FormData) {
   const existingUser = existing?.users.find(u => u.email === email)
 
   if (existingUser?.confirmed_at) {
-    // User already has an active account — assign them to this tenant directly
+    // 1. Upsert membership (never overwrites active tenant)
+    const { error: membershipError } = await adminClient
+      .from('user_tenant_membership')
+      .upsert({ user_id: existingUser.id, tenant_id: tenantId, role: 'admin', is_active: true },
+               { onConflict: 'user_id,tenant_id' })
+    if (membershipError) {
+      redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(membershipError.message)}`)
+    }
+
+    // 2. Ensure user_profile exists; only set tenant_id if they have none
     const { data: existingProfile } = await adminClient
       .from('user_profile')
-      .select('id')
+      .select('id, tenant_id')
       .eq('id', existingUser.id)
       .maybeSingle()
 
-    let profileError
     if (existingProfile) {
-      // Profile exists — only update tenant/role fields, preserve name
-      const { error } = await adminClient
-        .from('user_profile')
-        .update({ tenant_id: tenantId, role: 'admin', is_active: true })
-        .eq('id', existingUser.id)
-      profileError = error
+      // If user has no active tenant yet, switch them to this one
+      if (!existingProfile.tenant_id) {
+        await adminClient
+          .from('user_profile')
+          .update({ tenant_id: tenantId })
+          .eq('id', existingUser.id)
+      }
     } else {
-      // No profile yet — insert with name from metadata or email prefix
+      // No profile at all — create one with this tenant as active
       const meta = existingUser.user_metadata as Record<string, unknown> | null
       const { error } = await adminClient
         .from('user_profile')
@@ -161,12 +170,11 @@ export async function inviteAdmin(formData: FormData) {
           first_name: (meta?.first_name as string) || (existingUser.email?.split('@')[0] ?? ''),
           last_name: (meta?.last_name as string) || '',
         })
-      profileError = error
+      if (error) {
+        redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(error.message)}`)
+      }
     }
 
-    if (profileError) {
-      redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(profileError.message)}`)
-    }
     await logEvent(tenantId, 'admin_assigned', { email, user_id: existingUser.id })
     redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent(`${email} asignado como admin del taller`)}`)
   }

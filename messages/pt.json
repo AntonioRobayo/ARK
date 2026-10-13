@@ -566,7 +566,11 @@
       "lastName": "Sobrenome",
       "phone": "Telefone",
       "save": "Salvar alterações",
-      "saved": "Perfil atualizado com sucesso"
+      "saved": "Perfil atualizado com sucesso",
+      "workshops": "Meus oficinas",
+      "workshopsDesc": "Oficinas às quais você tem acesso",
+      "active": "Ativo",
+      "switch": "Trocar"
     },
     "services": {
       "back": "← Configurações",

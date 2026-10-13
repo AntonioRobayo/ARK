@@ -566,7 +566,11 @@
       "lastName": "Last name",
       "phone": "Phone",
       "save": "Save changes",
-      "saved": "Profile updated successfully"
+      "saved": "Profile updated successfully",
+      "workshops": "My workshops",
+      "workshopsDesc": "Workshops you have access to",
+      "active": "Active",
+      "switch": "Switch"
     },
     "services": {
       "back": "← Settings",

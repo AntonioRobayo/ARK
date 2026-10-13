@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { updateProfile } from './actions'
+import { updateProfile, switchTenant } from './actions'
 import { getTranslations } from 'next-intl/server'
 
 export default async function ProfilePage({
@@ -16,9 +16,15 @@ export default async function ProfilePage({
 
   const { data: profile } = await supabase
     .from('user_profile')
-    .select('first_name, last_name, phone')
+    .select('first_name, last_name, phone, tenant_id')
     .eq('id', user.id)
     .single()
+
+  const { data: memberships } = await supabase
+    .from('user_tenant_membership')
+    .select('tenant_id, tenants(name, slug)')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
 
   const t = await getTranslations('settings.profile')
 
@@ -47,8 +53,8 @@ export default async function ProfilePage({
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        {/* Email — read only */}
+      {/* Personal info */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
         <div className="mb-5 pb-5 border-b border-gray-100">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t('email')}</p>
           <p className="text-sm text-gray-700">{user.email}</p>
@@ -95,7 +101,7 @@ export default async function ProfilePage({
             />
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <button
               type="submit"
               className="bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-6 rounded-lg text-sm transition-colors"
@@ -105,6 +111,46 @@ export default async function ProfilePage({
           </div>
         </form>
       </div>
+
+      {/* Workshops */}
+      {memberships && memberships.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-gray-100">
+            <p className="text-sm font-semibold text-gray-700">{t('workshops')}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('workshopsDesc')}</p>
+          </div>
+          <ul className="divide-y divide-gray-50">
+            {memberships.map(m => {
+              const tenant = m.tenants as unknown as { name: string; slug: string } | null
+              const isActive = m.tenant_id === profile?.tenant_id
+              return (
+                <li key={m.tenant_id} className="flex items-center gap-4 px-5 py-3.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{tenant?.name ?? m.tenant_id}</p>
+                    <p className="text-xs text-gray-400 font-mono">{tenant?.slug}</p>
+                  </div>
+                  {isActive ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                      {t('active')}
+                    </span>
+                  ) : (
+                    <form action={switchTenant}>
+                      <input type="hidden" name="tenant_id" value={m.tenant_id} />
+                      <button
+                        type="submit"
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                      >
+                        {t('switch')}
+                      </button>
+                    </form>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
