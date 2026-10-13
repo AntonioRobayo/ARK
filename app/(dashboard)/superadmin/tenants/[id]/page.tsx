@@ -29,40 +29,24 @@ export default async function TenantDetailPage({
 
   const t = await getTranslations('superadmin.tenantDetail')
 
-  // ── Users (from membership table) ─────────────────────────────────────────
+  // ── Users (via tenant_members view) ──────────────────────────────────────
   const { data: members } = await adminClient
-    .from('user_tenant_membership')
-    .select('user_id, role')
+    .from('tenant_members')
+    .select('user_id, role, first_name, last_name, is_platform_admin, active_tenant_id')
     .eq('tenant_id', id)
     .eq('is_active', true)
-
-  const memberUserIds = (members ?? []).map(m => m.user_id)
 
   const { data: authData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const authUsers = authData?.users ?? []
   const emailMap = new Map(authUsers.map(u => [u.id, u.email ?? '']))
 
-  // Fetch profiles separately to avoid PostgREST cross-schema FK join issues
-  const { data: profileRows } = memberUserIds.length > 0
-    ? await adminClient
-        .from('user_profile')
-        .select('id, first_name, last_name, is_platform_admin, tenant_id')
-        .in('id', memberUserIds)
-    : { data: [] }
-
-  const profileMap = new Map((profileRows ?? []).map(p => [p.id, p]))
-
-  // Normalise membership rows into a flat list
-  const profiles = memberUserIds.map(userId => {
-    const p = profileMap.get(userId)
-    return {
-      id: userId,
-      first_name: p?.first_name ?? '',
-      last_name: p?.last_name ?? '',
-      is_platform_admin: p?.is_platform_admin ?? false,
-      activeHere: p?.tenant_id === id,
-    }
-  })
+  const profiles = (members ?? []).map(m => ({
+    id: m.user_id,
+    first_name: m.first_name ?? '',
+    last_name: m.last_name ?? '',
+    is_platform_admin: m.is_platform_admin ?? false,
+    activeHere: m.active_tenant_id === id,
+  }))
 
   // Pending invites for this tenant (invited but not yet confirmed)
   const INVITE_EXPIRY_HOURS = 24
