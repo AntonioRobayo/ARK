@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 
 export async function createLicensePlan(formData: FormData) {
   const supabase = createAdminClient()
@@ -26,6 +27,7 @@ export async function createLicensePlan(formData: FormData) {
 
   const { error } = await supabase.from('license_plan').insert(payload)
   if (error) redirect('/superadmin/licenses/new?error=' + encodeURIComponent(error.message))
+  revalidatePath('/superadmin/licenses')
   redirect('/superadmin/licenses')
 }
 
@@ -52,5 +54,6 @@ export async function updateLicensePlan(id: string, formData: FormData) {
 
   const { error } = await supabase.from('license_plan').update(payload).eq('id', id)
   if (error) redirect(`/superadmin/licenses/${id}?error=` + encodeURIComponent(error.message))
+  revalidatePath('/superadmin/licenses')
   redirect('/superadmin/licenses')
 }
