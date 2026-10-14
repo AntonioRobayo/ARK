@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -17,7 +18,8 @@ export async function updateProfile(formData: FormData) {
     redirect('/settings/profile?error=' + encodeURIComponent('El nombre es requerido'))
   }
 
-  const { error } = await supabase
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
     .from('user_profile')
     .update({ first_name: firstName, last_name: lastName, phone: phone || null })
     .eq('id', user.id)
