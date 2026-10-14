@@ -9,9 +9,9 @@ import { LocalDate } from '@/components/local-date'
 export default async function SuperAdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; error?: string }>
+  searchParams: Promise<{ success?: string; error?: string; q?: string }>
 }) {
-  const { success, error: pageError } = await searchParams
+  const { success, error: pageError, q } = await searchParams
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
@@ -60,6 +60,15 @@ export default async function SuperAdminUsersPage({
   const tenantNameMap = new Map((tenants ?? []).map(t => [t.id, t.name]))
 
   const t = await getTranslations('superadmin')
+
+  const qLower = q?.toLowerCase().trim() ?? ''
+  const filteredProfiles = qLower
+    ? (profiles ?? []).filter(p => {
+        const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ').toLowerCase()
+        const email = (emailMap[p.id] ?? '').toLowerCase()
+        return fullName.includes(qLower) || email.includes(qLower)
+      })
+    : (profiles ?? [])
 
   return (
     <div className="space-y-6">
@@ -155,6 +164,26 @@ export default async function SuperAdminUsersPage({
         <p className="text-sm text-gray-500">{t('users.count', { n: profiles?.length ?? 0 })}</p>
       </div>
 
+      <form method="get" className="mb-4">
+        <div className="flex gap-2">
+          <input
+            name="q"
+            type="search"
+            defaultValue={q}
+            placeholder="Buscar por nombre o email…"
+            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+          />
+          <button type="submit" className="px-4 py-2 text-sm font-medium rounded-lg text-white transition-colors" style={{ backgroundColor: '#FF7316' }}>
+            Buscar
+          </button>
+          {q && (
+            <a href="?" className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+              Limpiar
+            </a>
+          )}
+        </div>
+      </form>
+
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -167,7 +196,7 @@ export default async function SuperAdminUsersPage({
             </tr>
           </thead>
           <tbody>
-            {profiles?.map(p => {
+            {filteredProfiles.map(p => {
               const tenant = p.tenants as unknown as { name: string; slug: string } | null
               const email = emailMap[p.id] ?? '—'
               const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ') || '—'
@@ -237,10 +266,12 @@ export default async function SuperAdminUsersPage({
                 </tr>
               )
             })}
-            {(!profiles || profiles.length === 0) && (
+            {filteredProfiles.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-5 py-12 text-center">
-                  <p className="text-sm text-gray-400">{t('users.empty')}</p>
+                  <p className="text-sm text-gray-400">
+                    {q ? `Sin resultados para "${q}"` : t('users.empty')}
+                  </p>
                 </td>
               </tr>
             )}
