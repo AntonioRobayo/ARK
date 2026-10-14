@@ -8,9 +8,12 @@ export async function sendRecoveryLink(formData: FormData) {
   const adminClient = createAdminClient()
   const email = formData.get('email') as string
 
+  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/recovery`
+
   const { data, error } = await adminClient.auth.admin.generateLink({
     type: 'recovery',
     email,
+    options: { redirectTo: callbackUrl },
   })
 
   if (error) {

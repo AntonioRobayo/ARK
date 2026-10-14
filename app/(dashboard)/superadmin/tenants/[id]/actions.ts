@@ -100,9 +100,12 @@ export async function resetUserPassword(formData: FormData) {
   const email    = formData.get('email') as string
   const tenantId = formData.get('tenant_id') as string
 
+  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/recovery`
+
   const { data, error } = await adminClient.auth.admin.generateLink({
     type: 'recovery',
     email,
+    options: { redirectTo: callbackUrl },
   })
 
   if (error) {
