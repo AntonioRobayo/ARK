@@ -58,10 +58,11 @@ export default async function LicensesPage() {
               <div className="mb-1">
                 <div className="text-2xl font-bold text-gray-900">
                   {formatUSD(Number(plan.price_per_user))}
+                  <span className="text-xs font-semibold text-gray-400 ml-1.5 bg-gray-100 px-1.5 py-0.5 rounded">USD</span>
                   <span className="text-sm font-normal text-gray-400 ml-1">{t('licenses.perUserMonth')}</span>
                 </div>
                 {plan.min_monthly && (
-                  <p className="text-xs text-gray-400 mt-0.5">{t('licenses.minMonthly')} {formatUSD(Number(plan.min_monthly))}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{t('licenses.minMonthly')} {formatUSD(Number(plan.min_monthly))} USD</p>
                 )}
                 {copRate && (
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -93,7 +94,7 @@ export default async function LicensesPage() {
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     {t('licenses.extraBranch')}
                   </span>
-                  <span className="font-semibold text-gray-800">{formatUSD(Number(plan.price_per_extra_branch))}</span>
+                  <span className="font-semibold text-gray-800">{formatUSD(Number(plan.price_per_extra_branch))} <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">USD</span></span>
                 </div>
               )}
             </div>
