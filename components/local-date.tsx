@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 interface LocalDateProps {
   date: string | Date
   options?: Intl.DateTimeFormatOptions
@@ -21,12 +23,20 @@ const DATE_OPTIONS: Intl.DateTimeFormatOptions = {
 }
 
 export function LocalDate({ date, options = DATETIME_OPTIONS, className }: LocalDateProps) {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return (
-    <span suppressHydrationWarning className={className}>
-      {d.toLocaleString(undefined, options)}
-    </span>
-  )
+  const [formatted, setFormatted] = useState<string | null>(null)
+
+  useEffect(() => {
+    const d = typeof date === 'string' ? new Date(date) : date
+    setFormatted(d.toLocaleString(undefined, options))
+  }, [date])
+
+  if (formatted === null) {
+    // Server render placeholder — same date, UTC, no timezone ambiguity shown
+    const d = typeof date === 'string' ? new Date(date) : date
+    return <span className={className}>{d.toISOString().replace('T', ' ').slice(0, 16)} UTC</span>
+  }
+
+  return <span className={className}>{formatted}</span>
 }
 
 export function LocalDateOnly({ date, options = DATE_OPTIONS, className }: LocalDateProps) {
