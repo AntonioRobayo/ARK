@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { recordPayment, voidInvoice } from './actions'
 import { getTranslations } from 'next-intl/server'
+import { LocalDateOnly } from '@/components/local-date'
 
 const STATUS_CLS: Record<string, string> = {
   draft:          'bg-gray-50 text-gray-500',
@@ -83,11 +84,11 @@ export default async function InvoiceDetailPage({
               <div className="text-right">
                 <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{t('detail.issued')}</p>
                 <p className="text-sm text-gray-700">
-                  {invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' }) : '—'}
+                  {invoice.issued_at ? <LocalDateOnly date={invoice.issued_at} options={{ day:'2-digit', month:'long', year:'numeric' }} /> : '—'}
                 </p>
                 {invoice.due_at && (
                   <p className="text-xs text-gray-400 mt-1">
-                    {t('detail.due')} {new Date(invoice.due_at).toLocaleDateString('es-CO', { day:'2-digit', month:'long' })}
+                    {t('detail.due')} <LocalDateOnly date={invoice.due_at} options={{ day:'2-digit', month:'long' }} />
                   </p>
                 )}
               </div>
@@ -156,7 +157,7 @@ export default async function InvoiceDetailPage({
                       {p.reference && <span className="text-gray-400 text-xs ml-2">{t('detail.ref')} {p.reference}</span>}
                     </div>
                     <span className="text-gray-400 text-xs">
-                      {new Date(p.payment_date).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' })}
+                      <LocalDateOnly date={p.payment_date} options={{ day:'2-digit', month:'short', year:'numeric' }} />
                     </span>
                   </div>
                 ))}

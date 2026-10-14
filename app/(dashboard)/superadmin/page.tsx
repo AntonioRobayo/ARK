@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { toggleTenantStatus, extendLicense } from './tenants/[id]/actions'
 import { getTranslations } from 'next-intl/server'
 import { calculateMonthly, formatUSD } from '@/lib/billing'
+import { LocalDateOnly } from '@/components/local-date'
 
 type LicensePlan = {
   name: string
@@ -134,7 +135,7 @@ export default async function SuperAdminPage({
           ? t('workshops.expiredDays', { n: Math.abs(daysLeft) })
           : isWarning
             ? t('workshops.expiresSoon', { n: daysLeft })
-            : date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+            : <LocalDateOnly date={date} options={{ day: '2-digit', month: 'short', year: 'numeric' }} />}
       </span>
     )
   }
@@ -336,7 +337,7 @@ export default async function SuperAdminPage({
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-gray-400 text-xs">
-                      {new Date(tenant.created_at).toLocaleDateString('es-CO')}
+                      <LocalDateOnly date={tenant.created_at} />
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2 justify-end flex-wrap">

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { STATUS_LABEL, STATUS_COLOR, PRIORITY_COLOR, PRIORITY_LABEL } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
 import { getTranslations } from 'next-intl/server'
+import { LocalDateOnly } from '@/components/local-date'
 
 const STATUS_GROUP_DEFS = [
   { key: 'active',  tKey: 'tabs.active',    statuses: ['draft','received','in_diagnosis','quotation_sent','awaiting_authorization','authorized','in_execution'] },
@@ -146,7 +147,7 @@ export default async function WorkOrdersPage({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs">
-                    {new Date(ot.created_at).toLocaleDateString('es-CO', { day:'2-digit', month:'short' })}
+                    <LocalDateOnly date={ot.created_at} options={{ day:'2-digit', month:'short' }} />
                   </td>
                 </tr>
               ))}

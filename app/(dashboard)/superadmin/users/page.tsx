@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { revokeInvite, resendInvite } from '../tenants/[id]/actions'
 import { sendRecoveryLink } from './actions'
+import { LocalDate } from '@/components/local-date'
 
 export default async function SuperAdminUsersPage({
   searchParams,
@@ -112,7 +113,7 @@ export default async function SuperAdminUsersPage({
                       }
                     </td>
                     <td className="px-5 py-3.5 text-xs text-gray-500">
-                      {inv.invitedAt.toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <LocalDate date={inv.invitedAt} />
                     </td>
                     <td className="px-5 py-3.5">
                       {inv.expired

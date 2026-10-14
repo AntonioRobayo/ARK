@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { LocalDateOnly } from '@/components/local-date'
 
 const INVOICE_STATUS_CLS: Record<string, string> = {
   draft:           'bg-gray-50 text-gray-500',
@@ -123,7 +124,7 @@ export default async function BillingPage({
                       ${saldo.toLocaleString('es-CO')}
                     </td>
                     <td className="px-4 py-3 text-right text-gray-400 text-xs">
-                      {new Date(inv.created_at).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' })}
+                      <LocalDateOnly date={inv.created_at} options={{ day:'2-digit', month:'short', year:'numeric' }} />
                     </td>
                   </tr>
                 )

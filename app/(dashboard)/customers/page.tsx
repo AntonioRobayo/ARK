@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { LocalDateOnly } from '@/components/local-date'
 
 export default async function CustomersPage({
   searchParams,
@@ -88,7 +89,7 @@ export default async function CustomersPage({
                       : <span className="text-gray-300 text-xs">—</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs">
-                    {new Date(c.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    <LocalDateOnly date={c.created_at} options={{ day: '2-digit', month: 'short', year: 'numeric' }} />
                   </td>
                 </tr>
               ))}

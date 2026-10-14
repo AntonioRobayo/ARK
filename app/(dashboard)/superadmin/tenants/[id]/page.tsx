@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { ImpersonatePanel } from './impersonate-panel'
+import { LocalDate, LocalDateOnly } from '@/components/local-date'
 import { resetUserPassword, inviteAdmin, revokeInvite, resendInvite, removeMember } from './actions'
 
 export default async function TenantDetailPage({
@@ -166,7 +167,7 @@ export default async function TenantDetailPage({
                         </div>
                       </td>
                       <td className="px-5 py-3 text-xs text-gray-500">
-                        Enviada {inv.invitedAt.toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        Enviada <LocalDate date={inv.invitedAt} options={{ day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }} />
                       </td>
                       <td className="px-5 py-3">
                         {inv.expired
@@ -297,7 +298,7 @@ export default async function TenantDetailPage({
                         {actorEmail && <p className="text-xs text-gray-400 mt-0.5">por {actorEmail}</p>}
                       </div>
                       <time className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
-                        {new Date(log.created_at).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        <LocalDate date={log.created_at} />
                       </time>
                     </div>
                   )

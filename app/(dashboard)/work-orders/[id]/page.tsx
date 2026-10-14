@@ -6,6 +6,7 @@ import {
 } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
 import { changeStatus } from './actions'
+import { LocalDate, LocalDateOnly } from '@/components/local-date'
 import { getTranslations } from 'next-intl/server'
 
 export default async function WorkOrderDetailPage({
@@ -80,7 +81,7 @@ export default async function WorkOrderDetailPage({
               </span>
             </div>
             <p className="text-sm text-gray-400 mt-0.5">
-              {ot.branch?.name} · Creada {new Date(ot.created_at).toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' })}
+              {ot.branch?.name} · Creada <LocalDateOnly date={ot.created_at} options={{ day:'2-digit', month:'long', year:'numeric' }} />
             </p>
           </div>
         </div>
@@ -176,7 +177,7 @@ export default async function WorkOrderDetailPage({
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <p className="text-xs text-gray-400">{t('detail.estimatedDelivery')}</p>
                 <p className="text-sm font-medium text-gray-700 mt-0.5">
-                  {new Date(ot.estimated_delivery_at).toLocaleString('es-CO', { day:'2-digit', month:'long', hour:'2-digit', minute:'2-digit' })}
+                  <LocalDate date={ot.estimated_delivery_at} options={{ day:'2-digit', month:'long', hour:'2-digit', minute:'2-digit' }} />
                 </p>
               </div>
             )}
@@ -353,7 +354,7 @@ export default async function WorkOrderDetailPage({
                       </p>
                       {log.reason && <p className="text-xs text-gray-400 mt-0.5 truncate">{log.reason}</p>}
                       <p className="text-xs text-gray-300 mt-0.5">
-                        {new Date(log.created_at).toLocaleString('es-CO', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
+                        <LocalDate date={log.created_at} options={{ day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }} />
                       </p>
                     </div>
                   </div>

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { STATUS_COLOR, STATUS_LABEL } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
 import { getTranslations } from 'next-intl/server'
+import { LocalDate, LocalDateOnly } from '@/components/local-date'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -44,7 +45,7 @@ export default async function DashboardPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {now.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          <LocalDateOnly date={now} options={{ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }} />
         </p>
       </div>
 
@@ -98,7 +99,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-700">{ot.vehicle?.plate} · {ot.customer?.first_name} {ot.customer?.last_name}</p>
-                    <p className="text-xs text-gray-400">{new Date(ot.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}</p>
+                    <p className="text-xs text-gray-400"><LocalDateOnly date={ot.created_at} options={{ day: '2-digit', month: 'short' }} /></p>
                   </div>
                 </Link>
               ))}
