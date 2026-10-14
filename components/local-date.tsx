@@ -29,6 +29,6 @@ export function LocalDate({ date, options = DATETIME_OPTIONS, className }: Local
   )
 }
 
-export function LocalDateOnly({ date, className }: { date: string | Date; className?: string }) {
-  return <LocalDate date={date} options={DATE_OPTIONS} className={className} />
+export function LocalDateOnly({ date, options = DATE_OPTIONS, className }: LocalDateProps) {
+  return <LocalDate date={date} options={options} className={className} />
 }
