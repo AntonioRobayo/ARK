@@ -47,7 +47,7 @@ export async function updateLicensePlan(id: string, formData: FormData) {
     price_per_extra_branch: perBranch2 > 0 ? perBranch2 : null,
     price_monthly:          0,
     currency:               'USD',
-    is_active:              formData.get('is_active') === 'true',
+    is_active:              formData.getAll('is_active').includes('true'),
     sort_order:             Number(formData.get('sort_order') || 99),
     updated_at:             new Date().toISOString(),
   }
