@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { toggleAnnouncement } from './actions'
+import { LocalDate } from '@/components/local-date'
 
 const TYPE_COLORS: Record<string, string> = {
   info:        'bg-blue-50 text-blue-700',
@@ -77,8 +78,10 @@ export default async function AnnouncementsPage({
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-xs text-gray-500">
-                    <span>{new Date(ann.starts_at).toLocaleDateString('es-CO')}</span>
-                    {ann.ends_at && <span> → {new Date(ann.ends_at).toLocaleDateString('es-CO')}</span>}
+                    <LocalDate date={ann.starts_at} options={{ day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }} />
+                    {ann.ends_at && (
+                      <> → <LocalDate date={ann.ends_at} options={{ day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }} /></>
+                    )}
                   </td>
                   <td className="px-5 py-3.5">
                     <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${effectivelyActive ? 'text-emerald-600' : 'text-gray-400'}`}>
