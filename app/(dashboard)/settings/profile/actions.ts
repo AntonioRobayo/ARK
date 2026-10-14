@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 
 export async function updateProfile(formData: FormData) {
   const supabase = await createClient()
@@ -25,6 +26,7 @@ export async function updateProfile(formData: FormData) {
     redirect('/settings/profile?error=' + encodeURIComponent(error.message))
   }
 
+  revalidatePath('/', 'layout')
   redirect('/settings/profile?success=1')
 }
 

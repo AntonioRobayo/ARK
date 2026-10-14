@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { updateProfile, switchTenant } from './actions'
 import { getTranslations } from 'next-intl/server'
@@ -20,7 +21,8 @@ export default async function ProfilePage({
     .eq('id', user.id)
     .single()
 
-  const { data: memberships } = await supabase
+  const adminClient = createAdminClient()
+  const { data: memberships } = await adminClient
     .from('user_tenant_membership')
     .select('tenant_id, tenants(name, slug)')
     .eq('user_id', user.id)
