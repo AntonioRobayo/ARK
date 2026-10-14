@@ -70,7 +70,7 @@ function UserInfo({ firstName, lastName, email, isSuperadmin, locale = 'es', ten
           {isSuperadmin
             ? <span className="text-xs font-semibold" style={{ color: '#FF7316' }}>{t('superadminBadge')}</span>
             : tenantName
-              ? <span className="text-xs truncate block" style={{ color: 'rgba(255,255,255,0.4)' }}>{tenantName}</span>
+              ? <span className="text-xs font-medium truncate block" style={{ color: '#FF7316' }}>{tenantName}</span>
               : null
           }
         </div>
