@@ -164,6 +164,22 @@
       "scheduleAppointment": "Agendar próxima cita",
       "statusHistory": "Historial de estados",
       "noHistory": "Sin historial"
+    },
+    "time": {
+      "title": "Tiempo registrado",
+      "start": "Iniciar cronómetro",
+      "stop": "Finalizar",
+      "total": "Total",
+      "active": "En curso",
+      "notes": "Nota (opcional)",
+      "noEntries": "Sin registros"
+    },
+    "statusTransition": {
+      "reason": "Motivo",
+      "reasonPlaceholder": "Explica el motivo (opcional)",
+      "reasonRequired": "Ingresa el motivo para cancelar",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar"
     }
   },
   "quotation": {
@@ -536,8 +552,14 @@
     "paidInvoices": "{n} facturas pagadas",
     "otsThisMonth": "OTs este mes",
     "otsClosed": "{n} cerradas",
+    "openOTs": "OTs abiertas",
+    "avgTicket": "Ticket promedio",
     "otsByStatus": "OTs por estado",
-    "topServices": "Servicios más facturados"
+    "topServices": "Servicios más facturados",
+    "techProductivity": "Productividad técnicos",
+    "techName": "Técnico",
+    "otsClosedLabel": "OTs cerradas",
+    "revenue": "Ingresos"
   },
   "settings": {
     "title": "Configuración",
@@ -556,7 +578,11 @@
       "password": "Cambiar contraseña",
       "passwordDesc": "Actualiza la contraseña de tu cuenta",
       "language": "Idioma",
-      "languageDesc": "Cambia el idioma de la interfaz"
+      "languageDesc": "Cambia el idioma de la interfaz",
+      "integrations": "Integraciones",
+      "integrationsDesc": "Conecta Google Drive y otros servicios externos",
+      "branches": "Sucursales",
+      "branchesDesc": "Gestiona las ubicaciones físicas de tu taller"
     },
     "profile": {
       "title": "Mi perfil",
@@ -684,6 +710,139 @@
         "en": "English",
         "pt": "Português"
       }
+    },
+    "users": {
+      "title": "Usuarios del taller",
+      "subtitle": "Gestiona los miembros y sus roles",
+      "inviteBtn": "+ Invitar usuario",
+      "cancelBtn": "Cancelar",
+      "inviteTitle": "Invitar nuevo usuario",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "usuario@ejemplo.com",
+      "roleLabel": "Rol",
+      "sendInvite": "Enviar invitación",
+      "invited": "Invitación enviada correctamente",
+      "inviteError": "No se pudo enviar la invitación",
+      "table": {
+        "member": "Miembro",
+        "email": "Email",
+        "role": "Rol",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "roles": {
+        "owner": "Dueño",
+        "shop_manager": "Jefe de taller",
+        "mechanic": "Mecánico",
+        "receptionist": "Recepcionista",
+        "parts_manager": "Jefe de piezas",
+        "accountant": "Contabilidad",
+        "unknown": "Sin rol"
+      },
+      "statusActive": "Activo",
+      "statusInactive": "Inactivo",
+      "deactivate": "Desactivar",
+      "reactivate": "Reactivar",
+      "empty": "Sin miembros aún",
+      "ownerProtected": "El dueño no puede ser desactivado"
+    },
+    "integrations": {
+      "title": "Integraciones",
+      "subtitle": "Conecta servicios externos con tu taller",
+      "back": "← Configuración",
+      "connected": "Conectado",
+      "notConnected": "No conectado",
+      "googleDriveTitle": "Google Drive",
+      "googleDriveDesc": "Almacena fotos y adjuntos de OTs en tu Google Drive",
+      "connectedAccount": "Cuenta conectada",
+      "connectedAt": "Conectado el",
+      "storageAvailable": "Almacenamiento disponible",
+      "storageFree": "{free} libres de {total}",
+      "quotaCritical": "⛔ Espacio crítico — las subidas están bloqueadas. Libera espacio en Drive.",
+      "quotaLow": "⚠ Espacio bajo — considera liberar espacio pronto.",
+      "connectBtn": "Conectar con Google Drive",
+      "reconnectBtn": "Reconectar cuenta",
+      "disconnectBtn": "Desconectar Drive",
+      "featureStructured": "Carpetas organizadas por vehículo y etapa de la OT",
+      "featureCompression": "Compresión automática de fotos (3 MB → ~400 KB)",
+      "featureQuota": "Control de cuota: aviso antes de quedarse sin espacio",
+      "featureThumbnails": "Acceso a miniaturas desde el portal del cliente",
+      "successConnected": "Google Drive conectado correctamente.",
+      "errorDenied": "Permiso de Google Drive denegado.",
+      "errorNoRefresh": "No se recibió el token de actualización. Intenta de nuevo.",
+      "errorTokenFailed": "Error al obtener el token de Google. Intenta de nuevo.",
+      "errorGeneric": "Error: {code}",
+      "manualsTitle": "Manuales del taller",
+      "manualsDesc": "Procedimientos, formatos, capacitación y seguridad"
+    },
+    "manuals": {
+      "title": "Manuales del taller",
+      "subtitle": "Documentación interna — procedimientos, formatos, capacitación",
+      "back": "← Integraciones",
+      "noDrive": "Debes {link} para gestionar los manuales.",
+      "noDriveLink": "conectar Google Drive",
+      "empty": "Sin archivos en esta sección",
+      "uploading": "Subiendo…",
+      "uploadBtn": "Subir a {section}",
+      "uploadErrorQuota": "Sin espacio en Drive",
+      "uploadErrorGeneric": "Error al subir \"{name}\"",
+      "sections": {
+        "procedimientos": "Procedimientos",
+        "formatos": "Formatos",
+        "capacitacion": "Capacitación",
+        "seguridad": "Seguridad",
+        "garantias": "Garantías",
+        "contratos": "Contratos"
+      },
+      "sectionDescs": {
+        "procedimientos": "SOPs de recepción, diagnóstico, entrega y calidad",
+        "formatos": "Plantillas de OT en papel, formatos de custodia",
+        "capacitacion": "Fichas técnicas, tutoriales y guías de diagnóstico",
+        "seguridad": "Fichas FDS/MSDS, reglamento interno, EPP",
+        "garantias": "Comprobantes de garantía de repuestos instalados",
+        "contratos": "Contratos con proveedores y aliados"
+      }
+    },
+    "branches": {
+      "title": "Sucursales",
+      "subtitle": "Gestiona las ubicaciones físicas de tu taller",
+      "back": "← Configuración",
+      "addBtn": "+ Nueva sucursal",
+      "cancelBtn": "Cancelar",
+      "saveBtn": "Guardar",
+      "newTitle": "Nueva sucursal",
+      "editTitle": "Editar sucursal",
+      "nameLabel": "Nombre *",
+      "namePlaceholder": "Ej. Sede norte",
+      "addressLabel": "Dirección",
+      "addressPlaceholder": "Calle 123 # 45-67",
+      "cityLabel": "Ciudad",
+      "cityPlaceholder": "Bogotá",
+      "phoneLabel": "Teléfono",
+      "phonePlaceholder": "+57 300 000 0000",
+      "emailLabel": "Email",
+      "emailPlaceholder": "sucursal@taller.com",
+      "table": {
+        "name": "Nombre",
+        "city": "Ciudad",
+        "phone": "Teléfono",
+        "status": "Estado"
+      },
+      "mainBadge": "Principal",
+      "activeBadge": "Activa",
+      "inactiveBadge": "Inactiva",
+      "setMain": "Marcar como principal",
+      "deactivate": "Desactivar",
+      "reactivate": "Reactivar",
+      "edit": "Editar",
+      "empty": "No hay sucursales registradas",
+      "noPermission": "Solo el dueño o jefe de taller pueden gestionar sucursales",
+      "cannotDeactivateMain": "La sucursal principal no puede desactivarse",
+      "errorSave": "No se pudo guardar la sucursal",
+      "successCreated": "Sucursal creada correctamente",
+      "successUpdated": "Sucursal actualizada correctamente",
+      "successMain": "Sucursal marcada como principal",
+      "successToggle": "Estado actualizado correctamente"
     }
   },
   "auth": {
@@ -1164,6 +1323,18 @@
         }
       }
     }
+  },
+  "client": {
+    "appointments": "Mis citas",
+    "bookAppointment": "Solicitar cita",
+    "upcomingAppointments": "Próximas citas",
+    "pastAppointments": "Historial",
+    "noAppointments": "No tienes citas agendadas",
+    "appointmentBooked": "¡Cita solicitada! El taller te confirmará el horario.",
+    "vehicle": "Vehículo",
+    "serviceReason": "Servicio / motivo",
+    "preferredDateTime": "Fecha y hora preferida",
+    "additionalNotes": "Notas adicionales (opcional)"
   },
   "common": {
     "back": "← Volver",

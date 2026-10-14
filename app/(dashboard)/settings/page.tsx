@@ -11,6 +11,8 @@ export default async function SettingsPage() {
     { href: '/settings/cash-registers',          title: t('cards.cashRegisters'),  description: t('cards.cashRegistersDesc'),  icon: '🏧' },
     { href: '/auth/update-password?from=settings', title: t('cards.password'),     description: t('cards.passwordDesc'),       icon: '🔑' },
     { href: '/settings/language',                title: t('cards.language'),       description: t('cards.languageDesc'),       icon: '🌐' },
+    { href: '/settings/integrations',            title: t('cards.integrations'),   description: t('cards.integrationsDesc'),   icon: '🔗' },
+    { href: '/settings/branches',               title: t('cards.branches'),       description: t('cards.branchesDesc'),       icon: '🏢' },
   ]
 
   return (

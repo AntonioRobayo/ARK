@@ -63,6 +63,50 @@ export interface Tenant {
   is_active: boolean
   created_at: string
   updated_at: string
+  // Google Drive integration
+  gdrive_enabled: boolean
+  gdrive_refresh_token: string | null
+  gdrive_root_folder_id: string | null
+  gdrive_connected_email: string | null
+  gdrive_connected_at: string | null
+  gdrive_quota_warning: boolean
+}
+
+export type DriveSection =
+  | 'recepcion'
+  | 'diagnostico'
+  | 'trabajo'
+  | 'repuestos'
+  | 'entrega'
+  | 'custodia'
+  | 'documentos'
+
+export interface WorkOrderDriveAttachment {
+  id: string
+  tenant_id: string
+  work_order_id: string | null
+  vehicle_id: string | null
+  section: DriveSection
+  drive_file_id: string
+  drive_thumb_url: string | null
+  original_name: string
+  mime_type: string
+  size_kb: number | null
+  uploaded_by: string | null
+  created_at: string
+}
+
+export interface VehicleDriveFolders {
+  id: string
+  tenant_id: string
+  vehicle_id: string
+  root_folder_id: string
+  reception_folder_id: string | null
+  custodia_folder_id: string | null
+  documents_folder_id: string | null
+  ot_folder_map: Json
+  created_at: string
+  updated_at: string
 }
 
 export interface Branch {
@@ -193,6 +237,32 @@ export interface InventoryStock {
   quantity_on_hand: number
   quantity_reserved: number
   updated_at: string
+}
+
+export interface InventoryLocation {
+  id: string
+  tenant_id: string
+  branch_id: string
+  name: string
+  type: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface InventoryMovement {
+  id: string
+  tenant_id: string
+  item_id: string
+  location_id: string
+  movement_type: MovementType
+  quantity: number
+  unit_cost: number | null
+  reference_type: string | null
+  reference_id: string | null
+  work_order_id: string | null
+  performed_by: string | null
+  notes: string | null
+  created_at: string
 }
 
 export interface Invoice {

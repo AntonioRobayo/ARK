@@ -5,9 +5,11 @@ import {
   STATUS_LABEL, STATUS_COLOR, PRIORITY_LABEL, PRIORITY_COLOR, STATUS_TRANSITIONS,
 } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
-import { changeStatus } from './actions'
 import { LocalDate, LocalDateOnly } from '@/components/local-date'
 import { getTranslations } from 'next-intl/server'
+import { StatusTransitionButtons } from '@/components/work-orders/StatusTransitionButtons'
+import { TimeTracker } from '@/components/work-orders/TimeTracker'
+import { OTGallery } from '@/components/work-orders/OTGallery'
 
 export default async function WorkOrderDetailPage({
   params,
@@ -22,6 +24,9 @@ export default async function WorkOrderDetailPage({
     { data: statusLog },
     { data: quotations },
     { data: invoices },
+    { data: timeEntries },
+    { data: { user } },
+    { data: driveAttachments },
   ] = await Promise.all([
     supabase
       .from('work_order')
@@ -53,13 +58,41 @@ export default async function WorkOrderDetailPage({
       .select('id, number, status, total, paid_amount')
       .eq('work_order_id', id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('work_order_time_log')
+      .select('id, technician_id, started_at, ended_at, minutes, notes')
+      .eq('work_order_id', id)
+      .order('started_at', { ascending: false }),
+    supabase.auth.getUser(),
+    supabase
+      .from('work_order_drive_attachment')
+      .select('id, section, drive_file_id, drive_thumb_url, original_name, mime_type, size_kb, created_at')
+      .eq('work_order_id', id)
+      .order('created_at', { ascending: true }),
   ])
 
   if (!ot) notFound()
 
+  // Check if Drive is enabled for this tenant
+  const userId = user?.id
+  let driveEnabled = false
+  if (userId) {
+    const { data: profile } = await supabase.from('user_profile').select('tenant_id').eq('id', userId).single()
+    if (profile?.tenant_id) {
+      const { createAdminClient } = await import('@/lib/supabase/admin')
+      const { data: tenantDrive } = await createAdminClient()
+        .from('tenants')
+        .select('gdrive_enabled')
+        .eq('id', profile.tenant_id)
+        .single()
+      driveEnabled = tenantDrive?.gdrive_enabled ?? false
+    }
+  }
+
   const t = await getTranslations('workOrders')
   const transitions = STATUS_TRANSITIONS[ot.status as WorkOrderStatus] ?? []
   const activeQuotation = (quotations ?? [])[0] ?? null
+  const totalMinutes = (timeEntries ?? []).reduce((s, e) => s + (e.minutes ?? 0), 0)
   const items = activeQuotation?.quotation_item ?? []
   const totalServices = items.reduce((s: number, i: any) => s + (i.subtotal ?? 0), 0)
   const activeInvoice = (invoices ?? [])[0] ?? null
@@ -87,26 +120,7 @@ export default async function WorkOrderDetailPage({
         </div>
 
         {/* Acciones de estado */}
-        {transitions.length > 0 && (
-          <div className="flex gap-2 flex-wrap">
-            {transitions.map(toStatus => (
-              <form key={toStatus} action={changeStatus}>
-                <input type="hidden" name="ot_id" value={ot.id} />
-                <input type="hidden" name="to_status" value={toStatus} />
-                <button
-                  type="submit"
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                    toStatus === 'cancelled'
-                      ? 'border-red-200 text-red-600 hover:bg-red-50'
-                      : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  → {STATUS_LABEL[toStatus]}
-                </button>
-              </form>
-            ))}
-          </div>
-        )}
+        <StatusTransitionButtons otId={ot.id} transitions={transitions} />
       </div>
 
       <div className="grid grid-cols-3 gap-5">
@@ -332,6 +346,28 @@ export default async function WorkOrderDetailPage({
                 <span>📅</span> {t('detail.scheduleAppointment')}
               </Link>
             </div>
+          </div>
+
+          {/* Tiempo registrado */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('time.title')}</p>
+            <TimeTracker
+              otId={id}
+              currentUserId={user?.id ?? ''}
+              timeEntries={timeEntries ?? []}
+              totalMinutes={totalMinutes}
+            />
+          </div>
+
+          {/* Fotos / Drive */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Fotos</p>
+            <OTGallery
+              workOrderId={id}
+              vehicleId={ot.vehicle_id}
+              attachments={(driveAttachments ?? []) as any[]}
+              driveEnabled={driveEnabled}
+            />
           </div>
 
           {/* Timeline */}
