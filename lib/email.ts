@@ -1,29 +1,9 @@
-import nodemailer from 'nodemailer'
-
-function createTransporter() {
-  return nodemailer.createTransport({
-    host:   process.env.EMAIL_HOST,
-    port:   Number(process.env.EMAIL_PORT ?? 465),
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    authMethod:        'PLAIN',
-    tls: {
-      rejectUnauthorized: false,
-      secureProtocol:     'TLSv1_2_method',
-    },
-    connectionTimeout: 60000,
-    greetingTimeout:   30000,
-    socketTimeout:     60000,
-  })
-}
+import { Resend } from 'resend'
 
 const FROM = () =>
-  `"${process.env.EMAIL_FROM_NAME ?? 'ARK Workshop'}" <${process.env.EMAIL_FROM_EMAIL}>`
+  `"${process.env.EMAIL_FROM_NAME ?? 'ARK Workshop'}" <${process.env.EMAIL_FROM_EMAIL ?? 'noreply@devassetsconsulting.com'}>`
 
-const SUPPORT_EMAIL = () => process.env.EMAIL_FROM_EMAIL ?? 'soporte@arkworkshop.app'
+const SUPPORT_EMAIL = () => process.env.EMAIL_FROM_EMAIL ?? 'soporte@devassetsconsulting.com'
 
 const LOGO_URL     = 'https://rjcumppemoonwoolqmpz.supabase.co/storage/v1/object/public/assets/email/logo-ark-slogan.png'
 const DA_LOGO_URL  = 'https://rjcumppemoonwoolqmpz.supabase.co/storage/v1/object/public/assets/email/logo-da.png'
@@ -36,14 +16,15 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
-  const transporter = createTransporter()
-  await transporter.sendMail({
+  const resend = new Resend(process.env.RESEND_API_KEY)
+  const { error } = await resend.emails.send({
     from:    FROM(),
-    to:      Array.isArray(to) ? to.join(', ') : to,
+    to:      Array.isArray(to) ? to : [to],
     subject,
     html,
     text,
   })
+  if (error) throw new Error(error.message)
 }
 
 // ─── Layout base (table-based, email-client safe) ─────────────────────────────
