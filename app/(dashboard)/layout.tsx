@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { Sidebar } from './sidebar'
@@ -33,7 +34,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let licenseBlock: 'suspended' | 'expired' | null = null
   let tenantName: string | null = null
   if (!profile?.is_platform_admin && profile?.tenant_id) {
-    const { data: tenant } = await supabase
+    const adminClient = createAdminClient()
+    const { data: tenant } = await adminClient
       .from('tenants')
       .select('is_active, plan_expires_at, name')
       .eq('id', profile.tenant_id)
