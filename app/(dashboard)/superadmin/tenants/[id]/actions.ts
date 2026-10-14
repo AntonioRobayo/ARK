@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { sendPasswordResetEmail } from '@/lib/email'
 
 async function logEvent(tenantId: string, event: string, details?: object) {
   try {
@@ -99,7 +100,7 @@ export async function resetUserPassword(formData: FormData) {
   const email    = formData.get('email') as string
   const tenantId = formData.get('tenant_id') as string
 
-  const { error } = await adminClient.auth.admin.generateLink({
+  const { data, error } = await adminClient.auth.admin.generateLink({
     type: 'recovery',
     email,
   })
@@ -107,6 +108,19 @@ export async function resetUserPassword(formData: FormData) {
   if (error) {
     redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(error.message)}`)
   }
+
+  const resetUrl = data?.properties?.action_link
+  if (!resetUrl) {
+    redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent('No se pudo generar el link de recuperación')}`)
+  }
+
+  try {
+    await sendPasswordResetEmail({ to: email, resetUrl })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Error al enviar email'
+    redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(msg)}`)
+  }
+
   redirect(`/superadmin/tenants/${tenantId}?tab=users&success=${encodeURIComponent(`Email de restablecimiento enviado a ${email}`)}`)
 }
 
