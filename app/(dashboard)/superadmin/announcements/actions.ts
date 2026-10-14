@@ -3,14 +3,24 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 
+function localToUTC(localDatetime: string, tzOffsetMinutes: number): string {
+  // localDatetime is "YYYY-MM-DDTHH:MM" (no timezone), tzOffsetMinutes is offset from UTC
+  const localMs = new Date(localDatetime).getTime()
+  return new Date(localMs - tzOffsetMinutes * 60_000).toISOString()
+}
+
 export async function createAnnouncement(formData: FormData) {
   const adminClient = createAdminClient()
 
-  const title    = formData.get('title') as string
-  const body     = formData.get('body') as string
-  const type     = (formData.get('type') as string) || 'info'
-  const startsAt = (formData.get('starts_at') as string) || new Date().toISOString()
-  const endsAt   = (formData.get('ends_at') as string) || null
+  const title         = formData.get('title') as string
+  const body          = formData.get('body') as string
+  const type          = (formData.get('type') as string) || 'info'
+  const startsAtRaw   = formData.get('starts_at') as string
+  const endsAtRaw     = formData.get('ends_at') as string | null
+  const tzOffset      = Number(formData.get('starts_at_tz_offset') || 0)
+
+  const startsAt = startsAtRaw ? localToUTC(startsAtRaw, tzOffset) : new Date().toISOString()
+  const endsAt   = endsAtRaw   ? localToUTC(endsAtRaw, tzOffset)   : null
 
   const { error } = await adminClient
     .from('platform_announcements')

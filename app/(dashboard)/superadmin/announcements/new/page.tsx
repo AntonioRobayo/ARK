@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { createAnnouncement } from '../actions'
+import { DatetimeLocalInput } from '@/components/datetime-local-input'
 
 export default async function NewAnnouncementPage({
   searchParams,
@@ -64,13 +65,12 @@ export default async function NewAnnouncementPage({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{t('fieldStartsAt')}</label>
-            <input name="starts_at" type="datetime-local"
-              defaultValue={new Date().toISOString().slice(0, 16)}
+            <DatetimeLocalInput name="starts_at" defaultToNow withTzOffset
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300" />
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{t('fieldEndsAt')}</label>
-            <input name="ends_at" type="datetime-local"
+            <DatetimeLocalInput name="ends_at" withTzOffset
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300" />
           </div>
         </div>
