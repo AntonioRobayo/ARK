@@ -21,10 +21,15 @@ export async function POST(req: NextRequest) {
   if (file.size > 2 * 1024 * 1024) return NextResponse.json({ error: 'File exceeds 2 MB' }, { status: 400 })
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-  const safeName = file.name
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-zA-Z0-9._-]/g, '_')
-  const path = `ads/${Date.now()}-${safeName.replace(/\.[^.]+$/, '')}.${ext}`
+  const slug = file.name
+    .replace(/\.[^.]+$/, '')          // strip extension
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')  // strip diacritics
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')     // non-alphanumeric → hyphen
+    .replace(/^-+|-+$/g, '')          // trim leading/trailing hyphens
+    || 'image'
+  const path = `ads/${Date.now()}-${slug}.${ext}`
 
   const adminClient = createAdminClient()
   const { error } = await adminClient.storage
