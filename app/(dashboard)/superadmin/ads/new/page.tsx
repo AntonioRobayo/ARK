@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { createCampaign } from '../actions'
 import { DatetimeLocalInput } from '@/components/datetime-local-input'
+import { AdImageUploader } from '@/components/ads/AdImageUploader'
 
 export default async function NewCampaignPage({
   searchParams,
@@ -32,7 +33,7 @@ export default async function NewCampaignPage({
 
       {error && <div className="mb-4 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{decodeURIComponent(error)}</div>}
 
-      <form action={createCampaign} className="space-y-5">
+      <form action={createCampaign} encType="multipart/form-data" className="space-y-5">
 
         {/* Espacio publicitario */}
         <div className="bg-white border border-gray-200 rounded-xl p-5">
@@ -65,8 +66,7 @@ export default async function NewCampaignPage({
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{t('fieldImageUrl')}</label>
-            <input name="image_url" type="url" required className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-              placeholder="https://cdn.example.com/banner.jpg" />
+            <AdImageUploader className="w-full" />
             <p className="text-xs text-gray-400 mt-1">{t('fieldImageUrlHint')}</p>
           </div>
           <div>
