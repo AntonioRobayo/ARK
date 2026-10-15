@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { createCampaign } from '@/app/(dashboard)/superadmin/ads/actions'
 
 interface Placement {
   id: string
@@ -15,6 +14,7 @@ interface Placement {
 }
 
 interface Props {
+  action: (formData: FormData) => Promise<void> | void
   placements: Placement[]
   error?: string
   labels: {
@@ -37,7 +37,7 @@ interface Props {
   }
 }
 
-export function AdCampaignForm({ placements, error, labels }: Props) {
+export function AdCampaignForm({ action, placements, error, labels }: Props) {
   const [preview, setPreview] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -54,7 +54,7 @@ export function AdCampaignForm({ placements, error, labels }: Props) {
   }
 
   return (
-    <form action={createCampaign} className="space-y-5">
+    <form action={action} className="space-y-5">
 
       {error && (
         <div className="mb-4 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">

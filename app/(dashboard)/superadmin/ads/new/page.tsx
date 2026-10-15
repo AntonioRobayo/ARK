@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { createCampaign } from '../actions'
 import { AdCampaignForm } from '@/components/ads/AdCampaignForm'
 
 export default async function NewCampaignPage({
@@ -30,6 +31,7 @@ export default async function NewCampaignPage({
       </div>
 
       <AdCampaignForm
+        action={createCampaign}
         placements={placements ?? []}
         error={error}
         labels={{
