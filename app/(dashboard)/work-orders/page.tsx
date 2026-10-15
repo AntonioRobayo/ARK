@@ -4,6 +4,7 @@ import { STATUS_LABEL, STATUS_COLOR, PRIORITY_COLOR, PRIORITY_LABEL } from '@/li
 import type { WorkOrderStatus } from '@/types/database'
 import { getTranslations } from 'next-intl/server'
 import { LocalDateOnly } from '@/components/local-date'
+import { AdBanner } from '@/components/ad-banner'
 
 const STATUS_GROUP_DEFS = [
   { key: 'active',  tKey: 'tabs.active',    statuses: ['draft','received','in_diagnosis','quotation_sent','awaiting_authorization','authorized','in_execution'] },
@@ -54,6 +55,8 @@ export default async function WorkOrdersPage({
 
   return (
     <div>
+      <AdBanner placementSlug="orders_banner" />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
