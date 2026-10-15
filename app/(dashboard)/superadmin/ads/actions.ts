@@ -8,7 +8,6 @@ export async function createCampaign(formData: FormData) {
 
   const placementId        = formData.get('placement_id') as string
   const title              = formData.get('title') as string
-  const imageUrl           = formData.get('image_url') as string
   const linkUrl            = (formData.get('link_url') as string) || null
   const advertiserName     = formData.get('advertiser_name') as string
   const advertiserContact  = (formData.get('advertiser_contact') as string) || null
@@ -18,10 +17,35 @@ export async function createCampaign(formData: FormData) {
   const endsAt             = formData.get('ends_at') as string
   const notes              = (formData.get('notes') as string) || null
 
+  // Upload image to Supabase Storage
+  const imageFile = formData.get('image_file') as File | null
+  if (!imageFile || imageFile.size === 0) {
+    redirect(`/superadmin/ads/new?error=${encodeURIComponent('Debes seleccionar una imagen')}`)
+  }
+
+  const ext      = imageFile!.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const safeName = imageFile!.name
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+  const path = `ads/${Date.now()}-${safeName.replace(/\.[^.]+$/, '')}.${ext}`
+
+  const { error: uploadError } = await adminClient.storage
+    .from('ads-images')
+    .upload(path, new Uint8Array(await imageFile!.arrayBuffer()), {
+      contentType: imageFile!.type,
+      upsert: false,
+    })
+
+  if (uploadError) {
+    redirect(`/superadmin/ads/new?error=${encodeURIComponent(uploadError.message)}`)
+  }
+
+  const { data: { publicUrl } } = adminClient.storage.from('ads-images').getPublicUrl(path)
+
   const { error } = await adminClient.from('ads').insert({
     placement_id: placementId,
     title,
-    image_url: imageUrl,
+    image_url: publicUrl,
     link_url: linkUrl,
     advertiser_name: advertiserName,
     advertiser_contact: advertiserContact,
