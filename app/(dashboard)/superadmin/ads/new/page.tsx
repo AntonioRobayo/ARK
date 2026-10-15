@@ -33,7 +33,7 @@ export default async function NewCampaignPage({
 
       {error && <div className="mb-4 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{decodeURIComponent(error)}</div>}
 
-      <form action={createCampaign} encType="multipart/form-data" className="space-y-5">
+      <form action={createCampaign} className="space-y-5">
 
         {/* Espacio publicitario */}
         <div className="bg-white border border-gray-200 rounded-xl p-5">
