@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { Sidebar } from './sidebar'
 import { LocaleSync } from '@/components/locale-sync'
 import { LicenseBlockedScreen } from '@/components/license-blocked'
+import { AdBanner } from '@/components/ad-banner'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -83,6 +84,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         isSuperadmin={profile?.is_platform_admin === true}
         locale={cookieLocale}
         tenantName={tenantName}
+        sidebarAd={!profile?.is_platform_admin ? <AdBanner placementSlug="sidebar_square" /> : null}
       />
 
       {/* Main — pt-14 on mobile for the fixed header */}

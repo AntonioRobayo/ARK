@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { NavLinks } from './nav-links'
@@ -49,6 +49,7 @@ interface SidebarProps {
   isSuperadmin: boolean
   locale?: string
   tenantName?: string | null
+  sidebarAd?: React.ReactNode
 }
 
 function UserInfo({ firstName, lastName, email, isSuperadmin, locale = 'es', tenantName }: SidebarProps) {
@@ -113,13 +114,14 @@ function LogoutButton() {
   )
 }
 
-export function Sidebar({ firstName, lastName, email, isSuperadmin, locale, tenantName }: SidebarProps) {
+export function Sidebar({ firstName, lastName, email, isSuperadmin, locale, tenantName, sidebarAd }: SidebarProps) {
   const [open, setOpen] = useState(false)
   const t = useTranslations('sidebar')
 
   const navContent = (
     <>
       <NavLinks isSuperadmin={isSuperadmin} onNavClick={() => setOpen(false)} />
+      {sidebarAd && <div className="px-3 pb-2">{sidebarAd}</div>}
       <UserInfo firstName={firstName} lastName={lastName} email={email} isSuperadmin={isSuperadmin} locale={locale} tenantName={tenantName} />
       <LogoutButton />
     </>
