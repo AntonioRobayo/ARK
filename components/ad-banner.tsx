@@ -26,15 +26,14 @@ export async function AdBanner({ placementSlug }: { placementSlug: string }) {
       alt={ad.title}
       width={placement.width}
       height={placement.height}
-      className="w-full h-auto rounded-lg object-cover"
-      style={{ maxWidth: placement.width, maxHeight: placement.height }}
+      className="w-full h-full rounded-lg object-cover"
     />
   )
 
   return (
-    <div className="w-full flex justify-center my-3">
+    <div className="w-full my-3" style={{ maxWidth: placement.width, height: placement.height, margin: '12px auto' }}>
       {ad.link_url
-        ? <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="block">{banner}</a>
+        ? <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">{banner}</a>
         : banner
       }
     </div>
