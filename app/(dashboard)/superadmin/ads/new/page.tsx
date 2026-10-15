@@ -65,13 +65,8 @@ export default async function NewCampaignPage({
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{t('fieldImageUrl')}</label>
-            <input
-              name="image_file"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              required
-              className="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 cursor-pointer"
-            />
+            <input name="image_url" type="url" required className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+              placeholder="https://cdn.example.com/banner.jpg" />
             <p className="text-xs text-gray-400 mt-1">{t('fieldImageUrlHint')}</p>
           </div>
           <div>
