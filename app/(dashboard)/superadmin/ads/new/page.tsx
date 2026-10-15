@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { createCampaign } from '../actions'
 import { DatetimeLocalInput } from '@/components/datetime-local-input'
-import { AdImageUploader } from '@/components/ads/AdImageUploader'
 
 export default async function NewCampaignPage({
   searchParams,
@@ -66,7 +65,13 @@ export default async function NewCampaignPage({
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{t('fieldImageUrl')}</label>
-            <AdImageUploader className="w-full" />
+            <input
+              name="image_file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              required
+              className="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 cursor-pointer"
+            />
             <p className="text-xs text-gray-400 mt-1">{t('fieldImageUrlHint')}</p>
           </div>
           <div>

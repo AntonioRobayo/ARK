@@ -25,7 +25,7 @@ export async function createCampaign(formData: FormData) {
 
   const ext      = imageFile!.name.split('.').pop() ?? 'jpg'
   const path     = `ads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-  const buffer   = Buffer.from(await imageFile!.arrayBuffer())
+  const buffer   = new Uint8Array(await imageFile!.arrayBuffer())
 
   const { error: uploadError } = await adminClient.storage
     .from('ads-images')
