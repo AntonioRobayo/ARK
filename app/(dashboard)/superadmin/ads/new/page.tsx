@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { createCampaign } from '../actions'
+import { DatetimeLocalInput } from '@/components/datetime-local-input'
 
 export default async function NewCampaignPage({
   searchParams,
@@ -115,13 +116,12 @@ export default async function NewCampaignPage({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{t('fieldStartsAt')}</label>
-              <input name="starts_at" type="datetime-local" required
-                defaultValue={new Date().toISOString().slice(0, 16)}
+              <DatetimeLocalInput name="starts_at" required defaultToNow
                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300" />
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{t('fieldEndsAt')}</label>
-              <input name="ends_at" type="datetime-local" required
+              <DatetimeLocalInput name="ends_at" required
                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300" />
             </div>
           </div>
