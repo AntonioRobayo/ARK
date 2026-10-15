@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
+import { DatetimeLocalInput } from '@/components/datetime-local-input'
 
 interface Placement {
   id: string
@@ -41,10 +42,6 @@ export function AdCampaignForm({ action, placements, error, labels }: Props) {
   const [preview, setPreview] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const now = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  const defaultStart = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -176,12 +173,12 @@ export function AdCampaignForm({ action, placements, error, labels }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{labels.fieldStartsAt}</label>
-            <input name="starts_at" type="datetime-local" required defaultValue={defaultStart}
+            <DatetimeLocalInput name="starts_at" required defaultToNow
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300" />
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1.5">{labels.fieldEndsAt}</label>
-            <input name="ends_at" type="datetime-local" required
+            <DatetimeLocalInput name="ends_at" required
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300" />
           </div>
         </div>
