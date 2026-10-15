@@ -70,7 +70,10 @@ export default async function PortalAppointmentsPage({
       .in('customer_id', customerIds)
       .order('scheduled_at', { ascending: false })
 
-    appointments = (data ?? []) as AppointmentRow[]
+    appointments = (data ?? []).map(row => ({
+      ...row,
+      vehicle: Array.isArray(row.vehicle) ? (row.vehicle[0] ?? null) : row.vehicle,
+    })) as AppointmentRow[]
   }
 
   const now = new Date()

@@ -48,7 +48,8 @@ export default async function ReportsPage() {
   const techMap = new Map<string, TechRow>()
   for (const ot of closedOTs ?? []) {
     const tid = ot.technician_id ?? '__unassigned__'
-    const techProfile = ot.technician as { first_name: string; last_name: string | null } | null
+    const rawTech = ot.technician
+    const techProfile = (Array.isArray(rawTech) ? rawTech[0] : rawTech) as { first_name: string; last_name: string | null } | null
     const name = techProfile
       ? `${techProfile.first_name}${techProfile.last_name ? ' ' + techProfile.last_name : ''}`.trim()
       : 'Sin asignar'
