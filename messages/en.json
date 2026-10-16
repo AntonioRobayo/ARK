@@ -560,7 +560,9 @@
       "integrations": "Integrations",
       "integrationsDesc": "Connect Google Drive and other external services",
       "branches": "Branches",
-      "branchesDesc": "Manage your workshop's physical locations"
+      "branchesDesc": "Manage your workshop's physical locations",
+      "users": "Users",
+      "usersDesc": "Invite, activate and deactivate workshop members"
     },
     "profile": {
       "title": "My profile",

@@ -560,7 +560,9 @@
       "integrations": "Integrações",
       "integrationsDesc": "Conecte o Google Drive e outros serviços externos",
       "branches": "Filiais",
-      "branchesDesc": "Gerencie as localizações físicas da sua oficina"
+      "branchesDesc": "Gerencie as localizações físicas da sua oficina",
+      "users": "Usuários",
+      "usersDesc": "Convide, ative e desative membros da oficina"
     },
     "profile": {
       "title": "Meu perfil",

@@ -35,6 +35,26 @@ export async function inviteUser(formData: FormData) {
     redirect('/settings/users?error=' + encodeURIComponent('No tienes permiso para invitar usuarios'))
   }
 
+  // Check active user limit against license plan
+  const { data: tenant } = await adminClient
+    .from('tenants').select('plan').eq('id', myProfile.tenant_id).single()
+  if (tenant?.plan) {
+    const { data: plan } = await adminClient
+      .from('license_plan').select('max_users').eq('slug', tenant.plan).single()
+    if (plan?.max_users) {
+      const { count } = await adminClient
+        .from('user_profile')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', myProfile.tenant_id)
+        .eq('is_active', true)
+      if ((count ?? 0) >= plan.max_users) {
+        redirect('/settings/users?error=' + encodeURIComponent(
+          `Has alcanzado el límite de ${plan.max_users} usuarios activos de tu plan`
+        ))
+      }
+    }
+  }
+
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
     data: {
       tenant_id: myProfile.tenant_id,

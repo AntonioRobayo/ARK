@@ -97,8 +97,28 @@ export default async function SettingsUsersPage({
 
   const t = await getTranslations('settings.users')
 
+  // Get plan user limit
+  const { data: tenant } = await adminClient
+    .from('tenants')
+    .select('plan')
+    .eq('id', myProfile.tenant_id)
+    .single()
+
+  let maxUsers: number | null = null
+  if (tenant?.plan) {
+    const { data: plan } = await adminClient
+      .from('license_plan')
+      .select('max_users')
+      .eq('slug', tenant.plan)
+      .single()
+    maxUsers = plan?.max_users ?? null
+  }
+
+  const activeCount = (members ?? []).filter(m => m.is_active).length
+
   const canManage = myProfile.role === 'owner' || myProfile.role === 'shop_manager'
   const showInviteForm = invite === '1'
+  const atLimit = maxUsers !== null && activeCount >= maxUsers
 
   const ROLES: TenantRole[] = [
     'shop_manager',
@@ -123,15 +143,35 @@ export default async function SettingsUsersPage({
             <p className="text-sm text-gray-400">{t('subtitle')}</p>
           </div>
         </div>
-        {canManage && !showInviteForm && (
-          <Link
-            href="/settings/users?invite=1"
-            className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-lg text-white transition-colors"
-            style={{ backgroundColor: '#FF7316' }}
-          >
-            {t('inviteBtn')}
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          {maxUsers !== null && (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+              atLimit
+                ? 'bg-red-50 text-red-600 border border-red-200'
+                : 'bg-gray-100 text-gray-500'
+            }`}>
+              {activeCount} / {maxUsers} activos
+            </span>
+          )}
+          {canManage && !showInviteForm && (
+            atLimit ? (
+              <span
+                className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-lg text-gray-400 bg-gray-100 cursor-not-allowed"
+                title="Has alcanzado el límite de usuarios de tu plan"
+              >
+                {t('inviteBtn')}
+              </span>
+            ) : (
+              <Link
+                href="/settings/users?invite=1"
+                className="inline-flex items-center text-sm font-medium px-4 py-2 rounded-lg text-white transition-colors"
+                style={{ backgroundColor: '#FF7316' }}
+              >
+                {t('inviteBtn')}
+              </Link>
+            )
+          )}
+        </div>
       </div>
 
       {/* Alerts */}

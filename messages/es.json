@@ -582,7 +582,9 @@
       "integrations": "Integraciones",
       "integrationsDesc": "Conecta Google Drive y otros servicios externos",
       "branches": "Sucursales",
-      "branchesDesc": "Gestiona las ubicaciones físicas de tu taller"
+      "branchesDesc": "Gestiona las ubicaciones físicas de tu taller",
+      "users": "Usuarios",
+      "usersDesc": "Invita, activa y desactiva miembros del taller"
     },
     "profile": {
       "title": "Mi perfil",
