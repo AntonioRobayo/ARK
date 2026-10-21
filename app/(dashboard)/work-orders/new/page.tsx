@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
@@ -14,17 +15,27 @@ export default async function NewWorkOrderPage({
 }) {
   const { customer_id, vehicle_id, q, error, appointment_id } = await searchParams
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
+  const { data: myProfile } = await adminClient
+    .from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!myProfile?.tenant_id) redirect('/auth/login')
+  const tenantId = myProfile.tenant_id
+
   const t = await getTranslations('workOrders')
 
   // ── Paso 3: formulario de recepción ─────────────────────────────────────────
   if (customer_id && vehicle_id) {
     const today = new Date().toISOString().split('T')[0]
     const [{ data: customer }, { data: vehicle }, { data: techs }, { data: checklistTemplates }] = await Promise.all([
-      supabase.from('customer').select('id, first_name, last_name, phone').eq('id', customer_id).single(),
-      supabase.from('vehicle').select('id, plate, brand, model, year, current_mileage').eq('id', vehicle_id).single(),
-      supabase.from('user_profile').select('id, first_name, last_name').eq('is_active', true).not('role_id', 'is', null),
-      supabase.from('checklist_template')
+      adminClient.from('customer').select('id, first_name, last_name, phone').eq('id', customer_id).eq('tenant_id', tenantId).single(),
+      adminClient.from('vehicle').select('id, plate, brand, model, year, current_mileage').eq('id', vehicle_id).single(),
+      adminClient.from('user_profile').select('id, first_name, last_name').eq('tenant_id', tenantId).eq('is_active', true).not('role_id', 'is', null),
+      adminClient.from('checklist_template')
         .select('id, name, checklist_template_item(id, label, is_required, order_index)')
+        .eq('tenant_id', tenantId)
         .eq('stage', 'reception')
         .eq('is_active', true)
         .is('deleted_at', null)
@@ -94,11 +105,12 @@ export default async function NewWorkOrderPage({
     todayEnd.setHours(23, 59, 59, 999)
 
     const [{ data: customer }, { data: vehicles }, { data: todayAppointments }] = await Promise.all([
-      supabase.from('customer').select('id, first_name, last_name, phone').eq('id', customer_id).single(),
-      supabase.from('vehicle').select('id, plate, brand, model, year, vehicle_type').eq('customer_id', customer_id).order('created_at', { ascending: false }),
-      supabase.from('appointment')
+      adminClient.from('customer').select('id, first_name, last_name, phone').eq('id', customer_id).eq('tenant_id', tenantId).single(),
+      adminClient.from('vehicle').select('id, plate, brand, model, year, vehicle_type').eq('customer_id', customer_id).order('created_at', { ascending: false }),
+      adminClient.from('appointment')
         .select('id, scheduled_at, notes, vehicle_id, vehicle:vehicle_id(id, plate, brand, model)')
         .eq('customer_id', customer_id)
+        .eq('tenant_id', tenantId)
         .eq('status', 'confirmed')
         .gte('scheduled_at', todayStart.toISOString())
         .lte('scheduled_at', todayEnd.toISOString())
@@ -190,9 +202,11 @@ export default async function NewWorkOrderPage({
   // ── Paso 1: buscar cliente ────────────────────────────────────────────────────
   let customers: any[] = []
   if (q && q.length >= 2) {
-    const { data } = await supabase
+    const { data } = await adminClient
       .from('customer')
       .select('id, first_name, last_name, phone, id_number')
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,phone.ilike.%${q}%,id_number.ilike.%${q}%`)
       .limit(10)
     customers = data ?? []
