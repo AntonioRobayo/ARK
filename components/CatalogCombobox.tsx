@@ -29,10 +29,14 @@ export function CatalogCombobox({
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const filtered = options.filter(o =>
-    o.label.toLowerCase().includes(inputVal.toLowerCase()) ||
-    o.value.toLowerCase().includes(inputVal.toLowerCase())
-  )
+  // Show all options when the current value exactly matches a known option (nothing new typed yet)
+  const isExactMatch = options.some(o => o.label.toLowerCase() === inputVal.toLowerCase())
+  const filtered = isExactMatch
+    ? options
+    : options.filter(o =>
+        o.label.toLowerCase().includes(inputVal.toLowerCase()) ||
+        o.value.toLowerCase().includes(inputVal.toLowerCase())
+      )
 
   function select(opt: Option) {
     setInputVal(opt.label)
