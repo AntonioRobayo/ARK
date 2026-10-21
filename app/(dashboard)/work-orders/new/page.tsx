@@ -21,7 +21,19 @@ export default async function NewWorkOrderPage({
   const adminClient = createAdminClient()
   const { data: myProfile } = await adminClient
     .from('user_profile').select('tenant_id').eq('id', user.id).single()
-  if (!myProfile?.tenant_id) redirect('/auth/login')
+  if (!myProfile?.tenant_id) {
+    return (
+      <div className="max-w-md mx-auto mt-16 text-center">
+        <p className="text-4xl mb-4">🔧</p>
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">Cuenta sin taller asociado</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Tu cuenta no está vinculada a ningún taller. Para usar las Órdenes de Trabajo
+          inicia sesión con una cuenta de taller o usa la impersonación desde Superadmin.
+        </p>
+        <Link href="/superadmin" className="text-sm text-slate-600 hover:underline">← Ir a Superadmin</Link>
+      </div>
+    )
+  }
   const tenantId = myProfile.tenant_id
 
   const t = await getTranslations('workOrders')

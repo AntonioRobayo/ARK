@@ -26,7 +26,7 @@ export default async function BillingPage({
 
   const adminClient = createAdminClient()
   const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
-  if (!myProfile?.tenant_id) redirect('/auth/login')
+  if (!myProfile?.tenant_id) redirect('/superadmin')
   const tenantId = myProfile.tenant_id
 
   let query = adminClient
