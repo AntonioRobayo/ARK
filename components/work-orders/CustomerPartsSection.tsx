@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import { addCustomerPart } from '@/app/(dashboard)/work-orders/[id]/actions'
-import { OTGallery } from '@/components/work-orders/OTGallery'
+import { DriveUploader } from '@/components/work-orders/DriveUploader'
 
 const CONDITION_LABEL: Record<string, string> = {
   new:     'Nuevo',
@@ -35,7 +35,7 @@ interface Props {
 export function CustomerPartsSection({ otId, vehicleId, parts, attachments, driveEnabled }: Props) {
   const formRef = useRef<HTMLFormElement>(null)
 
-  const repuestosAttachments = attachments.filter(a => a.section === 'repuestos_cliente')
+  const repuestosPhotos = attachments.filter(a => a.section === 'repuestos_cliente')
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
@@ -67,15 +67,23 @@ export function CustomerPartsSection({ otId, vehicleId, parts, attachments, driv
         <p className="text-sm text-gray-400 py-1 mb-4">Sin repuestos registrados.</p>
       )}
 
-      {/* Fotos */}
+      {/* Fotos de repuestos del cliente */}
       {driveEnabled && (
         <div className="mb-4">
-          <OTGallery
-            workOrderId={otId}
-            vehicleId={vehicleId}
-            attachments={repuestosAttachments}
-            driveEnabled={driveEnabled}
-          />
+          {repuestosPhotos.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {repuestosPhotos.map((a: any) => (
+                <a key={a.id} href={`https://drive.google.com/file/d/${a.drive_file_id}/view`} target="_blank" rel="noreferrer">
+                  <img
+                    src={a.drive_thumb_url ?? `https://drive.google.com/thumbnail?id=${a.drive_file_id}&sz=w200`}
+                    alt={a.original_name}
+                    className="w-full aspect-square object-cover rounded-lg border border-gray-100"
+                  />
+                </a>
+              ))}
+            </div>
+          )}
+          <DriveUploader workOrderId={otId} vehicleId={vehicleId} section="repuestos_cliente" />
         </div>
       )}
 
