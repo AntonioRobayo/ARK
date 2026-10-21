@@ -18,9 +18,9 @@ const STATUS_GROUP_DEFS = [
 export default async function WorkOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ group?: string; q?: string }>
+  searchParams: Promise<{ group?: string; q?: string; sort?: string }>
 }) {
-  const { group = 'active', q } = await searchParams
+  const { group = 'active', q, sort = 'created_at' } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -60,7 +60,7 @@ export default async function WorkOrdersPage({
     `)
     .eq('tenant_id', profile.tenant_id)
     .in('status', activeGroup.statuses)
-    .order('created_at', { ascending: false })
+    .order(sort === 'delivery' ? 'estimated_delivery_at' : 'created_at', { ascending: sort === 'delivery', nullsFirst: false })
 
   if (q) {
     query = query.or(`number.ilike.%${q}%`)
@@ -78,12 +78,24 @@ export default async function WorkOrdersPage({
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{t('count', { n: (allOrders ?? []).length })}</p>
         </div>
-        <Link
-          href="/work-orders/new"
-          className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          {t('newBtn')}
-        </Link>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg text-xs">
+            <Link href={`/work-orders?group=${group}&sort=created_at`}
+              className={`px-3 py-1.5 rounded font-medium transition-colors ${sort !== 'delivery' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              Fecha ingreso
+            </Link>
+            <Link href={`/work-orders?group=${group}&sort=delivery`}
+              className={`px-3 py-1.5 rounded font-medium transition-colors ${sort === 'delivery' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              Fecha entrega
+            </Link>
+          </div>
+          <Link
+            href="/work-orders/new"
+            className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            {t('newBtn')}
+          </Link>
+        </div>
       </div>
 
       {/* Tabs por grupo */}
@@ -131,6 +143,7 @@ export default async function WorkOrdersPage({
                 <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.technician')}</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.priority')}</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">{t('table.date')}</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">Entrega</th>
               </tr>
             </thead>
             <tbody>
@@ -166,6 +179,15 @@ export default async function WorkOrdersPage({
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs">
                     <LocalDateOnly date={ot.created_at} options={{ day:'2-digit', month:'short' }} />
+                  </td>
+                  <td className="px-4 py-3 text-xs">
+                    {ot.estimated_delivery_at ? (
+                      <span className="text-amber-600 font-medium">
+                        <LocalDateOnly date={ot.estimated_delivery_at} options={{ day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }} />
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

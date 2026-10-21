@@ -31,7 +31,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     adminClient.from('work_order').select('status').eq('tenant_id', tenantId),
     adminClient.from('work_order')
-      .select('id, number, status, priority, created_at, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)')
+      .select('id, number, status, priority, created_at, estimated_delivery_at, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(6),
@@ -114,7 +114,13 @@ export default async function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-700">{ot.vehicle?.plate} · {ot.customer?.first_name} {ot.customer?.last_name}</p>
-                    <p className="text-xs text-gray-400"><LocalDateOnly date={ot.created_at} options={{ day: '2-digit', month: 'short' }} /></p>
+                    {ot.estimated_delivery_at ? (
+                      <p className="text-xs font-medium text-amber-600">
+                        ⏱ <LocalDateOnly date={ot.estimated_delivery_at} options={{ day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }} />
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400"><LocalDateOnly date={ot.created_at} options={{ day: '2-digit', month: 'short' }} /></p>
+                    )}
                   </div>
                 </Link>
               ))}
