@@ -15,10 +15,13 @@ import { FindingsSection } from '@/components/work-orders/FindingsSection'
 
 export default async function WorkOrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ error?: string; notified?: string }>
 }) {
   const { id } = await params
+  const { notified, error: pageError } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -105,6 +108,19 @@ export default async function WorkOrderDetailPage({
 
   return (
     <div className="max-w-5xl">
+      {notified === '1' && (
+        <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
+          ✅ Email enviado al cliente con los hallazgos. Cuando responda, el estado se actualizará aquí automáticamente.
+        </div>
+      )}
+      {pageError && (
+        <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+          {pageError === 'no_customer_email' && 'El cliente no tiene correo registrado.'}
+          {pageError === 'no_pending_findings' && 'No hay hallazgos pendientes de notificación.'}
+          {!['no_customer_email', 'no_pending_findings'].includes(pageError) && decodeURIComponent(pageError)}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">

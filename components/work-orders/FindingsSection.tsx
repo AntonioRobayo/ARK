@@ -50,7 +50,12 @@ export function FindingsSection({ otId, findings, customerEmail, customerName, o
     <div className="bg-white border border-gray-200 rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Diagnóstico / Hallazgos</p>
-        {pendingCount > 0 && customerEmail && (
+        {notifiedCount > 0 && (
+          <span className="text-xs text-blue-500 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg">
+            📬 Notificado — esperando respuesta
+          </span>
+        )}
+        {pendingCount > 0 && notifiedCount === 0 && customerEmail && (
           <form action={notifyCustomerFindings}>
             <input type="hidden" name="ot_id" value={otId} />
             <button
@@ -61,14 +66,9 @@ export function FindingsSection({ otId, findings, customerEmail, customerName, o
             </button>
           </form>
         )}
-        {pendingCount > 0 && !customerEmail && (
+        {pendingCount > 0 && notifiedCount === 0 && !customerEmail && (
           <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
             ⚠ Cliente sin email
-          </span>
-        )}
-        {notifiedCount > 0 && pendingCount === 0 && (
-          <span className="text-xs text-blue-500">
-            Esperando respuesta del cliente…
           </span>
         )}
       </div>

@@ -153,5 +153,5 @@ export async function notifyCustomerFindings(formData: FormData) {
     details: { work_order_id: otId, count: findings.length, token },
   })
 
-  revalidatePath(`/work-orders/${otId}`)
+  redirect(`/work-orders/${otId}?notified=1`)
 }
