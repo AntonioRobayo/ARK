@@ -31,6 +31,14 @@ export async function toggleUserPermission(formData: FormData) {
     redirect('/settings/roles?error=' + encodeURIComponent('Usuario no encontrado'))
   }
 
+  // Read current state before mutating (for old_values in audit log)
+  const { data: existing } = await adminClient
+    .from('user_permission')
+    .select('granted')
+    .eq('user_id', targetUserId)
+    .eq('permission_id', permissionId)
+    .maybeSingle()
+
   if (action === 'clear') {
     await adminClient
       .from('user_permission')
@@ -45,6 +53,17 @@ export async function toggleUserPermission(formData: FormData) {
         { onConflict: 'user_id,permission_id' }
       )
   }
+
+  // Audit log
+  await adminClient.from('audit_log').insert({
+    tenant_id:    myProfile.tenant_id,
+    table_name:   'user_permission',
+    record_id:    targetUserId,
+    action:       action === 'clear' ? 'DELETE' : existing ? 'UPDATE' : 'INSERT',
+    old_values:   existing ? { granted: existing.granted, permission_id: permissionId } : null,
+    new_values:   action === 'clear' ? null : { granted: action === 'grant', permission_id: permissionId },
+    performed_by: user.id,
+  })
 
   revalidatePath('/settings/roles')
   redirect(`/settings/roles?success=1&user=${redirectUser}`)
