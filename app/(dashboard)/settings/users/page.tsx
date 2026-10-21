@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { checkPermission } from '@/lib/permissions'
-import { inviteUser, toggleUserActive, changeRole, revokeInvite } from './actions'
+import { inviteUser, toggleUserActive, changeRole, revokeInvite, resendInvite } from './actions'
 
 type TenantRole =
   | 'owner'
@@ -418,15 +418,29 @@ export default async function SettingsUsersPage({
                 </td>
                 {canManage && (
                   <td className="px-5 py-3.5 text-right">
-                    <form action={revokeInvite}>
-                      <input type="hidden" name="user_id" value={inv.id} />
-                      <button
-                        type="submit"
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                    </form>
+                    <div className="flex items-center gap-2 justify-end">
+                      <form action={resendInvite}>
+                        <input type="hidden" name="user_id" value={inv.id} />
+                        <input type="hidden" name="email" value={inv.email} />
+                        <input type="hidden" name="role" value={inv.role ?? ''} />
+                        <input type="hidden" name="tenant_id" value={myProfile.tenant_id!} />
+                        <button
+                          type="submit"
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                        >
+                          Reenviar
+                        </button>
+                      </form>
+                      <form action={revokeInvite}>
+                        <input type="hidden" name="user_id" value={inv.id} />
+                        <button
+                          type="submit"
+                          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </form>
+                    </div>
                   </td>
                 )}
               </tr>

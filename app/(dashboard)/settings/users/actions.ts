@@ -85,6 +85,33 @@ export async function revokeInvite(formData: FormData) {
   redirect('/settings/users')
 }
 
+export async function resendInvite(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const targetUserId = formData.get('user_id') as string
+  const email        = formData.get('email') as string
+  const role         = formData.get('role') as string | null
+  const tenantId     = formData.get('tenant_id') as string
+
+  const adminClient = createAdminClient()
+  await adminClient.auth.admin.deleteUser(targetUserId)
+
+  const passwordNext = `/auth/update-password`
+  const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(passwordNext)}`,
+    data: { tenant_id: tenantId, role: role || null },
+  })
+
+  if (error) {
+    redirect('/settings/users?error=' + encodeURIComponent(error.message))
+  }
+
+  revalidatePath('/settings/users')
+  redirect('/settings/users?success=invited')
+}
+
 export async function changeRole(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
