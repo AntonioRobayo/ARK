@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { checkPermission } from '@/lib/permissions'
 import { toggleUserPermission } from './actions'
+import { UserPicker } from './UserPicker'
 
 const MODULE_LABELS: Record<string, string> = {
   users:     'Usuarios',
@@ -107,6 +108,14 @@ export default async function RolesPage({
     selectedOverrides[up.permission_id] = up.granted
   }
 
+  // Permission set for the selected member's role (for showing effective state)
+  const selectedRoleObj = selectedMember
+    ? (roles ?? []).find(r => r.name === selectedMember.role)
+    : null
+  const selectedRolePermSet: Set<string> = selectedRoleObj
+    ? (rolePermSet[selectedRoleObj.id] ?? new Set())
+    : new Set()
+
   return (
     <div className="max-w-5xl">
       {/* Header */}
@@ -189,50 +198,75 @@ export default async function RolesPage({
         </div>
 
         {/* User picker */}
-        <div className="px-5 py-4 border-b border-gray-100 flex flex-wrap gap-2">
-          {(members ?? []).map(m => {
-            const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || emailMap[m.id] || '?'
-            const isSelected = m.id === selectedUserId
-            return (
-              <Link
-                key={m.id}
-                href={isSelected ? '/settings/roles' : `/settings/roles?user=${m.id}`}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                  isSelected
-                    ? 'border-orange-300 bg-orange-50 text-orange-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {name}
-              </Link>
-            )
-          })}
+        <div className="px-5 py-4 border-b border-gray-100">
+          <UserPicker
+            members={(members ?? []).map(m => ({
+              id: m.id,
+              first_name: m.first_name,
+              last_name: m.last_name,
+              role: m.role,
+            }))}
+            emailMap={emailMap}
+            selectedUserId={selectedUserId ?? null}
+          />
         </div>
 
         {selectedMember ? (
           <div className="px-5 py-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Overrides para {[selectedMember.first_name, selectedMember.last_name].filter(Boolean).join(' ') || emailMap[selectedMember.id]}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              Permisos de {[selectedMember.first_name, selectedMember.last_name].filter(Boolean).join(' ') || emailMap[selectedMember.id]}
               {' · '}
               <span className="text-gray-400 normal-case font-normal">
                 {ROLE_LABELS[selectedMember.role ?? ''] ?? selectedMember.role ?? 'Sin rol'}
               </span>
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+            <div className="divide-y divide-gray-50">
               {(allPerms ?? []).map(p => {
                 const override = selectedOverrides[p.id]
+                const byRole = selectedRolePermSet.has(p.id)
+                // effective: override takes priority over role
+                const effective = override === true ? true : override === false ? false : byRole
+                const hasOverride = override !== undefined && override !== null
+
                 return (
-                  <form key={p.id} action={toggleUserPermission} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-gray-50">
+                  <form key={p.id} action={toggleUserPermission} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50/60 transition-colors">
                     <input type="hidden" name="user_id" value={selectedMember.id} />
                     <input type="hidden" name="permission_id" value={p.id} />
                     <input type="hidden" name="redirect_user" value={selectedMember.id} />
-                    <span className="text-xs text-gray-700">{p.description}</span>
-                    <div className="flex items-center gap-1 shrink-0">
+
+                    {/* Effective state indicator */}
+                    <span
+                      title={effective ? 'Tiene este permiso' : 'No tiene este permiso'}
+                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        effective ? 'bg-emerald-400' : 'bg-gray-200'
+                      }`}
+                    />
+
+                    {/* Permission name */}
+                    <span className={`flex-1 text-xs ${effective ? 'text-gray-800' : 'text-gray-400'}`}>
+                      {p.description}
+                    </span>
+
+                    {/* Source badge */}
+                    {hasOverride ? (
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                        override === true
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-red-100 text-red-600'
+                      }`}>
+                        {override === true ? 'Forzado ✓' : 'Revocado ✕'}
+                      </span>
+                    ) : byRole ? (
+                      <span className="text-[10px] text-blue-400 flex-shrink-0">Por rol</span>
+                    ) : null}
+
+                    {/* Override buttons */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         type="submit"
                         name="action"
                         value="grant"
-                        title="Conceder siempre"
+                        title="Forzar activo"
                         className={`w-6 h-6 rounded text-[10px] font-bold transition-colors ${
                           override === true
                             ? 'bg-emerald-500 text-white'
@@ -254,7 +288,7 @@ export default async function RolesPage({
                       >
                         ✕
                       </button>
-                      {override !== undefined && override !== null && (
+                      {hasOverride && (
                         <button
                           type="submit"
                           name="action"
