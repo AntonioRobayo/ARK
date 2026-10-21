@@ -106,37 +106,48 @@ export default async function IntegrationsPage({
               </div>
 
               {/* Steps */}
-              <ol className="space-y-4">
+              <ol className="space-y-5">
                 {/* Step 1 */}
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">1</span>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-700">{t('shareStep1')}</p>
+                    <p className="text-sm font-medium text-gray-700">Crea una carpeta en Google Drive</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Abre <strong>drive.google.com</strong>, haz clic en <strong>+ Nuevo → Carpeta</strong> y dale un nombre (ej: <em>ARK Workshop — Soportes</em>).</p>
                   </div>
                 </li>
-                {/* Step 2 — copy email */}
+
+                {/* Step 2 — share */}
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">2</span>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-700 mb-2">{t('shareStep2')}</p>
-                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                      <code className="text-sm text-gray-800 flex-1 select-all break-all">{SERVICE_ACCOUNT_EMAIL || 'ark-drive@tu-proyecto.iam.gserviceaccount.com'}</code>
+                    <p className="text-sm font-medium text-gray-700 mb-1.5">Comparte la carpeta con ARK <span className="text-red-500 font-semibold">(no la hagas pública)</span></p>
+                    <p className="text-xs text-gray-500 mb-2">
+                      Haz clic derecho sobre la carpeta → <strong>Compartir → Compartir</strong>. En el campo <em>"Agregar personas o grupos"</em> pega este correo y selecciona rol <strong>Editor</strong>:
+                    </p>
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-2">
+                      <code className="text-sm text-gray-800 flex-1 select-all break-all">{SERVICE_ACCOUNT_EMAIL || 'socialdevasconfirm@gmail.com'}</code>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">{t('shareStep2Note')}</p>
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-700 space-y-1">
+                      <p>✅ <strong>Acceso correcto:</strong> "Compartir con personas específicas" → rol <strong>Editor</strong></p>
+                      <p>❌ <strong>No uses:</strong> "Cualquier persona con el enlace" ni <strong>Lector</strong></p>
+                    </div>
                   </div>
                 </li>
+
                 {/* Step 3 */}
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">3</span>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-700">{t('shareStep3')}</p>
+                    <p className="text-sm font-medium text-gray-700">Copia el enlace de la carpeta</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Clic derecho sobre la carpeta → <strong>Copiar enlace</strong>. El enlace tiene el formato <code className="bg-gray-100 px-1 rounded">drive.google.com/drive/folders/…</code></p>
                   </div>
                 </li>
+
                 {/* Step 4 — paste link */}
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">4</span>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-700 mb-2">{t('shareStep4')}</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Pega el enlace aquí y haz clic en <strong>Verificar acceso</strong></p>
                     <form action={connectDrive} className="flex gap-2">
                       <input
                         type="url"
