@@ -31,7 +31,6 @@ export async function createWorkOrder(formData: FormData) {
 
   const receptionMileage = formData.get('reception_mileage')
   const fuelLevel        = formData.get('fuel_level')
-  const batteryLevel     = formData.get('battery_level')
   const technicianId     = formData.get('technician_id') as string
   const estimatedAt      = formData.get('estimated_delivery_at') as string
   const appointmentId    = (formData.get('appointment_id') as string) || null
@@ -48,8 +47,7 @@ export async function createWorkOrder(formData: FormData) {
       status:                'received',
       priority:              (formData.get('priority') as string) || 'normal',
       reception_mileage:     receptionMileage ? Number(receptionMileage) : null,
-      fuel_level:            fuelLevel ? Number(fuelLevel) : null,
-      battery_level:         batteryLevel ? Number(batteryLevel) : null,
+      fuel_level:            (fuelLevel as string) || null,
       reception_notes:       (formData.get('reception_notes') as string) || null,
       technician_id:         technicianId || null,
       estimated_delivery_at: estimatedAt || null,
