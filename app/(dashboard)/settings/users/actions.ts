@@ -56,9 +56,8 @@ export async function inviteUser(formData: FormData) {
     }
   }
 
-  const passwordNext = `/auth/update-password`
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(passwordNext)}`,
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
     data: {
       tenant_id: myProfile.tenant_id,
       role: role || null,
@@ -116,9 +115,8 @@ export async function resendInvite(formData: FormData) {
   const adminClient = createAdminClient()
   await adminClient.auth.admin.deleteUser(targetUserId)
 
-  const passwordNext = `/auth/update-password`
   const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(passwordNext)}`,
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
     data: { tenant_id: tenantId, role: role || null },
   })
 

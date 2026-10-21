@@ -36,10 +36,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Allow authenticated users to access update-password (change password from inside app)
+  // Allow authenticated users to access update-password and confirm (invite flow)
   const isUpdatePassword = request.nextUrl.pathname === '/auth/update-password'
+  const isConfirm        = request.nextUrl.pathname === '/auth/confirm'
 
-  if (user && isAuthRoute && !isUpdatePassword) {
+  if (user && isAuthRoute && !isUpdatePassword && !isConfirm) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
