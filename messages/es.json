@@ -786,7 +786,20 @@
       "errorTokenFailed": "Error al obtener el token de Google. Intenta de nuevo.",
       "errorGeneric": "Error: {code}",
       "manualsTitle": "Manuales del taller",
-      "manualsDesc": "Procedimientos, formatos, capacitación y seguridad"
+      "manualsDesc": "Procedimientos, formatos, capacitación y seguridad",
+      "shareIntro": "Conecta una carpeta de tu Google Drive para almacenar fotos, documentos y archivos de tus OTs de forma automática.",
+      "shareStep1": "Abre Google Drive en tu navegador y crea una carpeta nueva para tu taller.",
+      "shareStep2": "Comparte esa carpeta con el siguiente correo y dale permiso de Editor:",
+      "shareStep2Note": "Clic derecho en la carpeta → Compartir → agregar el correo → Editor → Enviar",
+      "shareStep3": "Copia el enlace de la carpeta: clic derecho → Copiar enlace.",
+      "shareStep4": "Pega el enlace aquí y haz clic en Verificar acceso.",
+      "verifyBtn": "Verificar acceso",
+      "folderName": "Carpeta conectada",
+      "errorNoPermission": "No tienes permisos para conectar Drive.",
+      "errorNoUrl": "Debes ingresar el enlace de la carpeta.",
+      "errorInvalidUrl": "El enlace no es válido. Cópialo directamente desde Google Drive.",
+      "errorFolderNotAccessible": "No se puede acceder a la carpeta. Asegúrate de haberla compartido con el correo indicado y que tenga permiso de Editor.",
+      "errorServiceAccount": "Error interno al conectar Drive. Contacta a soporte."
     },
     "manuals": {
       "title": "Manuales del taller",
@@ -1210,7 +1223,11 @@
       "tabImpersonate": "Impersonar",
       "users": {
         "count": "{n} usuarios",
-        "table": { "user": "Usuario", "email": "Email", "role": "Rol" },
+        "table": {
+          "user": "Usuario",
+          "email": "Email",
+          "role": "Rol"
+        },
         "resetPassword": "Restablecer contraseña",
         "resetSent": "Email de restablecimiento enviado a {email}",
         "noUsers": "Este taller no tiene usuarios registrados"
@@ -1259,13 +1276,22 @@
       "title": "Comunicados",
       "count": "{n} comunicados",
       "newBtn": "Nuevo comunicado",
-      "table": { "title": "Título", "type": "Tipo", "status": "Estado", "dates": "Vigencia" },
+      "table": {
+        "title": "Título",
+        "type": "Tipo",
+        "status": "Estado",
+        "dates": "Vigencia"
+      },
       "active": "Activo",
       "inactive": "Inactivo",
       "deactivate": "Desactivar",
       "activate": "Activar",
       "empty": "No hay comunicados configurados",
-      "types": { "info": "Información", "warning": "Aviso", "maintenance": "Mantenimiento" },
+      "types": {
+        "info": "Información",
+        "warning": "Aviso",
+        "maintenance": "Mantenimiento"
+      },
       "new": {
         "title": "Nuevo comunicado",
         "fieldTitle": "Título *",
@@ -1284,9 +1310,20 @@
       "campaigns": {
         "count": "{n} campañas",
         "newBtn": "Nueva campaña",
-        "table": { "ad": "Anuncio", "placement": "Espacio", "advertiser": "Anunciante", "dates": "Vigencia", "price": "Precio", "status": "Estado" },
-        "active": "Activo", "inactive": "Inactivo", "scheduled": "Programado", "expired": "Vencido",
-        "deactivate": "Desactivar", "activate": "Activar",
+        "table": {
+          "ad": "Anuncio",
+          "placement": "Espacio",
+          "advertiser": "Anunciante",
+          "dates": "Vigencia",
+          "price": "Precio",
+          "status": "Estado"
+        },
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "scheduled": "Programado",
+        "expired": "Vencido",
+        "deactivate": "Desactivar",
+        "activate": "Activar",
         "empty": "No hay campañas publicitarias creadas",
         "new": {
           "title": "Nueva campaña",
@@ -1313,9 +1350,16 @@
       "placements": {
         "count": "{n} espacios",
         "newBtn": "Nuevo espacio",
-        "table": { "placement": "Espacio", "dimensions": "Dimensiones", "price": "Precios", "status": "Estado" },
-        "active": "Activo", "inactive": "Inactivo",
-        "deactivate": "Desactivar", "activate": "Activar",
+        "table": {
+          "placement": "Espacio",
+          "dimensions": "Dimensiones",
+          "price": "Precios",
+          "status": "Estado"
+        },
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "deactivate": "Desactivar",
+        "activate": "Activar",
         "empty": "No hay espacios publicitarios definidos",
         "specsTitle": "Especificaciones para el anunciante",
         "new": {

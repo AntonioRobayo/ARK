@@ -729,7 +729,20 @@
       "errorTokenFailed": "Erro ao obter token do Google. Tente novamente.",
       "errorGeneric": "Erro: {code}",
       "manualsTitle": "Manuais da oficina",
-      "manualsDesc": "Procedimentos, formulários, treinamento e segurança"
+      "manualsDesc": "Procedimentos, formulários, treinamento e segurança",
+      "shareIntro": "Conecta una carpeta de tu Google Drive para almacenar fotos, documentos y archivos de tus OTs de forma automática.",
+      "shareStep1": "Abre Google Drive en tu navegador y crea una carpeta nueva para tu taller.",
+      "shareStep2": "Comparte esa carpeta con el siguiente correo y dale permiso de Editor:",
+      "shareStep2Note": "Clic derecho en la carpeta → Compartir → agregar el correo → Editor → Enviar",
+      "shareStep3": "Copia el enlace de la carpeta: clic derecho → Copiar enlace.",
+      "shareStep4": "Pega el enlace aquí y haz clic en Verificar acceso.",
+      "verifyBtn": "Verificar acceso",
+      "folderName": "Carpeta conectada",
+      "errorNoPermission": "No tienes permisos para conectar Drive.",
+      "errorNoUrl": "Debes ingresar el enlace de la carpeta.",
+      "errorInvalidUrl": "El enlace no es válido. Cópialo directamente desde Google Drive.",
+      "errorFolderNotAccessible": "No se puede acceder a la carpeta. Asegúrate de haberla compartido con el correo indicado y que tenga permiso de Editor.",
+      "errorServiceAccount": "Error interno al conectar Drive. Contacta a soporte."
     },
     "manuals": {
       "title": "Manuais da oficina",
@@ -1095,35 +1108,54 @@
     },
     "catalogs": {
       "title": "Catálogos",
-      "tabs": { "countries": "Países", "currencies": "Moedas" },
+      "tabs": {
+        "countries": "Países",
+        "currencies": "Moedas"
+      },
       "countries": {
         "count": "{n} países",
         "addBtn": "+ Adicionar país",
-        "code": "Código", "name": "País", "currency": "Moeda",
-        "timezone": "Fuso horário", "status": "Status",
-        "active": "Ativo", "inactive": "Inativo",
-        "activate": "Ativar", "deactivate": "Desativar",
+        "code": "Código",
+        "name": "País",
+        "currency": "Moeda",
+        "timezone": "Fuso horário",
+        "status": "Status",
+        "active": "Ativo",
+        "inactive": "Inativo",
+        "activate": "Ativar",
+        "deactivate": "Desativar",
         "empty": "Nenhum país cadastrado",
         "add": {
           "title": "Adicionar país",
-          "code": "Código ISO (2 letras) *", "codePlaceholder": "BR",
-          "name": "Nome *", "namePlaceholder": "Brasil",
-          "currency": "Moeda padrão *", "currencyPlaceholder": "BRL",
-          "timezone": "Fuso horário *", "timezonePlaceholder": "America/Sao_Paulo",
+          "code": "Código ISO (2 letras) *",
+          "codePlaceholder": "BR",
+          "name": "Nome *",
+          "namePlaceholder": "Brasil",
+          "currency": "Moeda padrão *",
+          "currencyPlaceholder": "BRL",
+          "timezone": "Fuso horário *",
+          "timezonePlaceholder": "America/Sao_Paulo",
           "submit": "Salvar país"
         }
       },
       "currencies": {
         "count": "{n} moedas",
         "addBtn": "+ Adicionar moeda",
-        "code": "Código", "name": "Nome", "usdRate": "Taxa vs USD", "status": "Status",
-        "active": "Ativa", "inactive": "Inativa",
-        "activate": "Ativar", "deactivate": "Desativar",
+        "code": "Código",
+        "name": "Nome",
+        "usdRate": "Taxa vs USD",
+        "status": "Status",
+        "active": "Ativa",
+        "inactive": "Inativa",
+        "activate": "Ativar",
+        "deactivate": "Desativar",
         "empty": "Nenhuma moeda cadastrada",
         "add": {
           "title": "Adicionar moeda",
-          "code": "Código ISO (3 letras) *", "codePlaceholder": "BRL",
-          "name": "Nome *", "namePlaceholder": "Real brasileiro",
+          "code": "Código ISO (3 letras) *",
+          "codePlaceholder": "BRL",
+          "name": "Nome *",
+          "namePlaceholder": "Real brasileiro",
           "submit": "Salvar moeda"
         }
       }
@@ -1134,7 +1166,11 @@
       "tabImpersonate": "Impersonar",
       "users": {
         "count": "{n} usuários",
-        "table": { "user": "Usuário", "email": "Email", "role": "Função" },
+        "table": {
+          "user": "Usuário",
+          "email": "Email",
+          "role": "Função"
+        },
         "resetPassword": "Redefinir senha",
         "resetSent": "Email de redefinição enviado para {email}",
         "noUsers": "Esta oficina não tem usuários cadastrados"
@@ -1183,13 +1219,22 @@
       "title": "Comunicados",
       "count": "{n} comunicados",
       "newBtn": "Novo comunicado",
-      "table": { "title": "Título", "type": "Tipo", "status": "Status", "dates": "Vigência" },
+      "table": {
+        "title": "Título",
+        "type": "Tipo",
+        "status": "Status",
+        "dates": "Vigência"
+      },
       "active": "Ativo",
       "inactive": "Inativo",
       "deactivate": "Desativar",
       "activate": "Ativar",
       "empty": "Nenhum comunicado configurado",
-      "types": { "info": "Informação", "warning": "Aviso", "maintenance": "Manutenção" },
+      "types": {
+        "info": "Informação",
+        "warning": "Aviso",
+        "maintenance": "Manutenção"
+      },
       "new": {
         "title": "Novo comunicado",
         "fieldTitle": "Título *",
@@ -1208,9 +1253,20 @@
       "campaigns": {
         "count": "{n} campanhas",
         "newBtn": "Nova campanha",
-        "table": { "ad": "Anúncio", "placement": "Espaço", "advertiser": "Anunciante", "dates": "Vigência", "price": "Preço", "status": "Status" },
-        "active": "Ativo", "inactive": "Inativo", "scheduled": "Agendado", "expired": "Vencido",
-        "deactivate": "Desativar", "activate": "Ativar",
+        "table": {
+          "ad": "Anúncio",
+          "placement": "Espaço",
+          "advertiser": "Anunciante",
+          "dates": "Vigência",
+          "price": "Preço",
+          "status": "Status"
+        },
+        "active": "Ativo",
+        "inactive": "Inativo",
+        "scheduled": "Agendado",
+        "expired": "Vencido",
+        "deactivate": "Desativar",
+        "activate": "Ativar",
         "empty": "Nenhuma campanha publicitária criada",
         "new": {
           "title": "Nova campanha",
@@ -1237,9 +1293,16 @@
       "placements": {
         "count": "{n} espaços",
         "newBtn": "Novo espaço",
-        "table": { "placement": "Espaço", "dimensions": "Dimensões", "price": "Preços", "status": "Status" },
-        "active": "Ativo", "inactive": "Inativo",
-        "deactivate": "Desativar", "activate": "Ativar",
+        "table": {
+          "placement": "Espaço",
+          "dimensions": "Dimensões",
+          "price": "Preços",
+          "status": "Status"
+        },
+        "active": "Ativo",
+        "inactive": "Inativo",
+        "deactivate": "Desativar",
+        "activate": "Ativar",
         "empty": "Nenhum espaço publicitário definido",
         "specsTitle": "Especificações para o anunciante",
         "new": {

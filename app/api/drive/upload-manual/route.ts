@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
-  getAccessToken, checkQuota, getOrCreateFolder,
-  uploadFileToDrive, QUOTA_BLOCK_BYTES,
+  getServiceAccountToken, getOrCreateFolder,
+  uploadFileToDrive,
 } from '@/lib/google-drive'
 
 export const MANUAL_SECTIONS: Record<string, string> = {
@@ -50,14 +50,9 @@ export async function POST(req: NextRequest) {
 
   let accessToken: string
   try {
-    accessToken = await getAccessToken(tenantId)
+    accessToken = await getServiceAccountToken()
   } catch {
     return NextResponse.json({ error: 'drive_token_error' }, { status: 503 })
-  }
-
-  const quota = await checkQuota(accessToken)
-  if (quota.available < QUOTA_BLOCK_BYTES) {
-    return NextResponse.json({ error: 'drive_quota_exceeded', available: quota.available }, { status: 507 })
   }
 
   // Resolve Manuales/[section] folder

@@ -1,18 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { decrypt } from '@/lib/crypto'
 
 const DRIVE_API = 'https://www.googleapis.com/drive/v3'
 const DRIVE_UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3'
-const OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token'
-
-export const QUOTA_WARN_BYTES = 500 * 1024 * 1024   // 500 MB
-export const QUOTA_BLOCK_BYTES = 100 * 1024 * 1024  // 100 MB
-
-export interface DriveQuota {
-  total: number
-  used: number
-  available: number
-}
 
 export interface DriveFile {
   id: string
@@ -22,51 +11,75 @@ export interface DriveFile {
   mimeType: string
 }
 
-// --- Token management ---
+// --- Service Account Token ---
 
-export async function getAccessToken(tenantId: string): Promise<string> {
-  const admin = createAdminClient()
-  const { data: tenant } = await admin
-    .from('tenants')
-    .select('gdrive_refresh_token')
-    .eq('id', tenantId)
-    .single()
+function toBase64Url(input: ArrayBuffer | string): string {
+  let bytes: Uint8Array
+  if (typeof input === 'string') {
+    bytes = new TextEncoder().encode(input)
+  } else {
+    bytes = new Uint8Array(input)
+  }
+  let str = ''
+  bytes.forEach(b => { str += String.fromCharCode(b) })
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+}
 
-  if (!tenant?.gdrive_refresh_token) throw new Error('Google Drive not connected')
+export async function getServiceAccountToken(): Promise<string> {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+  const pemRaw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+  if (!email || !pemRaw) throw new Error('Google service account not configured')
 
-  const refreshToken = decrypt(tenant.gdrive_refresh_token)
+  const pem = pemRaw.replace(/\\n/g, '\n')
+  const b64 = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\s+/g, '')
 
-  const res = await fetch(OAUTH_TOKEN_URL, {
+  const keyBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8',
+    keyBytes.buffer,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+
+  const now = Math.floor(Date.now() / 1000)
+  const header = toBase64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+  const payload = toBase64Url(JSON.stringify({
+    iss: email,
+    scope: 'https://www.googleapis.com/auth/drive',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  }))
+
+  const signingInput = `${header}.${payload}`
+  const sig = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    cryptoKey,
+    new TextEncoder().encode(signingInput),
+  )
+
+  const jwt = `${signingInput}.${toBase64Url(sig)}`
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-      refresh_token: refreshToken,
-      grant_type: 'refresh_token',
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt,
     }),
   })
 
   if (!res.ok) {
     const err = await res.text()
-    throw new Error(`Failed to refresh Google token: ${err}`)
+    throw new Error(`Service account auth failed: ${err}`)
   }
 
   const json = await res.json()
   return json.access_token as string
-}
-
-// --- Quota ---
-
-export async function checkQuota(accessToken: string): Promise<DriveQuota> {
-  const res = await fetch(`${DRIVE_API}/about?fields=storageQuota`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
-  if (!res.ok) throw new Error('Failed to check Drive quota')
-  const { storageQuota } = await res.json()
-  const total = Number(storageQuota.limit ?? 0)
-  const used = Number(storageQuota.usage ?? 0)
-  return { total, used, available: total - used }
 }
 
 // --- Folder management ---

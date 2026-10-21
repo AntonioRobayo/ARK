@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
-  getAccessToken, checkQuota, getOtSectionFolder,
+  getServiceAccountToken, getOtSectionFolder,
   uploadFileToDrive, driveThumbnailUrl,
-  QUOTA_WARN_BYTES, QUOTA_BLOCK_BYTES,
 } from '@/lib/google-drive'
 
 export async function POST(req: NextRequest) {
@@ -43,24 +42,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Google Drive not configured' }, { status: 412 })
   }
 
-  // Check quota
   let accessToken: string
   try {
-    accessToken = await getAccessToken(tenantId)
+    accessToken = await getServiceAccountToken()
   } catch {
     return NextResponse.json({ error: 'drive_token_error' }, { status: 503 })
   }
 
-  const quota = await checkQuota(accessToken)
-  if (quota.available < QUOTA_BLOCK_BYTES) {
-    return NextResponse.json({ error: 'drive_quota_exceeded', available: quota.available }, { status: 507 })
-  }
-
-  // Update quota warning flag if needed
-  const shouldWarn = quota.available < QUOTA_WARN_BYTES
-  if (shouldWarn !== tenant.gdrive_quota_warning) {
-    admin.from('tenants').update({ gdrive_quota_warning: shouldWarn }).eq('id', tenantId).then(() => {})
-  }
+  const shouldWarn = false
 
   // Resolve target folder
   const vehicle = (Array.isArray(workOrder?.vehicle) ? workOrder.vehicle[0] : workOrder?.vehicle) as { plate: string; brand: string; model: string } | null
