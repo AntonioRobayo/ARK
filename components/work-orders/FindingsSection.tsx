@@ -102,29 +102,29 @@ export function FindingsSection({ otId, findings, customerEmail, customerName, o
       )}
 
       {/* Formulario agregar hallazgo */}
-      <form action={addFinding} className="flex gap-2 items-end border-t border-gray-100 pt-3">
+      <form action={addFinding} className="space-y-2 border-t border-gray-100 pt-3">
         <input type="hidden" name="ot_id" value={otId} />
-        <div className="flex-1">
+        <div className="flex gap-2">
           <input
             type="text"
             name="description"
             required
             placeholder="Describe el hallazgo…"
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+            className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
           />
+          <select
+            name="severity"
+            defaultValue="moderate"
+            className="text-sm border border-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white shrink-0"
+          >
+            <option value="minor">Menor</option>
+            <option value="moderate">Moderado</option>
+            <option value="critical">Crítico</option>
+          </select>
         </div>
-        <select
-          name="severity"
-          defaultValue="moderate"
-          className="text-sm border border-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white"
-        >
-          <option value="minor">Menor</option>
-          <option value="moderate">Moderado</option>
-          <option value="critical">Crítico</option>
-        </select>
         <button
           type="submit"
-          className="text-sm bg-slate-800 hover:bg-slate-700 text-white font-medium px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
+          className="w-full text-sm bg-slate-800 hover:bg-slate-700 text-white font-medium px-3 py-2 rounded-lg transition-colors"
         >
           + Agregar
         </button>

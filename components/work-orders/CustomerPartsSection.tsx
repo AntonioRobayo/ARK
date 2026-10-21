@@ -88,21 +88,21 @@ export function CustomerPartsSection({ otId, vehicleId, parts, attachments, driv
             name="description"
             required
             placeholder="Nombre de la pieza o repuesto…"
-            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+            className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
           />
           <input
             type="number"
             name="quantity"
             defaultValue={1}
             min={1}
-            className="w-16 text-sm border border-gray-200 rounded-lg px-2 py-2 text-center focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className="w-14 text-sm border border-gray-200 rounded-lg px-2 py-2 text-center focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
         </div>
         <div className="flex gap-2">
           <select
             name="condition"
             defaultValue="new"
-            className="text-sm border border-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white"
+            className="text-sm border border-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white shrink-0"
           >
             <option value="new">Nuevo</option>
             <option value="used">Usado</option>
@@ -112,15 +112,15 @@ export function CustomerPartsSection({ otId, vehicleId, parts, attachments, driv
             type="text"
             name="notes"
             placeholder="Observaciones (opcional)"
-            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+            className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
           />
-          <button
-            type="submit"
-            className="text-sm bg-slate-800 hover:bg-slate-700 text-white font-medium px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
-          >
-            + Agregar
-          </button>
         </div>
+        <button
+          type="submit"
+          className="w-full text-sm bg-slate-800 hover:bg-slate-700 text-white font-medium px-3 py-2 rounded-lg transition-colors"
+        >
+          + Agregar
+        </button>
       </form>
     </div>
   )
