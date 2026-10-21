@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 
 export async function createCustomer(formData: FormData) {
@@ -8,7 +9,9 @@ export async function createCustomer(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+
+  const { data: profile } = await adminClient
     .from('user_profile')
     .select('tenant_id')
     .eq('id', user.id)
@@ -18,7 +21,7 @@ export async function createCustomer(formData: FormData) {
     redirect('/customers/new?error=' + encodeURIComponent('Sin tenant configurado'))
   }
 
-  const { data: customer, error } = await supabase
+  const { data: customer, error } = await adminClient
     .from('customer')
     .insert({
       tenant_id:  profile.tenant_id,
