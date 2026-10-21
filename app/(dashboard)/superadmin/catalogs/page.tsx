@@ -7,6 +7,7 @@ type SearchParams = Promise<{ tab?: string; add?: string; edit_rate?: string; er
 const CATEGORY_LABELS: Record<string, string> = {
   vehicle_type: 'Tipos de vehículo',
   fuel_type: 'Tipos de combustible',
+  fuel_level: 'Niveles de combustible',
   document_type: 'Tipos de documento',
   inventory_item_type: 'Tipos de ítem (inventario)',
   vehicle_brand: 'Marcas de vehículo',

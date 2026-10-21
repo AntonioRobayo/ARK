@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { checkPermission } from '@/lib/permissions'
-import { inviteUser, toggleUserActive, changeRole } from './actions'
+import { inviteUser, toggleUserActive, changeRole, revokeInvite } from './actions'
 
 type TenantRole =
   | 'owner'
@@ -90,11 +90,23 @@ export default async function SettingsUsersPage({
     .eq('tenant_id', myProfile.tenant_id)
     .order('created_at', { ascending: true })
 
-  // Get emails from auth
+  // Get emails from auth + detect pending invites (invited but not confirmed)
   const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const emailMap: Record<string, string> = Object.fromEntries(
     (usersData?.users ?? []).map(u => [u.id, u.email ?? ''])
   )
+
+  const pendingInvites = (usersData?.users ?? []).filter(u => {
+    if (u.email_confirmed_at) return false
+    if (!u.invited_at) return false
+    const meta = u.raw_user_meta_data as Record<string, unknown> | null
+    return meta?.tenant_id === myProfile.tenant_id
+  }).map(u => ({
+    id: u.id,
+    email: u.email ?? '',
+    role: (u.raw_user_meta_data as Record<string, unknown> | null)?.role as string | null,
+    invited_at: u.invited_at,
+  }))
 
   const t = await getTranslations('settings.users')
 
@@ -381,7 +393,46 @@ export default async function SettingsUsersPage({
               )
             })}
 
-            {(members ?? []).length === 0 && (
+            {/* Pending invites */}
+            {pendingInvites.map(inv => (
+              <tr
+                key={inv.id}
+                className="hover:bg-gray-50 transition-colors"
+                style={{ borderBottom: '1px solid #F9FAFB' }}
+              >
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gray-300 flex-shrink-0">
+                      {(inv.email[0] ?? '?').toUpperCase()}
+                    </div>
+                    <span className="text-gray-400 text-sm">—</span>
+                  </div>
+                </td>
+                <td className="px-5 py-3.5 text-gray-500 text-xs">{inv.email}</td>
+                <td className="px-5 py-3.5">{roleBadge(inv.role, t)}</td>
+                <td className="px-5 py-3.5">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                    Invitación enviada
+                  </span>
+                </td>
+                {canManage && (
+                  <td className="px-5 py-3.5 text-right">
+                    <form action={revokeInvite}>
+                      <input type="hidden" name="user_id" value={inv.id} />
+                      <button
+                        type="submit"
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </form>
+                  </td>
+                )}
+              </tr>
+            ))}
+
+            {(members ?? []).length === 0 && pendingInvites.length === 0 && (
               <tr>
                 <td colSpan={canManage ? 5 : 4} className="px-5 py-12 text-center">
                   <p className="text-sm text-gray-400">{t('empty')}</p>

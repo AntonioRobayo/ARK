@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { ReceptionForm } from './reception-form'
+import { getCatalog } from '@/lib/catalog'
 
 // Paso 1: buscar cliente | Paso 2: seleccionar vehículo | Paso 3: formulario de recepción
 // El estado viaja por URL params: ?customer_id=xxx&vehicle_id=yyy&appointment_id=zzz
@@ -41,7 +42,7 @@ export default async function NewWorkOrderPage({
   // ── Paso 3: formulario de recepción ─────────────────────────────────────────
   if (customer_id && vehicle_id) {
     const today = new Date().toISOString().split('T')[0]
-    const [{ data: customer }, { data: vehicle }, { data: techs }, { data: checklistTemplates }] = await Promise.all([
+    const [{ data: customer }, { data: vehicle }, { data: techs }, { data: checklistTemplates }, fuelLevelOptions] = await Promise.all([
       adminClient.from('customer').select('id, first_name, last_name, phone').eq('id', customer_id).eq('tenant_id', tenantId).single(),
       adminClient.from('vehicle').select('id, plate, brand, model, year, current_mileage').eq('id', vehicle_id).single(),
       adminClient.from('user_profile').select('id, first_name, last_name').eq('tenant_id', tenantId).eq('is_active', true).not('role_id', 'is', null),
@@ -52,6 +53,7 @@ export default async function NewWorkOrderPage({
         .eq('is_active', true)
         .is('deleted_at', null)
         .limit(1),
+      getCatalog('fuel_level'),
     ])
 
     if (!customer || !vehicle) redirect('/work-orders/new')
@@ -104,6 +106,7 @@ export default async function NewWorkOrderPage({
           currentMileage={vehicle.current_mileage ?? null}
           techs={techs ?? []}
           checklist={checklist}
+          fuelLevelOptions={fuelLevelOptions}
         />
       </div>
     )

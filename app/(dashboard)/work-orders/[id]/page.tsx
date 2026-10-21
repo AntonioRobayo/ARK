@@ -159,19 +159,7 @@ export default async function WorkOrderDetailPage({
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-gray-400 text-xs">{t('detail.fuel')}</p>
-                <div className="flex gap-0.5 mt-1">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-2.5 w-4 rounded-sm ${i < (ot.fuel_level ?? 0) ? 'bg-green-400' : 'bg-gray-100'}`}
-                    />
-                  ))}
-                  <span className="text-xs text-gray-400 ml-1">{ot.fuel_level ?? '—'}/8</span>
-                </div>
-              </div>
-              <div>
-                <p className="text-gray-400 text-xs">{t('detail.battery')}</p>
-                <p className="font-medium text-gray-700 mt-1">{ot.battery_level != null ? `${ot.battery_level}/10` : '—'}</p>
+                <p className="font-medium text-gray-700 mt-1">{ot.fuel_level ?? '—'}</p>
               </div>
               <div>
                 <p className="text-gray-400 text-xs">{t('detail.technician')}</p>

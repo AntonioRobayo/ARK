@@ -23,6 +23,8 @@ interface Tech {
   last_name: string
 }
 
+interface FuelOption { value: string; label: string }
+
 interface Props {
   customerId: string
   vehicleId: string
@@ -30,11 +32,12 @@ interface Props {
   currentMileage: number | null
   techs: Tech[]
   checklist: ChecklistTemplate | null
+  fuelLevelOptions: FuelOption[]
 }
 
 type ChecklistStatus = 'ok' | 'issue' | 'na'
 
-export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMileage, techs, checklist }: Props) {
+export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMileage, techs, checklist, fuelLevelOptions }: Props) {
   const t = useTranslations('workOrders')
 
   const [custodyItems, setCustodyItems] = useState<{ description: string; location: string }[]>([])
@@ -98,23 +101,15 @@ export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMil
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.fuel')}</label>
-          <input
+          <select
             name="fuel_level"
-            type="number"
-            min="0" max="8"
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-            placeholder="0–8"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.battery')}</label>
-          <input
-            name="battery_level"
-            type="number"
-            min="0" max="10"
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-            placeholder="0–10"
-          />
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+          >
+            <option value="">— Sin registrar —</option>
+            {fuelLevelOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 

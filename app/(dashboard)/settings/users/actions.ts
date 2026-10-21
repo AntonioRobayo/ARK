@@ -56,7 +56,9 @@ export async function inviteUser(formData: FormData) {
     }
   }
 
+  const passwordNext = `/auth/update-password`
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(passwordNext)}`,
     data: {
       tenant_id: myProfile.tenant_id,
       role: role || null,
@@ -69,6 +71,18 @@ export async function inviteUser(formData: FormData) {
 
   revalidatePath('/settings/users')
   redirect('/settings/users?success=invited')
+}
+
+export async function revokeInvite(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const targetUserId = formData.get('user_id') as string
+  const adminClient = createAdminClient()
+  await adminClient.auth.admin.deleteUser(targetUserId)
+  revalidatePath('/settings/users')
+  redirect('/settings/users')
 }
 
 export async function changeRole(formData: FormData) {

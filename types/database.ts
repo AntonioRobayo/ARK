@@ -193,7 +193,7 @@ export interface WorkOrder {
   status: WorkOrderStatus
   priority: string
   reception_mileage: number | null
-  fuel_level: number | null
+  fuel_level: string | null
   battery_level: number | null
   reception_notes: string | null
   technician_id: string | null
