@@ -104,7 +104,7 @@
       "changeVehicle": "← Change",
       "km": "Reception mileage",
       "priority": "Priority",
-      "fuel": "Fuel level (0–8)",
+      "fuel": "Fuel level",
       "battery": "Battery (0–10)",
       "technician": "Assigned technician",
       "estimatedDelivery": "Estimated delivery",

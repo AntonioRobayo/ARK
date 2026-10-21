@@ -104,7 +104,7 @@
       "changeVehicle": "← Trocar",
       "km": "Quilometragem de recepção",
       "priority": "Prioridade",
-      "fuel": "Nível de combustível (0–8)",
+      "fuel": "Nível de combustível",
       "battery": "Bateria (0–10)",
       "technician": "Técnico atribuído",
       "estimatedDelivery": "Entrega estimada",

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { LocalDateOnly } from '@/components/local-date'
+import { requirePermission } from '@/lib/require-permission'
 
 const INVOICE_STATUS_CLS: Record<string, string> = {
   draft:           'bg-gray-50 text-gray-500',
@@ -19,6 +20,7 @@ export default async function BillingPage({
 }: {
   searchParams: Promise<{ tab?: string }>
 }) {
+  await requirePermission('billing.view')
   const { tab = 'open' } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

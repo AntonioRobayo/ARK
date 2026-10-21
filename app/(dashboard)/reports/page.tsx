@@ -4,8 +4,10 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { STATUS_LABEL, STATUS_COLOR } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
+import { requirePermission } from '@/lib/require-permission'
 
 export default async function ReportsPage() {
+  await requirePermission('reports.view')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')

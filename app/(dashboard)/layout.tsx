@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('user_profile')
-    .select('first_name, last_name, is_platform_admin, locale, tenant_id')
+    .select('first_name, last_name, is_platform_admin, locale, tenant_id, role')
     .eq('id', user.id)
     .single()
 
@@ -82,6 +82,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         lastName={profile?.last_name ?? ''}
         email={user.email}
         isSuperadmin={profile?.is_platform_admin === true}
+        role={profile?.role ?? null}
         locale={cookieLocale}
         tenantName={tenantName}
         sidebarAd={!profile?.is_platform_admin ? <AdBanner placementSlug="sidebar_square" /> : null}

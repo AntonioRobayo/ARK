@@ -47,6 +47,7 @@ interface SidebarProps {
   lastName?: string | null
   email?: string | null
   isSuperadmin: boolean
+  role?: string | null
   locale?: string
   tenantName?: string | null
   sidebarAd?: React.ReactNode
@@ -114,13 +115,13 @@ function LogoutButton() {
   )
 }
 
-export function Sidebar({ firstName, lastName, email, isSuperadmin, locale, tenantName, sidebarAd }: SidebarProps) {
+export function Sidebar({ firstName, lastName, email, isSuperadmin, role, locale, tenantName, sidebarAd }: SidebarProps) {
   const [open, setOpen] = useState(false)
   const t = useTranslations('sidebar')
 
   const navContent = (
     <>
-      <NavLinks isSuperadmin={isSuperadmin} onNavClick={() => setOpen(false)} />
+      <NavLinks isSuperadmin={isSuperadmin} role={role} onNavClick={() => setOpen(false)} />
       {sidebarAd && <div className="px-3 pb-2">{sidebarAd}</div>}
       <UserInfo firstName={firstName} lastName={lastName} email={email} isSuperadmin={isSuperadmin} locale={locale} tenantName={tenantName} />
       <LogoutButton />

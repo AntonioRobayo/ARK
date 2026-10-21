@@ -4,6 +4,19 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
+// Routes each role is allowed to see. Superadmins always see everything.
+const NAV_ROLES: Record<string, string[]> = {
+  '/dashboard':    ['owner','admin','shop_manager','mechanic','receptionist','parts_manager','accountant'],
+  '/work-orders':  ['owner','admin','shop_manager','mechanic','receptionist','parts_manager'],
+  '/customers':    ['owner','admin','shop_manager','mechanic','receptionist','parts_manager','accountant'],
+  '/vehicles':     ['owner','admin','shop_manager','mechanic','receptionist'],
+  '/appointments': ['owner','admin','shop_manager','mechanic','receptionist'],
+  '/inventory':    ['owner','admin','shop_manager','mechanic','parts_manager'],
+  '/billing':      ['owner','admin','shop_manager','receptionist','accountant'],
+  '/reports':      ['owner','admin','shop_manager','accountant'],
+  '/settings':     ['owner','admin','shop_manager'],
+}
+
 const NAV = [
   { href: '/dashboard',    tKey: 'dashboard' as const,
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
@@ -36,14 +49,23 @@ const NAV = [
 
 const SUPERADMIN_ICON = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
 
-export function NavLinks({ isSuperadmin, onNavClick }: { isSuperadmin?: boolean; onNavClick?: () => void }) {
+export function NavLinks({ isSuperadmin, role, onNavClick }: { isSuperadmin?: boolean; role?: string | null; onNavClick?: () => void }) {
   const pathname = usePathname()
   const t = useTranslations('nav')
+
+  const visibleNav = isSuperadmin
+    ? NAV
+    : NAV.filter(item => {
+        const allowed = NAV_ROLES[item.href]
+        if (!allowed) return true
+        if (!role) return item.href === '/dashboard'
+        return allowed.includes(role)
+      })
 
   return (
     <nav className="flex-1 px-3 py-3 overflow-y-auto overflow-x-hidden">
       <div className="space-y-0.5">
-        {NAV.map(item => {
+        {visibleNav.map(item => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
           return (
             <Link
