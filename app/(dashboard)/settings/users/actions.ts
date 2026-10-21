@@ -79,7 +79,25 @@ export async function revokeInvite(formData: FormData) {
   if (!user) redirect('/auth/login')
 
   const targetUserId = formData.get('user_id') as string
+  if (!targetUserId) redirect('/settings/users?error=' + encodeURIComponent('Usuario no válido'))
+
   const adminClient = createAdminClient()
+
+  const { data: myProfile } = await adminClient
+    .from('user_profile').select('tenant_id, role').eq('id', user.id).single()
+
+  const canInvite = await checkPermission('users.invite')
+  if (!canInvite || !myProfile?.tenant_id) {
+    redirect('/settings/users?error=' + encodeURIComponent('No tienes permiso para cancelar invitaciones'))
+  }
+
+  // Verify the target user belongs to this tenant (check user_metadata)
+  const { data: targetUser } = await adminClient.auth.admin.getUserById(targetUserId)
+  const targetTenantId = (targetUser?.user?.user_metadata as Record<string, unknown> | null)?.tenant_id
+  if (!targetUser?.user || targetTenantId !== myProfile.tenant_id) {
+    redirect('/settings/users?error=' + encodeURIComponent('Invitación no encontrada en este taller'))
+  }
+
   await adminClient.auth.admin.deleteUser(targetUserId)
   revalidatePath('/settings/users')
   redirect('/settings/users')

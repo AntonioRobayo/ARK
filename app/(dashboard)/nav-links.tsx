@@ -41,7 +41,7 @@ export function NavLinks({ isSuperadmin, onNavClick }: { isSuperadmin?: boolean;
   const t = useTranslations('nav')
 
   return (
-    <nav className="flex-1 px-3 py-3 overflow-y-auto">
+    <nav className="flex-1 px-3 py-3 overflow-y-auto overflow-x-hidden">
       <div className="space-y-0.5">
         {NAV.map(item => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
@@ -50,11 +50,11 @@ export function NavLinks({ isSuperadmin, onNavClick }: { isSuperadmin?: boolean;
               key={item.href}
               href={item.href}
               onClick={onNavClick}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
               style={isActive ? { backgroundColor: '#FF7316', color: '#fff' } : { color: 'rgba(255,255,255,0.55)' }}
             >
               <span className="shrink-0">{item.icon}</span>
-              <span className="font-medium">{t(item.tKey)}</span>
+              <span className="font-medium min-w-0 truncate">{t(item.tKey)}</span>
             </Link>
           )
         })}
