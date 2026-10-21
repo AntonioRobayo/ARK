@@ -388,14 +388,12 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {!e.is_system && (
-                            <form action={toggleCatalogEntry.bind(null, e.id, e.is_active)}>
-                              <button type="submit" className="text-xs font-medium transition-colors hover:underline"
-                                style={{ color: e.is_active ? '#EF4444' : '#FF7316' }}>
-                                {e.is_active ? 'Desactivar' : 'Activar'}
-                              </button>
-                            </form>
-                          )}
+                          <form action={toggleCatalogEntry.bind(null, e.id, e.is_active)}>
+                            <button type="submit" className="text-xs font-medium transition-colors hover:underline"
+                              style={{ color: e.is_active ? '#EF4444' : '#FF7316' }}>
+                              {e.is_active ? 'Desactivar' : 'Activar'}
+                            </button>
+                          </form>
                         </td>
                       </tr>
                     ))}
