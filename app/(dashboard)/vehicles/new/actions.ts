@@ -33,31 +33,43 @@ export async function createVehicle(formData: FormData) {
   const fuelType     = (formData.get('fuel_type') as string)?.trim() || null
   const vin          = (formData.get('vin') as string)?.trim().toUpperCase() || null
 
-  const { data: vehicle, error } = await adminClient
-    .from('vehicle')
-    .insert({
-      tenant_id:       profile.tenant_id,
-      customer_id:     customerId || null,
-      plate,
-      brand,
-      model:           (formData.get('model') as string).trim(),
-      year,
-      color:           (formData.get('color') as string)?.trim() || null,
-      engine_cc:       cc,
-      vehicle_type:    vehicleType,
-      current_mileage: km,
-      fuel_type:       fuelType,
-      vin,
-      notes:           (formData.get('notes') as string)?.trim() || null,
-    })
-    .select('id')
-    .single()
+  const model = (formData.get('model') as string).trim()
+  const color = (formData.get('color') as string)?.trim() || null
+  const notes = (formData.get('notes') as string)?.trim() || null
 
-  if (error || !vehicle) {
-    redirect('/vehicles/new?error=' + encodeURIComponent(error?.message ?? 'Error al registrar vehículo'))
+  let vehicleId: string
+
+  if (plate) {
+    const { data: existing } = await adminClient
+      .from('vehicle')
+      .select('id')
+      .ilike('plate', plate)
+      .maybeSingle()
+
+    if (existing) {
+      vehicleId = existing.id
+      if (customerId) {
+        await adminClient.from('vehicle').update({ customer_id: customerId }).eq('id', vehicleId)
+      }
+    } else {
+      const { data: vehicle, error } = await adminClient
+        .from('vehicle')
+        .insert({ customer_id: customerId || null, plate, brand, model, year, color, engine_cc: cc, vehicle_type: vehicleType, current_mileage: km, fuel_type: fuelType, vin, notes })
+        .select('id')
+        .single()
+      if (error || !vehicle) redirect('/vehicles/new?error=' + encodeURIComponent(error?.message ?? 'Error al registrar vehículo'))
+      vehicleId = vehicle.id
+    }
+  } else {
+    const { data: vehicle, error } = await adminClient
+      .from('vehicle')
+      .insert({ customer_id: customerId || null, plate, brand, model, year, color, engine_cc: cc, vehicle_type: vehicleType, current_mileage: km, fuel_type: fuelType, vin, notes })
+      .select('id')
+      .single()
+    if (error || !vehicle) redirect('/vehicles/new?error=' + encodeURIComponent(error?.message ?? 'Error al registrar vehículo'))
+    vehicleId = vehicle.id
   }
 
-  // Auto-add new values to global catalog so they appear as suggestions next time
   await Promise.allSettled([
     ensureCatalogValue('vehicle_brand', brand, brand),
     ensureCatalogValue('vehicle_type', vehicleType, vehicleType),
@@ -67,5 +79,5 @@ export async function createVehicle(formData: FormData) {
   const redirectTo = formData.get('redirect_to') as string
   if (redirectTo) redirect(redirectTo)
   if (customerId) redirect(`/customers/${customerId}`)
-  redirect(`/vehicles/${vehicle.id}`)
+  redirect(`/vehicles/${vehicleId}`)
 }

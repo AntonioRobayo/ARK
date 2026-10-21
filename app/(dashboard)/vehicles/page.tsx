@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 
@@ -9,17 +11,25 @@ export default async function VehiclesPage({
 }) {
   const { q } = await searchParams
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
 
-  let query = supabase
+  const adminClient = createAdminClient()
+  const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!myProfile?.tenant_id) redirect('/superadmin')
+  const tenantId = myProfile.tenant_id
+
+  let vehicleQuery = adminClient
     .from('vehicle')
-    .select(`id, plate, brand, model, year, color, vehicle_type, current_mileage, customer:customer_id(id, first_name, last_name, phone)`)
+    .select(`id, plate, brand, model, year, color, vehicle_type, current_mileage, customer:customer_id(id, first_name, last_name, phone, tenant_id)`)
     .order('created_at', { ascending: false })
 
   if (q && q.length >= 2) {
-    query = query.or(`plate.ilike.%${q}%,brand.ilike.%${q}%,model.ilike.%${q}%`)
+    vehicleQuery = vehicleQuery.or(`plate.ilike.%${q}%,brand.ilike.%${q}%,model.ilike.%${q}%`)
   }
 
-  const { data: vehicles } = await query.limit(50)
+  const { data: allVehicles } = await vehicleQuery.limit(200)
+  const vehicles = (allVehicles ?? []).filter((v: any) => v.customer?.tenant_id === tenantId)
   const t = await getTranslations('vehicles')
 
   return (
