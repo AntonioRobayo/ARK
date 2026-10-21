@@ -70,6 +70,54 @@ export async function inviteUser(formData: FormData) {
   redirect('/settings/users?success=invited')
 }
 
+export async function changeRole(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const targetUserId = formData.get('user_id') as string
+  const newRole      = formData.get('role') as string
+
+  const ALLOWED = ['owner', 'shop_manager', 'mechanic', 'receptionist', 'parts_manager', 'accountant']
+  if (!targetUserId || !ALLOWED.includes(newRole)) {
+    redirect('/settings/users?error=' + encodeURIComponent('Datos no válidos'))
+  }
+
+  const adminClient = createAdminClient()
+
+  const { data: myProfile } = await adminClient
+    .from('user_profile').select('tenant_id, role').eq('id', user.id).single()
+
+  if (myProfile?.role !== 'owner') {
+    redirect('/settings/users?error=' + encodeURIComponent('Solo el dueño puede cambiar roles'))
+  }
+
+  const { data: targetProfile } = await adminClient
+    .from('user_profile').select('tenant_id, role').eq('id', targetUserId).single()
+
+  if (!targetProfile || targetProfile.tenant_id !== myProfile.tenant_id) {
+    redirect('/settings/users?error=' + encodeURIComponent('Usuario no encontrado en este taller'))
+  }
+
+  if (targetProfile.role === 'owner') {
+    redirect('/settings/users?error=' + encodeURIComponent('No puedes cambiar el rol del dueño'))
+  }
+
+  const { error } = await adminClient
+    .from('user_profile').update({ role: newRole }).eq('id', targetUserId)
+
+  if (error) redirect('/settings/users?error=' + encodeURIComponent(error.message))
+
+  await adminClient
+    .from('user_tenant_membership')
+    .update({ role: newRole })
+    .eq('user_id', targetUserId)
+    .eq('tenant_id', myProfile.tenant_id)
+
+  revalidatePath('/settings/users')
+  redirect('/settings/users?success=updated')
+}
+
 export async function toggleUserActive(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

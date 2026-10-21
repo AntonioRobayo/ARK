@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { inviteUser, toggleUserActive } from './actions'
+import { inviteUser, toggleUserActive, changeRole } from './actions'
 
 type TenantRole =
   | 'owner'
@@ -318,22 +318,46 @@ export default async function SettingsUsersPage({
 
                   {/* Actions */}
                   {canManage && (
-                    <td className="px-5 py-3.5 text-right">
+                    <td className="px-5 py-3.5">
                       {!isMe && !isOwner && (
-                        <form action={toggleUserActive}>
-                          <input type="hidden" name="user_id" value={m.id} />
-                          <input type="hidden" name="is_active" value={String(!m.is_active)} />
-                          <button
-                            type="submit"
-                            className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap ${
-                              m.is_active
-                                ? 'border-red-200 text-red-500 hover:bg-red-50'
-                                : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
-                            }`}
-                          >
-                            {m.is_active ? t('deactivate') : t('reactivate')}
-                          </button>
-                        </form>
+                        <div className="flex items-center gap-2 justify-end">
+                          {/* Role selector — only owner can change roles */}
+                          {myProfile.role === 'owner' && (
+                            <form action={changeRole} className="flex items-center">
+                              <input type="hidden" name="user_id" value={m.id} />
+                              <select
+                                name="role"
+                                defaultValue={m.role ?? ''}
+                                className="text-xs px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer"
+                              >
+                                {ROLES.map(r => (
+                                  <option key={r} value={r}>{t(`roles.${r}`)}</option>
+                                ))}
+                              </select>
+                              <button
+                                type="submit"
+                                className="ml-1 text-xs px-2 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+                                title="Guardar rol"
+                              >
+                                ✓
+                              </button>
+                            </form>
+                          )}
+                          <form action={toggleUserActive}>
+                            <input type="hidden" name="user_id" value={m.id} />
+                            <input type="hidden" name="is_active" value={String(!m.is_active)} />
+                            <button
+                              type="submit"
+                              className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap ${
+                                m.is_active
+                                  ? 'border-red-200 text-red-500 hover:bg-red-50'
+                                  : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                            >
+                              {m.is_active ? t('deactivate') : t('reactivate')}
+                            </button>
+                          </form>
+                        </div>
                       )}
                     </td>
                   )}
