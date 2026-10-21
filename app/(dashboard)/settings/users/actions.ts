@@ -94,6 +94,10 @@ export async function changeRole(formData: FormData) {
     redirect('/settings/users?error=' + encodeURIComponent('No tienes permiso para cambiar roles'))
   }
 
+  if (!myProfile?.tenant_id) {
+    redirect('/settings/users?error=' + encodeURIComponent('No se pudo obtener la información del taller'))
+  }
+
   const { data: targetProfile } = await adminClient
     .from('user_profile').select('tenant_id, role').eq('id', targetUserId).single()
 
