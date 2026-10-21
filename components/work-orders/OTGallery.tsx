@@ -22,13 +22,14 @@ interface Props {
 }
 
 const SECTIONS = [
-  { key: 'recepcion',   label: 'Recepción' },
-  { key: 'diagnostico', label: 'Diagnóstico' },
-  { key: 'trabajo',     label: 'Trabajo' },
-  { key: 'repuestos',   label: 'Repuestos' },
-  { key: 'entrega',     label: 'Entrega' },
-  { key: 'custodia',    label: 'Custodia' },
-  { key: 'documentos',  label: 'Documentos' },
+  { key: 'recepcion',          label: 'Recepción' },
+  { key: 'custodia',           label: 'Custodia' },
+  { key: 'diagnostico',        label: 'Diagnóstico' },
+  { key: 'trabajo',            label: 'Trabajo' },
+  { key: 'repuestos',          label: 'Repuestos' },
+  { key: 'repuestos_cliente',  label: 'Rep. cliente' },
+  { key: 'entrega',            label: 'Entrega' },
+  { key: 'documentos',         label: 'Documentos' },
 ]
 
 function DriveFileLink({ fileId, children }: { fileId: string; children: React.ReactNode }) {
