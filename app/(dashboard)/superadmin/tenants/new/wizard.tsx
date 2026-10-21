@@ -35,6 +35,7 @@ type WizardDraft = {
   plan_id: string
   admin_email: string
   admin_first_name: string
+  admin_role: string
 }
 
 const DRAFT_KEY = 'ark_wizard_new_tenant'
@@ -80,6 +81,7 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
   // Step 3
   const [adminEmail, setAdminEmail] = useState('')
   const [adminFirstName, setAdminFirstName] = useState('')
+  const [adminRole, setAdminRole] = useState<'owner' | 'shop_manager'>('owner')
 
   const STEPS = [
     { n: 1, label: t('steps.workshop') },
@@ -111,9 +113,10 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
       plan_id: planId,
       admin_email: adminEmail,
       admin_first_name: adminFirstName,
+      admin_role: adminRole,
     }
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)) } catch { /* ignore */ }
-  }, [step, workshopName, countryCode, currencyCode, timezone, planId, adminEmail, adminFirstName])
+  }, [step, workshopName, countryCode, currencyCode, timezone, planId, adminEmail, adminFirstName, adminRole])
 
   function resumeDraft() {
     if (!draft) return
@@ -124,6 +127,7 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
     setPlanId(draft.plan_id)
     setAdminEmail(draft.admin_email)
     setAdminFirstName(draft.admin_first_name)
+    if (draft.admin_role === 'owner' || draft.admin_role === 'shop_manager') setAdminRole(draft.admin_role)
     setStep(draft.step)
     setShowDraftBanner(false)
   }
@@ -166,6 +170,7 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
     fd.set('plan_expires_at', noExpiry ? '' : expiresAt)
     fd.set('admin_email', adminEmail)
     fd.set('admin_first_name', adminFirstName)
+    fd.set('admin_role', adminRole)
 
     startTransition(async () => {
       try {
@@ -422,6 +427,26 @@ export function NewTenantWizard({ plans, countries, currencies }: { plans: Plan[
                 placeholder={t('step3FirstNamePlaceholder')}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent" />
               <p className="mt-1.5 text-xs text-gray-400">{t('step3FirstNameHint')}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Rol del usuario</label>
+              <div className="grid grid-cols-2 gap-3">
+                {(['owner', 'shop_manager'] as const).map(r => (
+                  <button key={r} type="button" onClick={() => setAdminRole(r)}
+                    className={`px-4 py-3 rounded-xl border text-left transition-all ${
+                      adminRole === r
+                        ? 'border-orange-400 bg-orange-50 shadow-sm'
+                        : 'border-gray-200 hover:border-orange-200 bg-white'
+                    }`}>
+                    <p className={`text-sm font-semibold ${adminRole === r ? 'text-orange-700' : 'text-gray-800'}`}>
+                      {r === 'owner' ? '👑 Dueño' : '🔧 Gerente'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {r === 'owner' ? 'Acceso total al taller' : 'Gestión de OTs y usuarios'}
+                    </p>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

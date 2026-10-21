@@ -129,7 +129,7 @@ export default async function TenantDetailPage({
         <div>
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-gray-500">{t('users.count', { n: profiles?.length ?? 0 })}</p>
-            <form action={inviteAdmin} className="flex gap-2" noValidate>
+            <form action={inviteAdmin} className="flex gap-2 items-center flex-wrap" noValidate>
               <input type="hidden" name="tenant_id" value={id} />
               <input
                 name="email"
@@ -137,9 +137,14 @@ export default async function TenantDetailPage({
                 placeholder="email@taller.com"
                 className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 w-52"
               />
+              <select name="role"
+                className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
+                <option value="owner">👑 Dueño</option>
+                <option value="shop_manager">🔧 Gerente</option>
+              </select>
               <button type="submit"
                 className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 transition-colors whitespace-nowrap">
-                Invitar admin
+                Invitar
               </button>
             </form>
           </div>

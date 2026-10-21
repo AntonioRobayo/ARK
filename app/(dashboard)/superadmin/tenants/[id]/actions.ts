@@ -141,6 +141,8 @@ export async function inviteAdmin(formData: FormData) {
   const adminClient = createAdminClient()
   const tenantId = formData.get('tenant_id') as string
   const email    = (formData.get('email') as string)?.trim().toLowerCase()
+  const rawRole  = formData.get('role') as string | null
+  const role     = rawRole === 'owner' || rawRole === 'shop_manager' ? rawRole : 'owner'
 
   if (!email || !tenantId) {
     redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent('Email requerido')}`)
@@ -153,7 +155,7 @@ export async function inviteAdmin(formData: FormData) {
     // 1. Upsert membership (never overwrites active tenant)
     const { error: membershipError } = await adminClient
       .from('user_tenant_membership')
-      .upsert({ user_id: existingUser.id, tenant_id: tenantId, role: 'admin', is_active: true },
+      .upsert({ user_id: existingUser.id, tenant_id: tenantId, role, is_active: true },
                { onConflict: 'user_id,tenant_id' })
     if (membershipError) {
       redirect(`/superadmin/tenants/${tenantId}?tab=users&error=${encodeURIComponent(membershipError.message)}`)
@@ -182,7 +184,7 @@ export async function inviteAdmin(formData: FormData) {
         .insert({
           id: existingUser.id,
           tenant_id: tenantId,
-          role: 'admin',
+          role,
           is_active: true,
           first_name: (meta?.first_name as string) || (existingUser.email?.split('@')[0] ?? ''),
           last_name: (meta?.last_name as string) || '',
@@ -205,7 +207,7 @@ export async function inviteAdmin(formData: FormData) {
   const passwordNext  = `/auth/update-password?next=${encodeURIComponent(onboardingUrl)}`
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(passwordNext)}`,
-    data: { tenant_id: tenantId, role: 'admin' },
+    data: { tenant_id: tenantId, role },
   })
 
   if (inviteError) {

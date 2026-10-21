@@ -26,6 +26,8 @@ export async function createTenantAndInvite(formData: FormData) {
   const contractedBranches = Number(formData.get('contracted_branches') || 1)
   const adminEmail         = formData.get('admin_email') as string
   const adminFirstName     = (formData.get('admin_first_name') as string) || undefined
+  const adminRole          = (['owner', 'shop_manager'].includes(formData.get('admin_role') as string)
+    ? formData.get('admin_role') as string : 'owner')
   const planExpiresAt      = (formData.get('plan_expires_at') as string) || null
 
   // Obtener el slug del plan seleccionado
@@ -67,7 +69,7 @@ export async function createTenantAndInvite(formData: FormData) {
   const onboardingNext = encodeURIComponent(`/onboarding?tenant_id=${tenantId}`)
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(adminEmail, {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${onboardingNext}`,
-    data: { tenant_id: tenantId, role: 'admin', ...(adminFirstName ? { first_name: adminFirstName } : {}) },
+    data: { tenant_id: tenantId, role: adminRole, ...(adminFirstName ? { first_name: adminFirstName } : {}) },
   })
 
   if (inviteError) {
