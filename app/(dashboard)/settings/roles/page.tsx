@@ -66,7 +66,7 @@ export default async function RolesPage({
   // Fetch all members for individual overrides section
   const { data: members } = await adminClient
     .from('user_profile')
-    .select('id, first_name, last_name, role, role_id, user_permission(permission_id, granted)')
+    .select('id, first_name, last_name, role')
     .eq('tenant_id', myProfile.tenant_id)
     .eq('is_active', true)
     .order('first_name')
@@ -75,6 +75,14 @@ export default async function RolesPage({
   const emailMap: Record<string, string> = Object.fromEntries(
     (usersAuth?.users ?? []).map(u => [u.id, u.email ?? ''])
   )
+
+  // Fetch overrides only for the selected user
+  const { data: selectedUserPermissions } = selectedUserId
+    ? await adminClient
+        .from('user_permission')
+        .select('permission_id, granted')
+        .eq('user_id', selectedUserId)
+    : { data: null }
 
   // Group permissions by module
   const byModule: Record<string, typeof allPerms> = {}
@@ -95,10 +103,8 @@ export default async function RolesPage({
     : null
 
   const selectedOverrides: Record<string, boolean> = {}
-  if (selectedMember) {
-    for (const up of (selectedMember.user_permission ?? []) as Array<{ permission_id: string; granted: boolean }>) {
-      selectedOverrides[up.permission_id] = up.granted
-    }
+  for (const up of (selectedUserPermissions ?? []) as Array<{ permission_id: string; granted: boolean }>) {
+    selectedOverrides[up.permission_id] = up.granted
   }
 
   return (
@@ -187,7 +193,6 @@ export default async function RolesPage({
           {(members ?? []).map(m => {
             const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || emailMap[m.id] || '?'
             const isSelected = m.id === selectedUserId
-            const overrideCount = (m.user_permission ?? []).length
             return (
               <Link
                 key={m.id}
@@ -199,11 +204,6 @@ export default async function RolesPage({
                 }`}
               >
                 {name}
-                {overrideCount > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-orange-100 text-orange-600 text-[10px] leading-4 text-center font-bold">
-                    {overrideCount}
-                  </span>
-                )}
               </Link>
             )
           })}
@@ -254,7 +254,7 @@ export default async function RolesPage({
                       >
                         ✕
                       </button>
-                      {override !== undefined && (
+                      {override !== undefined && override !== null && (
                         <button
                           type="submit"
                           name="action"
