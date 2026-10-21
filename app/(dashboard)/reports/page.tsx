@@ -1,10 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { STATUS_LABEL, STATUS_COLOR } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
 
 export default async function ReportsPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
+  const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!myProfile?.tenant_id) redirect('/auth/login')
+  const tenantId = myProfile.tenant_id
 
   const now = new Date()
   const startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
@@ -18,13 +27,14 @@ export default async function ReportsPage() {
     { data: topServices },
     { data: closedOTs },
   ] = await Promise.all([
-    supabase.from('invoice').select('total').eq('status', 'paid').gte('created_at', startMonth),
-    supabase.from('invoice').select('total').eq('status', 'paid').gte('created_at', startLastMonth).lte('created_at', endLastMonth),
-    supabase.from('work_order').select('status'),
-    supabase.from('quotation_item').select('description, quantity, subtotal, item_type').eq('item_type', 'service').order('subtotal', { ascending: false }).limit(10),
-    supabase
+    adminClient.from('invoice').select('total').eq('tenant_id', tenantId).eq('status', 'paid').gte('created_at', startMonth),
+    adminClient.from('invoice').select('total').eq('tenant_id', tenantId).eq('status', 'paid').gte('created_at', startLastMonth).lte('created_at', endLastMonth),
+    adminClient.from('work_order').select('status').eq('tenant_id', tenantId),
+    adminClient.from('quotation_item').select('description, quantity, subtotal, item_type').eq('item_type', 'service').order('subtotal', { ascending: false }).limit(10),
+    adminClient
       .from('work_order')
       .select('id, technician_id, technician:technician_id(first_name, last_name), invoices:invoice(total)')
+      .eq('tenant_id', tenantId)
       .in('status', ['closed'])
       .gte('closed_at', startMonth),
   ])

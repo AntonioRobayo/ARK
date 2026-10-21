@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -9,7 +10,8 @@ export async function upsertQuotation(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
     .from('user_profile').select('tenant_id').eq('id', user.id).single()
   if (!profile?.tenant_id) return
 
@@ -18,11 +20,11 @@ export async function upsertQuotation(formData: FormData) {
   const notes = (formData.get('notes') as string)?.trim() || null
 
   if (!quotationId) {
-    const { data: numRow } = await supabase.rpc('next_document_number', {
+    const { data: numRow } = await adminClient.rpc('next_document_number', {
       p_tenant_id: profile.tenant_id,
       p_doc_type: 'COT',
     })
-    await supabase.from('quotation').insert({
+    await adminClient.from('quotation').insert({
       tenant_id: profile.tenant_id,
       work_order_id: workOrderId,
       number: numRow,
@@ -35,7 +37,7 @@ export async function upsertQuotation(formData: FormData) {
       created_by: user.id,
     })
   } else {
-    await supabase.from('quotation').update({ notes }).eq('id', quotationId)
+    await adminClient.from('quotation').update({ notes }).eq('id', quotationId)
   }
 
   revalidatePath(`/work-orders/${workOrderId}`)
@@ -47,6 +49,7 @@ export async function addQuotationItem(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
+  const adminClient = createAdminClient()
   const quotationId = formData.get('quotation_id') as string
   const workOrderId = formData.get('work_order_id') as string
   const description = (formData.get('description') as string).trim()
@@ -62,7 +65,7 @@ export async function addQuotationItem(formData: FormData) {
   const taxAmount = subtotalAfterDiscount * (taxRateSnapshot / 100)
   const subtotal = subtotalAfterDiscount + taxAmount
 
-  await supabase.from('quotation_item').insert({
+  await adminClient.from('quotation_item').insert({
     quotation_id: quotationId,
     description,
     quantity,
@@ -75,19 +78,23 @@ export async function addQuotationItem(formData: FormData) {
     is_customer_supplied: false,
   })
 
-  await recalcQuotationTotals(supabase, quotationId)
+  await recalcQuotationTotals(adminClient, quotationId)
   revalidatePath(`/work-orders/${workOrderId}/quotation`)
   redirect(`/work-orders/${workOrderId}/quotation`)
 }
 
 export async function removeQuotationItem(formData: FormData) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
   const itemId = formData.get('item_id') as string
   const quotationId = formData.get('quotation_id') as string
   const workOrderId = formData.get('work_order_id') as string
 
-  await supabase.from('quotation_item').delete().eq('id', itemId)
-  await recalcQuotationTotals(supabase, quotationId)
+  await adminClient.from('quotation_item').delete().eq('id', itemId)
+  await recalcQuotationTotals(adminClient, quotationId)
 
   revalidatePath(`/work-orders/${workOrderId}/quotation`)
   redirect(`/work-orders/${workOrderId}/quotation`)
@@ -95,6 +102,10 @@ export async function removeQuotationItem(formData: FormData) {
 
 export async function changeQuotationStatus(formData: FormData) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
   const quotationId = formData.get('quotation_id') as string
   const workOrderId = formData.get('work_order_id') as string
   const newStatus = formData.get('status') as string
@@ -103,18 +114,18 @@ export async function changeQuotationStatus(formData: FormData) {
   if (newStatus === 'approved') update.approved_at = new Date().toISOString()
   if (newStatus === 'sent') update.sent_at = new Date().toISOString()
 
-  await supabase.from('quotation').update(update).eq('id', quotationId)
+  await adminClient.from('quotation').update(update).eq('id', quotationId)
 
   revalidatePath(`/work-orders/${workOrderId}`)
   redirect(`/work-orders/${workOrderId}/quotation`)
 }
 
-async function recalcQuotationTotals(supabase: any, quotationId: string) {
-  const { data: items } = await supabase
+async function recalcQuotationTotals(adminClient: any, quotationId: string) {
+  const { data: items } = await adminClient
     .from('quotation_item').select('subtotal').eq('quotation_id', quotationId)
 
   const total = (items ?? []).reduce((s: number, i: any) => s + (i.subtotal ?? 0), 0)
-  await supabase.from('quotation').update({
+  await adminClient.from('quotation').update({
     subtotal: total,
     total,
   }).eq('id', quotationId)

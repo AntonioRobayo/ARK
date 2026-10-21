@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -9,7 +10,8 @@ export async function upsertService(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
     .from('user_profile').select('tenant_id').eq('id', user.id).single()
   if (!profile?.tenant_id) return
 
@@ -26,9 +28,9 @@ export async function upsertService(formData: FormData) {
   }
 
   if (id) {
-    await supabase.from('service_catalog').update(data).eq('id', id)
+    await adminClient.from('service_catalog').update(data).eq('id', id)
   } else {
-    await supabase.from('service_catalog').insert(data)
+    await adminClient.from('service_catalog').insert(data)
   }
 
   revalidatePath('/settings/services')
@@ -37,9 +39,13 @@ export async function upsertService(formData: FormData) {
 
 export async function toggleService(formData: FormData) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
   const id = formData.get('id') as string
   const current = formData.get('is_active') === 'true'
-  await supabase.from('service_catalog').update({ is_active: !current }).eq('id', id)
+  await adminClient.from('service_catalog').update({ is_active: !current }).eq('id', id)
   revalidatePath('/settings/services')
   redirect('/settings/services')
 }

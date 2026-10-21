@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createInvoice } from './actions'
 import { getTranslations } from 'next-intl/server'
@@ -13,12 +14,16 @@ export default async function NewInvoicePage({
   if (!work_order_id) notFound()
 
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
 
   const [{ data: ot }, { data: quotations }] = await Promise.all([
-    supabase.from('work_order')
+    adminClient.from('work_order')
       .select('id, number, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)')
       .eq('id', work_order_id).single(),
-    supabase.from('quotation')
+    adminClient.from('quotation')
       .select('id, number, status, total, subtotal, tax_amount, discount_amount, quotation_item(*)')
       .eq('work_order_id', work_order_id)
       .eq('status', 'approved')

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   STATUS_LABEL, STATUS_COLOR, PRIORITY_LABEL, PRIORITY_COLOR, STATUS_TRANSITIONS,
@@ -18,6 +19,10 @@ export default async function WorkOrderDetailPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
 
   const [
     { data: ot },
@@ -25,10 +30,9 @@ export default async function WorkOrderDetailPage({
     { data: quotations },
     { data: invoices },
     { data: timeEntries },
-    { data: { user } },
     { data: driveAttachments },
   ] = await Promise.all([
-    supabase
+    adminClient
       .from('work_order')
       .select(`
         *,
@@ -39,12 +43,12 @@ export default async function WorkOrderDetailPage({
       `)
       .eq('id', id)
       .single(),
-    supabase
+    adminClient
       .from('work_order_status_log')
       .select('id, from_status, to_status, reason, created_at')
       .eq('work_order_id', id)
       .order('created_at', { ascending: false }),
-    supabase
+    adminClient
       .from('quotation')
       .select(`
         id, number, status, total, subtotal, tax_amount, discount_amount,
@@ -53,18 +57,17 @@ export default async function WorkOrderDetailPage({
       .eq('work_order_id', id)
       .neq('status', 'cancelled')
       .order('created_at', { ascending: false }),
-    supabase
+    adminClient
       .from('invoice')
       .select('id, number, status, total, paid_amount')
       .eq('work_order_id', id)
       .order('created_at', { ascending: false }),
-    supabase
+    adminClient
       .from('work_order_time_log')
       .select('id, technician_id, started_at, ended_at, minutes, notes')
       .eq('work_order_id', id)
       .order('started_at', { ascending: false }),
-    supabase.auth.getUser(),
-    supabase
+    adminClient
       .from('work_order_drive_attachment')
       .select('id, section, drive_file_id, drive_thumb_url, original_name, mime_type, size_kb, created_at')
       .eq('work_order_id', id)
@@ -74,19 +77,15 @@ export default async function WorkOrderDetailPage({
   if (!ot) notFound()
 
   // Check if Drive is enabled for this tenant
-  const userId = user?.id
+  const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
   let driveEnabled = false
-  if (userId) {
-    const { data: profile } = await supabase.from('user_profile').select('tenant_id').eq('id', userId).single()
-    if (profile?.tenant_id) {
-      const { createAdminClient } = await import('@/lib/supabase/admin')
-      const { data: tenantDrive } = await createAdminClient()
-        .from('tenants')
-        .select('gdrive_enabled')
-        .eq('id', profile.tenant_id)
-        .single()
-      driveEnabled = tenantDrive?.gdrive_enabled ?? false
-    }
+  if (myProfile?.tenant_id) {
+    const { data: tenantDrive } = await adminClient
+      .from('tenants')
+      .select('gdrive_enabled')
+      .eq('id', myProfile.tenant_id)
+      .single()
+    driveEnabled = tenantDrive?.gdrive_enabled ?? false
   }
 
   const t = await getTranslations('workOrders')
@@ -353,7 +352,7 @@ export default async function WorkOrderDetailPage({
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('time.title')}</p>
             <TimeTracker
               otId={id}
-              currentUserId={user?.id ?? ''}
+              currentUserId={user.id}
               timeEntries={timeEntries ?? []}
               totalMinutes={totalMinutes}
             />

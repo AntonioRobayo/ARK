@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { STATUS_LABEL, STATUS_COLOR } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
@@ -8,13 +9,17 @@ import { getTranslations } from 'next-intl/server'
 export default async function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
 
   const [{ data: vehicle }, { data: orders }] = await Promise.all([
-    supabase.from('vehicle')
+    adminClient.from('vehicle')
       .select(`*, customer:customer_id(id, first_name, last_name, phone)`)
       .eq('id', id)
       .single(),
-    supabase.from('work_order')
+    adminClient.from('work_order')
       .select('id, number, status, priority, created_at, reception_mileage, technician:technician_id(first_name, last_name)')
       .eq('vehicle_id', id)
       .order('created_at', { ascending: false })

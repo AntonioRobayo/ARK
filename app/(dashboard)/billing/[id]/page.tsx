@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { recordPayment, voidInvoice } from './actions'
 import { getTranslations } from 'next-intl/server'
@@ -21,21 +22,27 @@ export default async function InvoiceDetailPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
+  const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!myProfile?.tenant_id) redirect('/auth/login')
 
   const [{ data: invoice }, { data: payments }, { data: paymentMethods }, { data: cashRegisters }] = await Promise.all([
-    supabase.from('invoice')
+    adminClient.from('invoice')
       .select(`
         *,
         work_order:work_order_id(id, number, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)),
         invoice_line(id, description, quantity, unit_price, subtotal, tax_rate_snapshot, discount_pct)
       `)
-      .eq('id', id).single(),
-    supabase.from('payment')
+      .eq('id', id).eq('tenant_id', myProfile.tenant_id).single(),
+    adminClient.from('payment')
       .select('id, amount, reference, payment_date, notes, payment_method:payment_method_id(name)')
       .eq('invoice_id', id)
       .order('payment_date', { ascending: false }),
-    supabase.from('payment_method').select('id, name').eq('is_active', true).order('name'),
-    supabase.from('cash_register').select('id, name').eq('is_active', true).order('name'),
+    adminClient.from('payment_method').select('id, name').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
+    adminClient.from('cash_register').select('id, name').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
   ])
 
   if (!invoice) notFound()

@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createAppointment } from '../actions'
 import { getTranslations } from 'next-intl/server'
@@ -10,11 +12,18 @@ export default async function NewAppointmentPage({
 }) {
   const { customer_id, vehicle_id, error } = await searchParams
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
+  const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!myProfile?.tenant_id) redirect('/auth/login')
+  const tenantId = myProfile.tenant_id
 
   const [{ data: customers }, { data: vehicles }] = await Promise.all([
-    supabase.from('customer').select('id, first_name, last_name, phone').order('first_name'),
+    adminClient.from('customer').select('id, first_name, last_name, phone').eq('tenant_id', tenantId).is('deleted_at', null).order('first_name'),
     customer_id
-      ? supabase.from('vehicle').select('id, plate, brand, model').eq('customer_id', customer_id)
+      ? adminClient.from('vehicle').select('id, plate, brand, model').eq('customer_id', customer_id)
       : Promise.resolve({ data: [] }),
   ])
 

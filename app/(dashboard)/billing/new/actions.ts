@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 
 export async function createInvoice(formData: FormData) {
@@ -8,7 +9,8 @@ export async function createInvoice(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
     .from('user_profile').select('tenant_id').eq('id', user.id).single()
   if (!profile?.tenant_id) return
 
@@ -17,7 +19,7 @@ export async function createInvoice(formData: FormData) {
   const notes = (formData.get('notes') as string)?.trim() || null
   const dueAt = formData.get('due_at') as string | null
 
-  const { data: quotation } = await supabase
+  const { data: quotation } = await adminClient
     .from('quotation')
     .select('*, quotation_item(*)')
     .eq('id', quotationId)
@@ -27,12 +29,12 @@ export async function createInvoice(formData: FormData) {
     redirect(`/work-orders/${workOrderId}?error=Cotización no encontrada`)
   }
 
-  const { data: numRow } = await supabase.rpc('next_document_number', {
+  const { data: numRow } = await adminClient.rpc('next_document_number', {
     p_tenant_id: profile.tenant_id,
     p_doc_type: 'FAC',
   })
 
-  const { data: invoice, error } = await supabase.from('invoice').insert({
+  const { data: invoice, error } = await adminClient.from('invoice').insert({
     tenant_id: profile.tenant_id,
     work_order_id: workOrderId,
     number: numRow,
@@ -65,7 +67,7 @@ export async function createInvoice(formData: FormData) {
   }))
 
   if (lines.length > 0) {
-    await supabase.from('invoice_line').insert(lines)
+    await adminClient.from('invoice_line').insert(lines)
   }
 
   redirect(`/billing/${invoice.id}`)

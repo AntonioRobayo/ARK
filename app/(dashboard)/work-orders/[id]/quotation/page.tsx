@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { addQuotationItem, removeQuotationItem, changeQuotationStatus, upsertQuotation } from './actions'
 import { getTranslations } from 'next-intl/server'
@@ -11,19 +12,25 @@ export default async function QuotationPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
+  const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!myProfile?.tenant_id) redirect('/auth/login')
 
   const [{ data: ot }, { data: quotations }, { data: services }, { data: taxRates }] = await Promise.all([
-    supabase.from('work_order')
+    adminClient.from('work_order')
       .select('id, number, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)')
-      .eq('id', id).single(),
-    supabase.from('quotation')
+      .eq('id', id).eq('tenant_id', myProfile.tenant_id).single(),
+    adminClient.from('quotation')
       .select(`id, number, status, total, subtotal, tax_amount, discount_amount, notes,
         quotation_item(id, description, quantity, unit_price, subtotal, item_type, tax_rate_snapshot, discount_pct)`)
       .eq('work_order_id', id)
       .neq('status', 'cancelled')
       .order('created_at', { ascending: false }),
-    supabase.from('service_catalog').select('id, name, base_price, category').eq('is_active', true).order('name'),
-    supabase.from('tax_rate').select('id, name, rate, is_default').eq('is_active', true).order('name'),
+    adminClient.from('service_catalog').select('id, name, base_price, category').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
+    adminClient.from('tax_rate').select('id, name, rate, is_default').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
   ])
 
   if (!ot) notFound()

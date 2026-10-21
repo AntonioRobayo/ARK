@@ -10,14 +10,15 @@ async function getTenantAndBranch() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthenticated')
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient()
+  const { data: profile } = await admin
     .from('user_profile')
     .select('tenant_id, branch_id')
     .eq('id', user.id)
     .single()
 
   if (!profile?.tenant_id) throw new Error('No tenant')
-  return { supabase, user, tenantId: profile.tenant_id, branchId: profile.branch_id }
+  return { admin, user, tenantId: profile.tenant_id, branchId: profile.branch_id }
 }
 
 async function getOrCreateDefaultLocation(tenantId: string, branchId: string | null) {
@@ -69,7 +70,7 @@ async function getOrCreateDefaultLocation(tenantId: string, branchId: string | n
 }
 
 export async function createItem(formData: FormData) {
-  const { supabase, tenantId } = await getTenantAndBranch()
+  const { admin, tenantId } = await getTenantAndBranch()
 
   const name = formData.get('name') as string
   const type = (formData.get('type') as string) || 'part'
@@ -82,7 +83,7 @@ export async function createItem(formData: FormData) {
   const description = (formData.get('description') as string) || null
   const initialStock = formData.get('initial_stock') ? Number(formData.get('initial_stock')) : 0
 
-  const { data: item, error } = await supabase
+  const { data: item, error } = await admin
     .from('inventory_item')
     .insert({
       tenant_id: tenantId,
@@ -106,7 +107,7 @@ export async function createItem(formData: FormData) {
     const { tenantId: tid, branchId } = await getTenantAndBranch()
     const locationId = await getOrCreateDefaultLocation(tid, branchId)
 
-    await supabase.from('inventory_movement').insert({
+    await admin.from('inventory_movement').insert({
       tenant_id: tenantId,
       item_id: item.id,
       location_id: locationId,
@@ -117,7 +118,7 @@ export async function createItem(formData: FormData) {
     })
 
     // Upsert stock record
-    await supabase.from('inventory_stock').upsert({
+    await admin.from('inventory_stock').upsert({
       tenant_id: tenantId,
       item_id: item.id,
       location_id: locationId,
@@ -130,7 +131,7 @@ export async function createItem(formData: FormData) {
 }
 
 export async function adjustStock(formData: FormData) {
-  const { supabase, user, tenantId, branchId } = await getTenantAndBranch()
+  const { admin, user, tenantId, branchId } = await getTenantAndBranch()
 
   const itemId = formData.get('item_id') as string
   const movementType = formData.get('movement_type') as string
@@ -142,7 +143,7 @@ export async function adjustStock(formData: FormData) {
 
   const locationId = await getOrCreateDefaultLocation(tenantId, branchId)
 
-  await supabase.from('inventory_movement').insert({
+  await admin.from('inventory_movement').insert({
     tenant_id: tenantId,
     item_id: itemId,
     location_id: locationId,
@@ -154,7 +155,7 @@ export async function adjustStock(formData: FormData) {
   })
 
   // Update stock record
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from('inventory_stock')
     .select('quantity_on_hand')
     .eq('item_id', itemId)
@@ -164,7 +165,7 @@ export async function adjustStock(formData: FormData) {
   const delta = movementType === 'consumption' || movementType === 'write_off' ? -Math.abs(qty) : Math.abs(qty)
   const newQty = Math.max(0, (existing?.quantity_on_hand ?? 0) + delta)
 
-  await supabase.from('inventory_stock').upsert({
+  await admin.from('inventory_stock').upsert({
     tenant_id: tenantId,
     item_id: itemId,
     location_id: locationId,
@@ -176,8 +177,8 @@ export async function adjustStock(formData: FormData) {
 }
 
 export async function toggleItemActive(itemId: string, isActive: boolean) {
-  const { supabase } = await getTenantAndBranch()
-  await supabase.from('inventory_item').update({ is_active: !isActive }).eq('id', itemId)
+  const { admin } = await getTenantAndBranch()
+  await admin.from('inventory_item').update({ is_active: !isActive }).eq('id', itemId)
   revalidatePath(`/inventory/${itemId}`)
   revalidatePath('/inventory')
 }

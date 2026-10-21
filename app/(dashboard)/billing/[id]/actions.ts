@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -9,7 +10,8 @@ export async function recordPayment(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
     .from('user_profile').select('tenant_id').eq('id', user.id).single()
   if (!profile?.tenant_id) return
 
@@ -26,7 +28,7 @@ export async function recordPayment(formData: FormData) {
     return
   }
 
-  await supabase.from('payment').insert({
+  await adminClient.from('payment').insert({
     tenant_id: profile.tenant_id,
     invoice_id: invoiceId,
     work_order_id: workOrderId,
@@ -41,13 +43,13 @@ export async function recordPayment(formData: FormData) {
   })
 
   // Update invoice paid_amount and status
-  const { data: invoice } = await supabase
+  const { data: invoice } = await adminClient
     .from('invoice').select('total, paid_amount').eq('id', invoiceId).single()
 
   if (invoice) {
     const newPaid = (invoice.paid_amount ?? 0) + amount
     const newStatus = newPaid >= invoice.total ? 'paid' : 'partially_paid'
-    await supabase.from('invoice').update({
+    await adminClient.from('invoice').update({
       paid_amount: newPaid,
       status: newStatus,
       ...(newStatus === 'paid' ? { closed_at: new Date().toISOString() } : {}),
@@ -60,8 +62,12 @@ export async function recordPayment(formData: FormData) {
 
 export async function voidInvoice(formData: FormData) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
   const invoiceId = formData.get('invoice_id') as string
-  await supabase.from('invoice').update({ status: 'void' }).eq('id', invoiceId)
+  await adminClient.from('invoice').update({ status: 'void' }).eq('id', invoiceId)
   revalidatePath(`/billing/${invoiceId}`)
   redirect(`/billing/${invoiceId}`)
 }

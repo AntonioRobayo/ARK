@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { STATUS_COLOR, STATUS_LABEL } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
@@ -8,6 +10,14 @@ import { AdBanner } from '@/components/ad-banner'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
+  const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!myProfile?.tenant_id) redirect('/auth/login')
+  const tenantId = myProfile.tenant_id
+
   const t = await getTranslations('dashboard')
 
   const now = new Date()
@@ -19,17 +29,20 @@ export default async function DashboardPage() {
     { data: revenueData },
     { data: pendingInvoices },
   ] = await Promise.all([
-    supabase.from('work_order').select('status'),
-    supabase.from('work_order')
+    adminClient.from('work_order').select('status').eq('tenant_id', tenantId),
+    adminClient.from('work_order')
       .select('id, number, status, priority, created_at, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(6),
-    supabase.from('invoice')
+    adminClient.from('invoice')
       .select('total, paid_amount')
+      .eq('tenant_id', tenantId)
       .gte('created_at', startOfMonth)
       .eq('status', 'paid'),
-    supabase.from('invoice')
+    adminClient.from('invoice')
       .select('id, number, total, paid_amount, status')
+      .eq('tenant_id', tenantId)
       .in('status', ['issued', 'partially_paid'])
       .order('created_at', { ascending: false })
       .limit(5),

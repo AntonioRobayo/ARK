@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { LocalDateOnly } from '@/components/local-date'
@@ -19,14 +21,22 @@ export default async function BillingPage({
 }) {
   const { tab = 'open' } = await searchParams
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
 
-  let query = supabase
+  const adminClient = createAdminClient()
+  const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!myProfile?.tenant_id) redirect('/auth/login')
+  const tenantId = myProfile.tenant_id
+
+  let query = adminClient
     .from('invoice')
     .select(`
       id, number, status, total, paid_amount, issued_at, created_at,
       work_order:work_order_id(number),
       customer:work_order_id(customer:customer_id(first_name, last_name))
     `)
+    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
 
   if (tab === 'open') query = query.in('status', ['issued', 'partially_paid', 'draft'])
