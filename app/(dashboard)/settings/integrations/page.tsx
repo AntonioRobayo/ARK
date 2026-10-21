@@ -98,6 +98,13 @@ export default async function IntegrationsPage({
             <div className="space-y-5">
               <p className="text-sm text-gray-500">{t('shareIntro')}</p>
 
+              {/* Disclaimer */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3.5 text-sm text-amber-800 leading-relaxed">
+                <p>
+                  <strong>Nota importante:</strong> ARK guardará los soportes automáticamente en esta carpeta, pero <strong>no se hace responsable por la disponibilidad, modificación o eliminación de archivos</strong>, ya que el repositorio es propiedad del taller y puede ser administrado externamente. Esta integración es una solución opcional para reducir costos de almacenamiento.
+                </p>
+              </div>
+
               {/* Steps */}
               <ol className="space-y-4">
                 {/* Step 1 */}
@@ -151,6 +158,10 @@ export default async function IntegrationsPage({
             </div>
           ) : (
             <div className="space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 leading-relaxed">
+                <strong>Nota:</strong> ARK no se hace responsable por la disponibilidad, modificación o eliminación de archivos en esta carpeta. El repositorio es propiedad del taller.
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">{t('folderName')}</p>

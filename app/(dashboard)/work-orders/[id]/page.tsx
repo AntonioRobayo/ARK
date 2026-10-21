@@ -36,6 +36,7 @@ export default async function WorkOrderDetailPage({
     { data: timeEntries },
     { data: driveAttachments },
     { data: findings },
+    { data: auditLog },
   ] = await Promise.all([
     adminClient
       .from('work_order')
@@ -82,6 +83,12 @@ export default async function WorkOrderDetailPage({
       .select('id, description, severity, status, notified_at, customer_responded_at')
       .eq('work_order_id', id)
       .order('created_at', { ascending: true }),
+    adminClient
+      .from('tenant_audit_log')
+      .select('id, event, created_at, details')
+      .like('event', 'finding.%')
+      .filter('details->>work_order_id', 'eq', id)
+      .order('created_at', { ascending: false }),
   ])
 
   if (!ot) notFound()
@@ -101,6 +108,16 @@ export default async function WorkOrderDetailPage({
   const t = await getTranslations('workOrders')
   const transitions = STATUS_TRANSITIONS[ot.status as WorkOrderStatus] ?? []
   const activeQuotation = (quotations ?? [])[0] ?? null
+
+  const AUDIT_EVENT_LABEL: Record<string, string> = {
+    'finding.added':    'Hallazgo registrado',
+    'finding.notified': 'Hallazgos notificados al cliente',
+  }
+
+  const mergedTimeline = [
+    ...(statusLog ?? []).map((e: any) => ({ ...e, _type: 'status' as const })),
+    ...(auditLog ?? []).map((e: any) => ({ ...e, _type: 'audit' as const })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   const totalMinutes = (timeEntries ?? []).reduce((s, e) => s + (e.minutes ?? 0), 0)
   const items = activeQuotation?.quotation_item ?? []
   const totalServices = items.reduce((s: number, i: any) => s + (i.subtotal ?? 0), 0)
@@ -224,7 +241,7 @@ export default async function WorkOrderDetailPage({
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{t('detail.quotation')}</p>
                 {activeQuotation && (
                   <p className="text-xs text-gray-500 mt-0.5">
-                    COT-{activeQuotation.number} ·{' '}
+                    {activeQuotation.number} ·{' '}
                     <span className={`font-medium ${
                       activeQuotation.status === 'approved' ? 'text-emerald-600' :
                       activeQuotation.status === 'draft' ? 'text-amber-600' : 'text-gray-500'
@@ -300,7 +317,7 @@ export default async function WorkOrderDetailPage({
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-mono font-bold text-gray-800">FAC-{activeInvoice.number}</p>
+                  <p className="font-mono font-bold text-gray-800">{activeInvoice.number}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                     activeInvoice.status === 'paid' ? 'bg-emerald-50 text-emerald-600' :
                     activeInvoice.status === 'partially_paid' ? 'bg-amber-50 text-amber-600' :
@@ -394,23 +411,37 @@ export default async function WorkOrderDetailPage({
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-4">{t('detail.statusHistory')}</p>
 
-            {!statusLog || statusLog.length === 0 ? (
+            {mergedTimeline.length === 0 ? (
               <p className="text-xs text-gray-400">{t('detail.noHistory')}</p>
             ) : (
               <div className="space-y-3">
-                {statusLog.map((log: any, i: number) => (
-                  <div key={log.id} className="flex gap-3">
+                {mergedTimeline.map((entry: any, i: number) => (
+                  <div key={entry.id} className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <div className={`w-2.5 h-2.5 rounded-full mt-0.5 shrink-0 ${i === 0 ? 'bg-slate-700' : 'bg-gray-300'}`} />
-                      {i < statusLog.length - 1 && <div className="w-px flex-1 bg-gray-100 mt-1" />}
+                      <div className={`w-2.5 h-2.5 rounded-full mt-0.5 shrink-0 ${
+                        i === 0
+                          ? entry._type === 'audit' ? 'bg-blue-500' : 'bg-slate-700'
+                          : entry._type === 'audit' ? 'bg-blue-200' : 'bg-gray-300'
+                      }`} />
+                      {i < mergedTimeline.length - 1 && <div className="w-px flex-1 bg-gray-100 mt-1" />}
                     </div>
                     <div className="pb-3 min-w-0">
                       <p className="text-xs font-medium text-gray-700">
-                        {STATUS_LABEL[log.to_status as WorkOrderStatus] ?? log.to_status}
+                        {entry._type === 'audit'
+                          ? (AUDIT_EVENT_LABEL[entry.event] ?? entry.event)
+                          : (STATUS_LABEL[entry.to_status as WorkOrderStatus] ?? entry.to_status)}
                       </p>
-                      {log.reason && <p className="text-xs text-gray-400 mt-0.5 truncate">{log.reason}</p>}
+                      {entry._type === 'audit' && entry.event === 'finding.notified' && entry.details?.count && (
+                        <p className="text-xs text-gray-400 mt-0.5">{entry.details.count} hallazgo{entry.details.count !== 1 ? 's' : ''} enviado{entry.details.count !== 1 ? 's' : ''} por email</p>
+                      )}
+                      {entry._type === 'audit' && entry.event === 'finding.added' && entry.details?.description && (
+                        <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.details.description}</p>
+                      )}
+                      {entry._type === 'status' && entry.reason && (
+                        <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.reason}</p>
+                      )}
                       <p className="text-xs text-gray-300 mt-0.5">
-                        <LocalDate date={log.created_at} options={{ day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }} />
+                        <LocalDate date={entry.created_at} options={{ day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }} />
                       </p>
                     </div>
                   </div>

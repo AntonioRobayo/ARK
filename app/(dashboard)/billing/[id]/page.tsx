@@ -66,7 +66,7 @@ export default async function InvoiceDetailPage({
     <div className="max-w-4xl">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/billing" className="text-gray-400 hover:text-gray-600 text-sm">{t('detail.back')}</Link>
-        <h1 className="text-2xl font-bold text-gray-900 font-mono">FAC-{invoice.number}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 font-mono">{invoice.number}</h1>
         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${s.cls}`}>{s.label}</span>
       </div>
 

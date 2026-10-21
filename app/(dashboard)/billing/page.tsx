@@ -114,7 +114,7 @@ export default async function BillingPage({
                   <tr key={inv.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <Link href={`/billing/${inv.id}`} className="font-mono font-bold text-gray-800 hover:text-slate-600">
-                        FAC-{inv.number}
+                        {inv.number}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-gray-500">
