@@ -21,7 +21,8 @@ export async function createWorkOrder(formData: FormData) {
     redirect('/work-orders/new?error=' + encodeURIComponent('Tu perfil no tiene taller configurado'))
   }
 
-  let branchId = profile.branch_id
+  // branch_id: from form (multi-branch) → profile → first branch of tenant
+  let branchId = (formData.get('branch_id') as string) || profile.branch_id
   if (!branchId) {
     const { data: branch } = await adminClient
       .from('branch')

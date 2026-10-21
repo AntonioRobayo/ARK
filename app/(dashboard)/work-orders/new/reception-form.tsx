@@ -24,6 +24,7 @@ interface Tech {
 }
 
 interface FuelOption { value: string; label: string }
+interface Branch { id: string; name: string }
 
 interface Props {
   customerId: string
@@ -33,11 +34,12 @@ interface Props {
   techs: Tech[]
   checklist: ChecklistTemplate | null
   fuelLevelOptions: FuelOption[]
+  branches: Branch[]
 }
 
 type ChecklistStatus = 'ok' | 'issue' | 'na'
 
-export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMileage, techs, checklist, fuelLevelOptions }: Props) {
+export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMileage, techs, checklist, fuelLevelOptions, branches }: Props) {
   const t = useTranslations('workOrders')
 
   const [custodyItems, setCustodyItems] = useState<{ description: string; location: string }[]>([])
@@ -71,6 +73,23 @@ export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMil
       {appointmentId && <input type="hidden" name="appointment_id" value={appointmentId} />}
       <input type="hidden" name="custody_items" value={custodyJson} />
       <input type="hidden" name="checklist_data" value={checklistJson} />
+      {branches.length === 1 && <input type="hidden" name="branch_id" value={branches[0].id} />}
+
+      {branches.length > 1 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Sede</label>
+          <select
+            name="branch_id"
+            required
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white"
+          >
+            <option value="">— Seleccionar sede —</option>
+            {branches.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
