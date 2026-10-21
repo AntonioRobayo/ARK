@@ -11,7 +11,10 @@ export interface DriveFile {
   mimeType: string
 }
 
-// --- Service Account Token ---
+// --- Google Drive Access Token ---
+// Supports two auth methods:
+// 1. OAuth2 refresh token (for regular Google accounts — set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
+// 2. GCP Service Account JWT (set GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY)
 
 function toBase64Url(input: ArrayBuffer | string): string {
   let bytes: Uint8Array
@@ -25,10 +28,30 @@ function toBase64Url(input: ArrayBuffer | string): string {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
 }
 
-export async function getServiceAccountToken(): Promise<string> {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+async function getTokenViaRefreshToken(): Promise<string> {
+  const clientId     = process.env.GOOGLE_CLIENT_ID
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN
+  if (!clientId || !clientSecret || !refreshToken) throw new Error('missing_oauth_vars')
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type:    'refresh_token',
+      refresh_token: refreshToken,
+      client_id:     clientId,
+      client_secret: clientSecret,
+    }),
+  })
+  if (!res.ok) throw new Error(`OAuth2 refresh failed: ${await res.text()}`)
+  return (await res.json()).access_token as string
+}
+
+async function getTokenViaServiceAccount(): Promise<string> {
+  const email  = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
   const pemRaw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
-  if (!email || !pemRaw) throw new Error('Google service account not configured')
+  if (!email || !pemRaw) throw new Error('missing_service_account_vars')
 
   const pem = pemRaw.replace(/\\n/g, '\n')
   const b64 = pem
@@ -46,40 +69,29 @@ export async function getServiceAccountToken(): Promise<string> {
   )
 
   const now = Math.floor(Date.now() / 1000)
-  const header = toBase64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+  const header  = toBase64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
   const payload = toBase64Url(JSON.stringify({
-    iss: email,
-    scope: 'https://www.googleapis.com/auth/drive',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
+    iss: email, scope: 'https://www.googleapis.com/auth/drive',
+    aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600,
   }))
-
   const signingInput = `${header}.${payload}`
-  const sig = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    cryptoKey,
-    new TextEncoder().encode(signingInput),
-  )
-
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, new TextEncoder().encode(signingInput))
   const jwt = `${signingInput}.${toBase64Url(sig)}`
 
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: jwt }),
   })
+  if (!res.ok) throw new Error(`Service account auth failed: ${await res.text()}`)
+  return (await res.json()).access_token as string
+}
 
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Service account auth failed: ${err}`)
-  }
-
-  const json = await res.json()
-  return json.access_token as string
+export async function getServiceAccountToken(): Promise<string> {
+  // Try OAuth2 refresh token first (regular Google account), then service account JWT
+  if (process.env.GOOGLE_REFRESH_TOKEN) return getTokenViaRefreshToken()
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) return getTokenViaServiceAccount()
+  throw new Error('Google Drive not configured: set GOOGLE_REFRESH_TOKEN or GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY')
 }
 
 // --- Folder management ---
