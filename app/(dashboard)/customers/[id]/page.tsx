@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { STATUS_LABEL, STATUS_COLOR } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
@@ -8,11 +9,15 @@ import { getTranslations } from 'next-intl/server'
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
 
   const [{ data: customer }, { data: vehicles }, { data: orders }] = await Promise.all([
-    supabase.from('customer').select('*').eq('id', id).single(),
-    supabase.from('vehicle').select('id, plate, brand, model, year, vehicle_type, current_mileage').eq('customer_id', id).is('deleted_at', null).order('created_at', { ascending: false }),
-    supabase.from('work_order').select('id, number, status, priority, created_at, vehicle:vehicle_id(plate, brand, model)').eq('customer_id', id).order('created_at', { ascending: false }).limit(10),
+    adminClient.from('customer').select('*').eq('id', id).single(),
+    adminClient.from('vehicle').select('id, plate, brand, model, year, vehicle_type, current_mileage').eq('customer_id', id).is('deleted_at', null).order('created_at', { ascending: false }),
+    adminClient.from('work_order').select('id, number, status, priority, created_at, vehicle:vehicle_id(plate, brand, model)').eq('customer_id', id).order('created_at', { ascending: false }).limit(10),
   ])
 
   if (!customer) notFound()

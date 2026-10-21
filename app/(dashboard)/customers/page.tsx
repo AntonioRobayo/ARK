@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { LocalDateOnly } from '@/components/local-date'
 
@@ -10,10 +12,18 @@ export default async function CustomersPage({
 }) {
   const { q } = await searchParams
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
 
-  let query = supabase
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
+    .from('user_profile').select('tenant_id').eq('id', user.id).single()
+  if (!profile?.tenant_id) redirect('/auth/login')
+
+  let query = adminClient
     .from('customer')
     .select(`id, first_name, last_name, phone, email, id_number, id_type, is_credit_enabled, created_at`)
+    .eq('tenant_id', profile.tenant_id)
     .is('deleted_at', null)
     .order('first_name', { ascending: true })
 
