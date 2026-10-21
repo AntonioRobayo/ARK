@@ -75,7 +75,6 @@ export function CustomerPartsSection({ otId, vehicleId, parts, attachments, driv
             vehicleId={vehicleId}
             attachments={repuestosAttachments}
             driveEnabled={driveEnabled}
-            section="repuestos_cliente"
           />
         </div>
       )}
