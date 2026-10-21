@@ -11,6 +11,7 @@ import { getTranslations } from 'next-intl/server'
 import { StatusTransitionButtons } from '@/components/work-orders/StatusTransitionButtons'
 import { TimeTracker } from '@/components/work-orders/TimeTracker'
 import { OTGallery } from '@/components/work-orders/OTGallery'
+import { FindingsSection } from '@/components/work-orders/FindingsSection'
 
 export default async function WorkOrderDetailPage({
   params,
@@ -31,6 +32,7 @@ export default async function WorkOrderDetailPage({
     { data: invoices },
     { data: timeEntries },
     { data: driveAttachments },
+    { data: findings },
   ] = await Promise.all([
     adminClient
       .from('work_order')
@@ -70,6 +72,11 @@ export default async function WorkOrderDetailPage({
     adminClient
       .from('work_order_drive_attachment')
       .select('id, section, drive_file_id, drive_thumb_url, original_name, mime_type, size_kb, created_at')
+      .eq('work_order_id', id)
+      .order('created_at', { ascending: true }),
+    adminClient
+      .from('work_order_finding')
+      .select('id, description, severity, status, notified_at, customer_responded_at')
       .eq('work_order_id', id)
       .order('created_at', { ascending: true }),
   ])
@@ -183,6 +190,16 @@ export default async function WorkOrderDetailPage({
               </div>
             )}
           </div>
+
+          {/* Hallazgos de diagnóstico */}
+          <FindingsSection
+            otId={id}
+            findings={findings ?? []}
+            customerEmail={ot.customer?.email}
+            customerName={`${ot.customer?.first_name ?? ''} ${ot.customer?.last_name ?? ''}`.trim()}
+            otNumber={ot.number}
+            vehiclePlate={ot.vehicle?.plate ?? ''}
+          />
 
           {/* Cotización / Servicios */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
