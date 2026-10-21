@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { checkPermission } from '@/lib/permissions'
 import { inviteUser, toggleUserActive, changeRole } from './actions'
 
 type TenantRole =
@@ -116,7 +117,11 @@ export default async function SettingsUsersPage({
 
   const activeCount = (members ?? []).filter(m => m.is_active).length
 
-  const canManage = myProfile.role === 'owner' || myProfile.role === 'shop_manager'
+  const [canManageRaw, canManageRoles] = await Promise.all([
+    checkPermission('users.invite'),
+    checkPermission('users.manage_roles'),
+  ])
+  const canManage = canManageRaw
   const showInviteForm = invite === '1'
   const atLimit = maxUsers !== null && activeCount >= maxUsers
 
@@ -321,8 +326,8 @@ export default async function SettingsUsersPage({
                     <td className="px-5 py-3.5">
                       {!isMe && !isOwner && (
                         <div className="flex items-center gap-2 justify-end">
-                          {/* Role selector — only owner can change roles */}
-                          {myProfile.role === 'owner' && (
+                          {/* Role selector — only users with manage_roles permission */}
+                          {canManageRoles && (
                             <form action={changeRole} className="flex items-center">
                               <input type="hidden" name="user_id" value={m.id} />
                               <select

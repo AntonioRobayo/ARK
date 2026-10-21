@@ -557,6 +557,8 @@
       "passwordDesc": "Atualize a senha da sua conta",
       "language": "Idioma",
       "languageDesc": "Altere o idioma da interface",
+      "roles": "Funções e Permissões",
+      "rolesDesc": "Defina o que cada usuário pode fazer na oficina",
       "integrations": "Integrações",
       "integrationsDesc": "Conecte o Google Drive e outros serviços externos",
       "branches": "Filiais",

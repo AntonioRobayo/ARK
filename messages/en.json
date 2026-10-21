@@ -557,6 +557,8 @@
       "passwordDesc": "Update your account password",
       "language": "Language",
       "languageDesc": "Change the interface language",
+      "roles": "Roles & Permissions",
+      "rolesDesc": "Define what each user can do in the workshop",
       "integrations": "Integrations",
       "integrationsDesc": "Connect Google Drive and other external services",
       "branches": "Branches",

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { checkPermission } from '@/lib/permissions'
 
 export async function inviteUser(formData: FormData) {
   const supabase = await createClient()
@@ -30,8 +31,8 @@ export async function inviteUser(formData: FormData) {
     redirect('/settings/users?error=' + encodeURIComponent('No se pudo obtener la información del taller'))
   }
 
-  // Only owner and shop_manager may invite
-  if (myProfile.role !== 'owner' && myProfile.role !== 'shop_manager') {
+  const canInvite = await checkPermission('users.invite')
+  if (!canInvite) {
     redirect('/settings/users?error=' + encodeURIComponent('No tienes permiso para invitar usuarios'))
   }
 
@@ -88,8 +89,9 @@ export async function changeRole(formData: FormData) {
   const { data: myProfile } = await adminClient
     .from('user_profile').select('tenant_id, role').eq('id', user.id).single()
 
-  if (myProfile?.role !== 'owner') {
-    redirect('/settings/users?error=' + encodeURIComponent('Solo el dueño puede cambiar roles'))
+  const canManageRoles = await checkPermission('users.manage_roles')
+  if (!canManageRoles) {
+    redirect('/settings/users?error=' + encodeURIComponent('No tienes permiso para cambiar roles'))
   }
 
   const { data: targetProfile } = await adminClient
@@ -143,7 +145,8 @@ export async function toggleUserActive(formData: FormData) {
     redirect('/settings/users?error=' + encodeURIComponent('No se pudo obtener la información del taller'))
   }
 
-  if (myProfile.role !== 'owner' && myProfile.role !== 'shop_manager') {
+  const canDeactivate = await checkPermission('users.deactivate')
+  if (!canDeactivate) {
     redirect('/settings/users?error=' + encodeURIComponent('No tienes permiso para modificar usuarios'))
   }
 
