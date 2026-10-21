@@ -563,6 +563,8 @@
       "integrationsDesc": "Conecte o Google Drive e outros serviços externos",
       "branches": "Filiais",
       "branchesDesc": "Gerencie as localizações físicas da sua oficina",
+      "logs": "Registro de atividade",
+      "logsDesc": "Histórico de alterações e ações na oficina",
       "users": "Usuários",
       "usersDesc": "Convide, ative e desative membros da oficina"
     },

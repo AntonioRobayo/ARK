@@ -585,6 +585,8 @@
       "integrationsDesc": "Conecta Google Drive y otros servicios externos",
       "branches": "Sucursales",
       "branchesDesc": "Gestiona las ubicaciones físicas de tu taller",
+      "logs": "Registro de actividad",
+      "logsDesc": "Historial de cambios y acciones en el taller",
       "users": "Usuarios",
       "usersDesc": "Invita, activa y desactiva miembros del taller"
     },

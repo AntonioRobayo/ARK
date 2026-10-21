@@ -563,6 +563,8 @@
       "integrationsDesc": "Connect Google Drive and other external services",
       "branches": "Branches",
       "branchesDesc": "Manage your workshop's physical locations",
+      "logs": "Activity log",
+      "logsDesc": "History of changes and actions in the workshop",
       "users": "Users",
       "usersDesc": "Invite, activate and deactivate workshop members"
     },
