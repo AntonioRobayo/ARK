@@ -1,11 +1,12 @@
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { createItem } from '../actions'
+import { getCatalog } from '@/lib/catalog'
+import { CatalogCombobox } from '@/components/CatalogCombobox'
 
 export default async function NewInventoryItemPage() {
   const t = await getTranslations('inventory')
-
-  const TYPES = ['part', 'product', 'supply', 'tool']
+  const itemTypes = await getCatalog('inventory_item_type')
 
   return (
     <div className="max-w-2xl">
@@ -31,15 +32,12 @@ export default async function NewInventoryItemPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('new.type')}</label>
-              <select
+              <CatalogCombobox
                 name="type"
+                options={itemTypes}
                 defaultValue="part"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 bg-white"
-              >
-                {TYPES.map(tp => (
-                  <option key={tp} value={tp}>{t(`types.${tp}`)}</option>
-                ))}
-              </select>
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 bg-white"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('new.unit')}</label>

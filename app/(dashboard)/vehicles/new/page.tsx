@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { createVehicle } from './actions'
 import { getTranslations } from 'next-intl/server'
+import { getCatalog } from '@/lib/catalog'
+import { CatalogCombobox } from '@/components/CatalogCombobox'
 
 export default async function NewVehiclePage({
   searchParams,
@@ -11,7 +13,6 @@ export default async function NewVehiclePage({
   const { customer_id, error, redirect: redirectTo } = await searchParams
   const supabase = await createClient()
 
-  // Si viene con customer_id, mostramos el nombre del cliente
   let customer = null
   if (customer_id) {
     const { data } = await supabase
@@ -23,6 +24,12 @@ export default async function NewVehiclePage({
   }
 
   const t = await getTranslations('vehicles')
+
+  const [vehicleTypes, fuelTypes, vehicleBrands] = await Promise.all([
+    getCatalog('vehicle_type'),
+    getCatalog('fuel_type'),
+    getCatalog('vehicle_brand'),
+  ])
 
   return (
     <div className="max-w-2xl">
@@ -56,22 +63,23 @@ export default async function NewVehiclePage({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.type')}</label>
-            <select name="vehicle_type" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-              <option value="motorcycle">{t('new.types.motorcycle')}</option>
-              <option value="scooter">{t('new.types.scooter')}</option>
-              <option value="atv">{t('new.types.atv')}</option>
-              <option value="car">{t('new.types.car')}</option>
-              <option value="other">{t('new.types.other')}</option>
-            </select>
+            <CatalogCombobox
+              name="vehicle_type"
+              options={vehicleTypes}
+              defaultValue="motorcycle"
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.brand')}</label>
-            <input name="brand" type="text" required
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-              placeholder="Honda" />
+            <CatalogCombobox
+              name="brand"
+              options={vehicleBrands}
+              placeholder="Honda"
+              required
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.model')}</label>
@@ -111,24 +119,21 @@ export default async function NewVehiclePage({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.fuelType')}</label>
-            <select name="fuel_type"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-              <option value="">{t('new.fuelTypeUnknown')}</option>
-              <option value="gasoline">{t('new.fuelTypes.gasoline')}</option>
-              <option value="electric">{t('new.fuelTypes.electric')}</option>
-              <option value="hybrid">{t('new.fuelTypes.hybrid')}</option>
-              <option value="diesel">{t('new.fuelTypes.diesel')}</option>
-            </select>
+            <CatalogCombobox
+              name="fuel_type"
+              options={[{ value: '', label: t('new.fuelTypeUnknown') }, ...fuelTypes]}
+              defaultValue=""
+              placeholder={t('new.fuelTypeUnknown')}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.vin')}</label>
             <input name="vin" type="text"
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
-              placeholder="VIN123456789" />
+              placeholder="Número de chasis, serie o VIN" />
           </div>
         </div>
 
-        {/* Si no viene con customer_id, buscar cliente */}
         {!customer_id && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.customerId')}</label>

@@ -1,0 +1,52 @@
+CREATE TABLE IF NOT EXISTS public.global_catalog (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  category TEXT NOT NULL,
+  value TEXT NOT NULL,
+  label_es TEXT NOT NULL,
+  label_en TEXT,
+  label_pt TEXT,
+  sort_order INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  is_system BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT global_catalog_category_value_key UNIQUE (category, value)
+);
+
+CREATE INDEX IF NOT EXISTS global_catalog_category_idx ON public.global_catalog(category) WHERE is_active = true;
+
+INSERT INTO public.global_catalog (category, value, label_es, label_en, label_pt, sort_order, is_system) VALUES
+('vehicle_type', 'motorcycle', 'Motocicleta', 'Motorcycle', 'Motocicleta', 1, true),
+('vehicle_type', 'scooter', 'Scooter', 'Scooter', 'Scooter', 2, true),
+('vehicle_type', 'atv', 'ATV / Cuatrimoto', 'ATV / Quad', 'ATV / Quadriciclo', 3, true),
+('vehicle_type', 'car', 'Automóvil', 'Car', 'Automóvel', 4, true),
+('vehicle_type', 'truck', 'Camión / Camioneta', 'Truck', 'Caminhão', 5, false),
+('vehicle_type', 'other', 'Otro', 'Other', 'Outro', 99, true),
+('fuel_type', 'gasoline', 'Gasolina', 'Gasoline', 'Gasolina', 1, true),
+('fuel_type', 'electric', 'Eléctrico', 'Electric', 'Elétrico', 2, true),
+('fuel_type', 'hybrid', 'Híbrido', 'Hybrid', 'Híbrido', 3, true),
+('fuel_type', 'diesel', 'Diésel', 'Diesel', 'Diesel', 4, true),
+('document_type', 'CC', 'Cédula de Ciudadanía', 'National ID', 'CPF', 1, true),
+('document_type', 'CE', 'Cédula de Extranjería', 'Foreign ID', 'RNE', 2, true),
+('document_type', 'NIT', 'NIT / RUT', 'Tax ID', 'CNPJ', 3, true),
+('document_type', 'PP', 'Pasaporte', 'Passport', 'Passaporte', 4, true),
+('document_type', 'TI', 'Tarjeta de Identidad', 'ID Card', 'Carteira de Identidade', 5, false),
+('inventory_item_type', 'part', 'Repuesto', 'Part', 'Peça', 1, true),
+('inventory_item_type', 'product', 'Producto', 'Product', 'Produto', 2, true),
+('inventory_item_type', 'supply', 'Insumo / Consumible', 'Supply', 'Insumo', 3, true),
+('inventory_item_type', 'tool', 'Herramienta', 'Tool', 'Ferramenta', 4, true),
+('vehicle_brand', 'Honda', 'Honda', 'Honda', 'Honda', 1, false),
+('vehicle_brand', 'Yamaha', 'Yamaha', 'Yamaha', 'Yamaha', 2, false),
+('vehicle_brand', 'Suzuki', 'Suzuki', 'Suzuki', 'Suzuki', 3, false),
+('vehicle_brand', 'Kawasaki', 'Kawasaki', 'Kawasaki', 'Kawasaki', 4, false),
+('vehicle_brand', 'KTM', 'KTM', 'KTM', 'KTM', 5, false),
+('vehicle_brand', 'BMW', 'BMW', 'BMW', 'BMW', 6, false),
+('vehicle_brand', 'Ducati', 'Ducati', 'Ducati', 'Ducati', 7, false),
+('vehicle_brand', 'AKT', 'AKT', 'AKT', 'AKT', 8, false),
+('vehicle_brand', 'Hero', 'Hero', 'Hero', 'Hero', 9, false),
+('vehicle_brand', 'Auteco', 'Auteco', 'Auteco', 'Auteco', 10, false),
+('vehicle_brand', 'Bajaj', 'Bajaj', 'Bajaj', 'Bajaj', 11, false),
+('vehicle_brand', 'Royal Enfield', 'Royal Enfield', 'Royal Enfield', 'Royal Enfield', 12, false),
+('vehicle_brand', 'TVS', 'TVS', 'TVS', 'TVS', 13, false),
+('vehicle_brand', 'Benelli', 'Benelli', 'Benelli', 'Benelli', 14, false),
+('vehicle_brand', 'CF Moto', 'CF Moto', 'CF Moto', 'CF Moto', 15, false)
+ON CONFLICT (category, value) DO NOTHING;

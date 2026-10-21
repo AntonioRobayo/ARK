@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createCustomer } from './actions'
 import { getTranslations } from 'next-intl/server'
+import { getCatalog } from '@/lib/catalog'
+import { CatalogCombobox } from '@/components/CatalogCombobox'
 
 export default async function NewCustomerPage({
   searchParams,
@@ -9,6 +11,7 @@ export default async function NewCustomerPage({
 }) {
   const { error, redirect: redirectTo } = await searchParams
   const t = await getTranslations('customers')
+  const docTypes = await getCatalog('document_type')
 
   return (
     <div className="max-w-2xl">
@@ -44,13 +47,13 @@ export default async function NewCustomerPage({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.documentType')}</label>
-            <select name="id_type" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-              <option value="">{t('new.selectDocType')}</option>
-              <option value="CC">{t('new.docTypes.cc')}</option>
-              <option value="CE">{t('new.docTypes.ce')}</option>
-              <option value="NIT">{t('new.docTypes.nit')}</option>
-              <option value="PP">{t('new.docTypes.passport')}</option>
-            </select>
+            <CatalogCombobox
+              name="id_type"
+              options={[{ value: '', label: t('new.selectDocType') }, ...docTypes]}
+              defaultValue=""
+              placeholder={t('new.selectDocType')}
+              allowCustom={false}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('new.documentNumber')}</label>
