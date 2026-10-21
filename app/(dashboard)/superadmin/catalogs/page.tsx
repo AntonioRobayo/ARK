@@ -1,8 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getTranslations } from 'next-intl/server'
-import { toggleCountry, addCountry, toggleCurrency, addCurrency, updateCurrencyRate, addCatalogEntry, toggleCatalogEntry } from './actions'
+import { toggleCountry, addCountry, toggleCurrency, addCurrency, updateCurrencyRate, addCatalogEntry, toggleCatalogEntry, updateCatalogEntry } from './actions'
 
-type SearchParams = Promise<{ tab?: string; add?: string; edit_rate?: string; error?: string; cat?: string }>
+type SearchParams = Promise<{ tab?: string; add?: string; edit_rate?: string; error?: string; cat?: string; edit?: string }>
 
 const CATEGORY_LABELS: Record<string, string> = {
   vehicle_type: 'Tipos de vehículo',
@@ -14,7 +14,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 export default async function CatalogsPage({ searchParams }: { searchParams: SearchParams }) {
-  const { tab = 'countries', add, edit_rate, error, cat = 'vehicle_type' } = await searchParams
+  const { tab = 'countries', add, edit_rate, error, cat = 'vehicle_type', edit } = await searchParams
   const supabase = createAdminClient()
   const t = await getTranslations('superadmin.catalogs')
 
@@ -372,30 +372,74 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
                   </thead>
                   <tbody>
                     {catEntries.map(e => (
-                      <tr key={e.id} className="hover:bg-gray-50 transition-colors" style={{ borderBottom: '1px solid #F9FAFB' }}>
-                        <td className="px-4 py-3 font-mono text-xs text-gray-700">
-                          {e.value}
-                          {e.is_system && <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-gray-100 text-gray-400">sistema</span>}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900">{e.label_es}</td>
-                        <td className="px-4 py-3 text-gray-400 text-xs">{e.label_en ?? '—'}</td>
-                        <td className="px-4 py-3 text-gray-400 text-xs">{e.sort_order}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            e.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'
-                          }`}>
-                            {e.is_active ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <form action={toggleCatalogEntry.bind(null, e.id, e.is_active)}>
-                            <button type="submit" className="text-xs font-medium transition-colors hover:underline"
-                              style={{ color: e.is_active ? '#EF4444' : '#FF7316' }}>
-                              {e.is_active ? 'Desactivar' : 'Activar'}
-                            </button>
-                          </form>
-                        </td>
-                      </tr>
+                      <>
+                        <tr key={e.id} className="hover:bg-gray-50 transition-colors" style={{ borderBottom: edit === e.id ? 'none' : '1px solid #F9FAFB' }}>
+                          <td className="px-4 py-3 font-mono text-xs text-gray-700">
+                            {e.value}
+                            {e.is_system && <span className="ml-1.5 px-1 py-0.5 rounded text-[10px] bg-gray-100 text-gray-400">sistema</span>}
+                          </td>
+                          <td className="px-4 py-3 text-gray-900">{e.label_es}</td>
+                          <td className="px-4 py-3 text-gray-400 text-xs">{e.label_en ?? '—'}</td>
+                          <td className="px-4 py-3 text-gray-400 text-xs">{e.sort_order}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                              e.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'
+                            }`}>
+                              {e.is_active ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center gap-3 justify-end">
+                              <a
+                                href={edit === e.id
+                                  ? `/superadmin/catalogs?tab=app_catalogs&cat=${activeCat}`
+                                  : `/superadmin/catalogs?tab=app_catalogs&cat=${activeCat}&edit=${e.id}`}
+                                className="text-xs font-medium text-gray-500 hover:underline transition-colors"
+                              >
+                                {edit === e.id ? 'Cancelar' : 'Editar'}
+                              </a>
+                              <form action={toggleCatalogEntry.bind(null, e.id, e.is_active)}>
+                                <button type="submit" className="text-xs font-medium transition-colors hover:underline"
+                                  style={{ color: e.is_active ? '#EF4444' : '#FF7316' }}>
+                                  {e.is_active ? 'Desactivar' : 'Activar'}
+                                </button>
+                              </form>
+                            </div>
+                          </td>
+                        </tr>
+                        {edit === e.id && (
+                          <tr key={`${e.id}-edit`} style={{ borderBottom: '1px solid #F9FAFB' }}>
+                            <td colSpan={6} className="px-4 py-4 bg-orange-50">
+                              <form action={updateCatalogEntry} className="grid grid-cols-4 gap-3 items-end">
+                                <input type="hidden" name="id" value={e.id} />
+                                <input type="hidden" name="category" value={activeCat} />
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">Etiqueta español</label>
+                                  <input name="label_es" defaultValue={e.label_es} required
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 bg-white"
+                                    style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">Etiqueta inglés</label>
+                                  <input name="label_en" defaultValue={e.label_en ?? ''}
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 bg-white"
+                                    style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">Orden</label>
+                                  <input name="sort_order" type="number" defaultValue={e.sort_order}
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 bg-white"
+                                    style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                                </div>
+                                <button type="submit" className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-colors"
+                                  style={{ backgroundColor: '#FF7316' }}>
+                                  Guardar
+                                </button>
+                              </form>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     ))}
                     {catEntries.length === 0 && (
                       <tr>

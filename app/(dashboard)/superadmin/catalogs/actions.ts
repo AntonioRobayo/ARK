@@ -75,8 +75,22 @@ export async function addCatalogEntry(formData: FormData) {
 
 export async function toggleCatalogEntry(id: string, isActive: boolean) {
   const supabase = createAdminClient()
-  await supabase.from('global_catalog').update({ is_active: !isActive }).eq('id', id).eq('is_system', false)
+  await supabase.from('global_catalog').update({ is_active: !isActive }).eq('id', id)
   redirect('/superadmin/catalogs?tab=app_catalogs')
+}
+
+export async function updateCatalogEntry(formData: FormData) {
+  const supabase = createAdminClient()
+  const id  = formData.get('id') as string
+  const cat = formData.get('category') as string
+  const { error } = await supabase.from('global_catalog').update({
+    label_es:   (formData.get('label_es') as string).trim(),
+    label_en:   (formData.get('label_en') as string)?.trim() || null,
+    label_pt:   (formData.get('label_pt') as string)?.trim() || null,
+    sort_order: Number(formData.get('sort_order') ?? 99),
+  }).eq('id', id)
+  if (error) redirect(`/superadmin/catalogs?tab=app_catalogs&cat=${cat}&error=${encodeURIComponent(error.message)}`)
+  redirect(`/superadmin/catalogs?tab=app_catalogs&cat=${cat}`)
 }
 
 export async function addCurrency(formData: FormData) {
