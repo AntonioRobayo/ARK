@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { STATUS_LABEL, STATUS_COLOR, PRIORITY_COLOR, PRIORITY_LABEL } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
@@ -20,15 +22,27 @@ export default async function WorkOrdersPage({
 }) {
   const { group = 'active', q } = await searchParams
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
+    .from('user_profile')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.tenant_id) redirect('/superadmin')
+
   const t = await getTranslations('workOrders')
 
   const STATUS_GROUPS = STATUS_GROUP_DEFS.map(g => ({ ...g, label: t(g.tKey as Parameters<typeof t>[0]) }))
   const activeGroup = STATUS_GROUPS.find(g => g.key === group) ?? STATUS_GROUPS[0]
 
   // Conteos por grupo para las tabs
-  const { data: allOrders } = await supabase
+  const { data: allOrders } = await adminClient
     .from('work_order')
     .select('status')
+    .eq('tenant_id', profile.tenant_id)
 
   const groupCounts = STATUS_GROUPS.reduce<Record<string, number>>((acc, g) => {
     acc[g.key] = (allOrders ?? []).filter(o => g.statuses.includes(o.status)).length
@@ -36,7 +50,7 @@ export default async function WorkOrdersPage({
   }, {})
 
   // Órdenes del grupo activo
-  let query = supabase
+  let query = adminClient
     .from('work_order')
     .select(`
       id, number, status, priority, created_at, estimated_delivery_at,
@@ -44,6 +58,7 @@ export default async function WorkOrdersPage({
       vehicle:vehicle_id(plate, brand, model, year),
       technician:technician_id(first_name, last_name)
     `)
+    .eq('tenant_id', profile.tenant_id)
     .in('status', activeGroup.statuses)
     .order('created_at', { ascending: false })
 
