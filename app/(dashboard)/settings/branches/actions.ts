@@ -40,14 +40,20 @@ export async function createBranch(formData: FormData) {
 
   const admin = createAdminClient()
 
-  // Check if this is the first branch → mark as main
-  const { count } = await admin
-    .from('branch')
-    .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', tenantId)
-    .is('deleted_at', null)
+  // Check license limit
+  const [{ data: tenant }, { count }] = await Promise.all([
+    admin.from('tenants').select('contracted_branches').eq('id', tenantId).single(),
+    admin.from('branch').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).is('deleted_at', null),
+  ])
 
-  const isMain = (count ?? 0) === 0
+  const limit = tenant?.contracted_branches ?? 1
+  const current = count ?? 0
+
+  if (current >= limit) {
+    redirect('/settings/branches?error=' + encodeURIComponent(`limitReached:${current}:${limit}`))
+  }
+
+  const isMain = current === 0
 
   const { error } = await admin
     .from('branch')

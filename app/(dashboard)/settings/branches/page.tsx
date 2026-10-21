@@ -38,17 +38,25 @@ export default async function BranchesPage({
 
   const admin = createAdminClient()
 
-  const { data: branches } = await admin
-    .from('branch')
-    .select('id, name, address, city, phone, email, is_main, is_active')
-    .eq('tenant_id', myProfile.tenant_id)
-    .is('deleted_at', null)
-    .order('is_main', { ascending: false })
-    .order('created_at', { ascending: true })
+  const [{ data: branches }, { data: tenant }] = await Promise.all([
+    admin.from('branch')
+      .select('id, name, address, city, phone, email, is_main, is_active')
+      .eq('tenant_id', myProfile.tenant_id)
+      .is('deleted_at', null)
+      .order('is_main', { ascending: false })
+      .order('created_at', { ascending: true }),
+    admin.from('tenants')
+      .select('contracted_branches')
+      .eq('id', myProfile.tenant_id)
+      .single(),
+  ])
 
   const t = await getTranslations('settings.branches')
 
   const canManage = myProfile.role === 'owner' || myProfile.role === 'shop_manager'
+  const contractedBranches = tenant?.contracted_branches ?? 1
+  const currentBranchCount = branches?.length ?? 0
+  const atLimit = currentBranchCount >= contractedBranches
 
   const errorKey = error ? ERROR_KEYS[error] : null
   const errorMsg = errorKey ? t(errorKey as Parameters<typeof t>[0]) : error ? decodeURIComponent(error) : null
@@ -121,9 +129,23 @@ export default async function BranchesPage({
         </div>
       )}
 
+      {/* License limit notice */}
+      {canManage && atLimit && (
+        <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+          <p className="font-semibold">Límite de sucursales alcanzado ({currentBranchCount}/{contractedBranches})</p>
+          <p className="mt-0.5 text-amber-700">Tu plan actual incluye {contractedBranches} sucursal{contractedBranches !== 1 ? 'es' : ''}. Para agregar más, actualiza tu plan en la sección de facturación o contacta a soporte.</p>
+        </div>
+      )}
+
+      {canManage && !atLimit && (
+        <div className="mb-2 text-xs text-gray-400 text-right">
+          {currentBranchCount} / {contractedBranches} sucursal{contractedBranches !== 1 ? 'es' : ''} usada{currentBranchCount !== 1 ? 's' : ''}
+        </div>
+      )}
+
       <BranchesClient
         branches={branches ?? []}
-        canManage={canManage}
+        canManage={canManage && !atLimit}
         labels={labels}
       />
     </div>
