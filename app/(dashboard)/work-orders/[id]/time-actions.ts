@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export async function startTimer(otId: string) {
@@ -8,13 +9,14 @@ export async function startTimer(otId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
     .from('user_profile')
     .select('tenant_id')
     .eq('id', user.id)
     .single()
 
-  await supabase.from('work_order_time_log').insert({
+  await adminClient.from('work_order_time_log').insert({
     work_order_id: otId,
     technician_id: user.id,
     tenant_id: profile!.tenant_id,
@@ -28,7 +30,8 @@ export async function stopTimer(entryId: string, otId: string, notes?: string) {
   const supabase = await createClient()
   const now = new Date()
 
-  const { data: entry } = await supabase
+  const adminClient = createAdminClient()
+  const { data: entry } = await adminClient
     .from('work_order_time_log')
     .select('started_at')
     .eq('id', entryId)
@@ -39,7 +42,7 @@ export async function stopTimer(entryId: string, otId: string, notes?: string) {
   const startedAt = new Date(entry.started_at)
   const minutes = Math.round((now.getTime() - startedAt.getTime()) / 60000)
 
-  await supabase.from('work_order_time_log').update({
+  await adminClient.from('work_order_time_log').update({
     ended_at: now.toISOString(),
     minutes,
     notes: notes || null,

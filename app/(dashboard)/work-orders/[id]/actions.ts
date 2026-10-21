@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { STATUS_TRANSITIONS } from '@/lib/work-order-utils'
 import type { WorkOrderStatus } from '@/types/database'
@@ -10,12 +11,13 @@ export async function changeStatus(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
+  const adminClient = createAdminClient()
   const otId    = formData.get('ot_id') as string
   const toStatus = formData.get('to_status') as WorkOrderStatus
   const reason  = (formData.get('reason') as string) || null
 
   // Verificar que la transición es válida
-  const { data: ot } = await supabase
+  const { data: ot } = await adminClient
     .from('work_order')
     .select('status')
     .eq('id', otId)
@@ -36,7 +38,7 @@ export async function changeStatus(formData: FormData) {
     updateData.delivered_at = new Date().toISOString()
   }
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('work_order')
     .update(updateData)
     .eq('id', otId)
@@ -46,7 +48,7 @@ export async function changeStatus(formData: FormData) {
   }
 
   // Log del cambio
-  await supabase.from('work_order_status_log').insert({
+  await adminClient.from('work_order_status_log').insert({
     work_order_id: otId,
     from_status:   ot.status,
     to_status:     toStatus,

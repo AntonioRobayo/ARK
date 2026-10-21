@@ -10,7 +10,8 @@ export async function createWorkOrder(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+  const { data: profile } = await adminClient
     .from('user_profile')
     .select('tenant_id, branch_id')
     .eq('id', user.id)
@@ -21,7 +22,7 @@ export async function createWorkOrder(formData: FormData) {
   }
 
   // Generar número de OT
-  const { data: nextNum, error: numError } = await supabase
+  const { data: nextNum, error: numError } = await adminClient
     .rpc('next_document_number', { p_tenant_id: profile.tenant_id, p_doc_type: 'OT' })
 
   if (numError || !nextNum) {
@@ -35,7 +36,7 @@ export async function createWorkOrder(formData: FormData) {
   const estimatedAt      = formData.get('estimated_delivery_at') as string
   const appointmentId    = (formData.get('appointment_id') as string) || null
 
-  const { data: ot, error } = await supabase
+  const { data: ot, error } = await adminClient
     .from('work_order')
     .insert({
       tenant_id:             profile.tenant_id,
@@ -62,7 +63,7 @@ export async function createWorkOrder(formData: FormData) {
   }
 
   // Registrar en log de estados
-  await supabase.from('work_order_status_log').insert({
+  await adminClient.from('work_order_status_log').insert({
     work_order_id: ot.id,
     from_status:   null,
     to_status:     'received',
@@ -72,10 +73,8 @@ export async function createWorkOrder(formData: FormData) {
 
   // Marcar cita como atendida
   if (appointmentId) {
-    await supabase.from('appointment').update({ status: 'arrived' }).eq('id', appointmentId)
+    await adminClient.from('appointment').update({ status: 'arrived' }).eq('id', appointmentId)
   }
-
-  const adminClient = createAdminClient()
 
   // Insertar objetos en custodia
   const custodyRaw = formData.get('custody_items') as string
