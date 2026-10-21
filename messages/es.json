@@ -326,8 +326,15 @@
       "notesPlaceholder": "Modificaciones, accesorios, observaciones...",
       "submit": "Registrar vehículo"
     },
+    "edit": {
+      "back": "← Cancelar",
+      "title": "Editar vehículo",
+      "submit": "Guardar cambios",
+      "mileageNote": "Solo se actualiza si es mayor al kilometraje registrado"
+    },
     "detail": {
       "back": "← Vehículos",
+      "edit": "Editar",
       "noPlate": "(sin placa)",
       "vehicleSection": "Vehículo",
       "type": "Tipo",

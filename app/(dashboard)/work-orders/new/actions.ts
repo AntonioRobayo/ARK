@@ -17,8 +17,23 @@ export async function createWorkOrder(formData: FormData) {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.tenant_id || !profile?.branch_id) {
-    redirect('/work-orders/new?error=' + encodeURIComponent('Tu perfil no tiene taller o sede configurada'))
+  if (!profile?.tenant_id) {
+    redirect('/work-orders/new?error=' + encodeURIComponent('Tu perfil no tiene taller configurado'))
+  }
+
+  let branchId = profile.branch_id
+  if (!branchId) {
+    const { data: branch } = await adminClient
+      .from('branch')
+      .select('id')
+      .eq('tenant_id', profile.tenant_id)
+      .limit(1)
+      .single()
+    branchId = branch?.id ?? null
+  }
+
+  if (!branchId) {
+    redirect('/work-orders/new?error=' + encodeURIComponent('No hay una sede configurada para este taller'))
   }
 
   // Generar número de OT
@@ -35,14 +50,16 @@ export async function createWorkOrder(formData: FormData) {
   const estimatedAt      = formData.get('estimated_delivery_at') as string
   const appointmentId    = (formData.get('appointment_id') as string) || null
 
+  const vehicleId = formData.get('vehicle_id') as string
+
   const { data: ot, error } = await adminClient
     .from('work_order')
     .insert({
       tenant_id:             profile.tenant_id,
-      branch_id:             profile.branch_id,
+      branch_id:             branchId,
       number:                String(nextNum),
       customer_id:           formData.get('customer_id') as string,
-      vehicle_id:            formData.get('vehicle_id') as string,
+      vehicle_id:            vehicleId,
       appointment_id:        appointmentId,
       status:                'received',
       priority:              (formData.get('priority') as string) || 'normal',
@@ -58,6 +75,18 @@ export async function createWorkOrder(formData: FormData) {
 
   if (error || !ot) {
     redirect('/work-orders/new?error=' + encodeURIComponent(error?.message ?? 'Error al crear la OT'))
+  }
+
+  // Actualizar kilometraje del vehículo si el de recepción es mayor
+  if (receptionMileage) {
+    const km = Number(receptionMileage)
+    if (!isNaN(km) && km > 0) {
+      await adminClient
+        .from('vehicle')
+        .update({ current_mileage: km })
+        .eq('id', vehicleId)
+        .or(`current_mileage.is.null,current_mileage.lt.${km}`)
+    }
   }
 
   // Registrar en log de estados
@@ -117,6 +146,14 @@ export async function createWorkOrder(formData: FormData) {
       }
     }
   }
+
+  // Audit log
+  await adminClient.from('tenant_audit_log').insert({
+    tenant_id: profile.tenant_id,
+    event: 'work_order.created',
+    actor_id: user.id,
+    details: { work_order_id: ot.id, number: String(nextNum) },
+  })
 
   redirect(`/work-orders/${ot.id}`)
 }

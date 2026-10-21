@@ -310,8 +310,15 @@
       "notesPlaceholder": "Modifications, accessories, observations...",
       "submit": "Register vehicle"
     },
+    "edit": {
+      "back": "← Cancel",
+      "title": "Edit vehicle",
+      "submit": "Save changes",
+      "mileageNote": "Only updated if greater than recorded mileage"
+    },
     "detail": {
       "back": "← Vehicles",
+      "edit": "Edit",
       "noPlate": "(no plate)",
       "vehicleSection": "Vehicle",
       "type": "Type",

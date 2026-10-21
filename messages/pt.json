@@ -310,7 +310,14 @@
       "notesPlaceholder": "Modificações, acessórios, observações...",
       "submit": "Cadastrar veículo"
     },
+    "edit": {
+      "back": "← Cancelar",
+      "title": "Editar veículo",
+      "submit": "Salvar alterações",
+      "mileageNote": "Apenas atualizado se maior que a quilometragem registrada"
+    },
     "detail": {
+      "edit": "Editar",
       "back": "← Veículos",
       "noPlate": "(sem placa)",
       "vehicleSection": "Veículo",

@@ -36,6 +36,14 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
         <Link href="/vehicles" className="text-gray-400 hover:text-gray-600 text-sm">{t('detail.back')}</Link>
         <h1 className="text-2xl font-bold text-gray-900 font-mono">{vehicle.plate ?? t('detail.noPlate')}</h1>
         <span className="text-gray-400 text-lg font-normal">{vehicle.brand} {vehicle.model} {vehicle.year}</span>
+        <div className="ml-auto">
+          <Link
+            href={`/vehicles/${id}/edit`}
+            className="text-sm px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:border-slate-400 hover:text-gray-900 transition-colors"
+          >
+            {t('detail.edit')}
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-5">
