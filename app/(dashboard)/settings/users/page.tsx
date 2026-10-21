@@ -99,12 +99,12 @@ export default async function SettingsUsersPage({
   const pendingInvites = (usersData?.users ?? []).filter(u => {
     if (u.email_confirmed_at) return false
     if (!u.invited_at) return false
-    const meta = u.raw_user_meta_data as Record<string, unknown> | null
+    const meta = u.user_metadata as Record<string, unknown> | null
     return meta?.tenant_id === myProfile.tenant_id
   }).map(u => ({
     id: u.id,
     email: u.email ?? '',
-    role: (u.raw_user_meta_data as Record<string, unknown> | null)?.role as string | null,
+    role: (u.user_metadata as Record<string, unknown> | null)?.role as string | null,
     invited_at: u.invited_at,
   }))
 
