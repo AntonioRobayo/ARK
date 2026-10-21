@@ -188,9 +188,6 @@ export async function getOtSectionFolder(params: {
   let rootFolderId = cache?.root_folder_id
   const otFolderMap: Record<string, Record<string, string>> = cache?.ot_folder_map ?? {}
 
-  // Non-OT sections (recepcion, custodia, documentos) go directly under vehicle root
-  const isDirectSection = ['recepcion', 'custodia', 'documentos'].includes(section)
-
   // Ensure vehicle root folder exists
   if (!rootFolderId) {
     const vehiclesFolder = await getOrCreateFolder(accessToken, tenantRootId, 'Vehículos')
@@ -198,33 +195,11 @@ export async function getOtSectionFolder(params: {
     rootFolderId = await getOrCreateFolder(accessToken, vehiclesFolder, vehicleLabel, true)
   }
 
-  // Sections directly under vehicle
-  if (section === 'recepcion') {
-    let recId = cache?.reception_folder_id
-    if (!recId) {
-      recId = await getOrCreateFolder(accessToken, rootFolderId, 'Recepción', true)
-      await admin
-        .from('vehicle_drive_folders')
-        .upsert({ tenant_id: tenantId, vehicle_id: vehicleId, root_folder_id: rootFolderId, reception_folder_id: recId, ot_folder_map: otFolderMap }, { onConflict: 'tenant_id,vehicle_id' })
-    }
-    return recId
-  }
-
-  if (section === 'custodia') {
-    let custId = cache?.custodia_folder_id
-    if (!custId) {
-      custId = await getOrCreateFolder(accessToken, rootFolderId, 'Custodia', true)
-      await admin
-        .from('vehicle_drive_folders')
-        .upsert({ tenant_id: tenantId, vehicle_id: vehicleId, root_folder_id: rootFolderId, custodia_folder_id: custId, ot_folder_map: otFolderMap }, { onConflict: 'tenant_id,vehicle_id' })
-    }
-    return custId
-  }
-
+  // Documentos stays at vehicle level (shared across OTs — SOAT, tarjeta de propiedad, etc.)
   if (section === 'documentos') {
     let docsId = cache?.documents_folder_id
     if (!docsId) {
-      docsId = await getOrCreateFolder(accessToken, rootFolderId, 'Documentos') // private
+      docsId = await getOrCreateFolder(accessToken, rootFolderId, 'Documentos')
       await admin
         .from('vehicle_drive_folders')
         .upsert({ tenant_id: tenantId, vehicle_id: vehicleId, root_folder_id: rootFolderId, documents_folder_id: docsId, ot_folder_map: otFolderMap }, { onConflict: 'tenant_id,vehicle_id' })
