@@ -60,7 +60,7 @@ export default async function QuotationPage({
       </div>
 
       <div className="flex items-center gap-2 mb-5 text-sm text-gray-500">
-        <span>OT-{ot.number}</span><span>·</span>
+        <span>{ot.number}</span><span>·</span>
         <span>{(ot.customer as any)?.first_name} {(ot.customer as any)?.last_name}</span><span>·</span>
         <span className="font-mono">{(ot.vehicle as any)?.plate}</span>
         <span>{(ot.vehicle as any)?.brand} {(ot.vehicle as any)?.model}</span>

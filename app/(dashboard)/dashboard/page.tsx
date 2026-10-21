@@ -107,7 +107,7 @@ export default async function DashboardPage() {
                 <Link key={ot.id} href={`/work-orders/${ot.id}`}
                   className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm font-bold text-gray-800">OT-{ot.number}</span>
+                    <span className="font-mono text-sm font-bold text-gray-800">{ot.number}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[ot.status as WorkOrderStatus]}`}>
                       {STATUS_LABEL[ot.status as WorkOrderStatus]}
                     </span>

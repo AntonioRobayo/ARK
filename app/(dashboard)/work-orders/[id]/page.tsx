@@ -104,7 +104,7 @@ export default async function WorkOrderDetailPage({
           <Link href="/work-orders" className="text-gray-400 hover:text-gray-600 text-sm">{t('detail.backToOTs')}</Link>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900 font-mono">OT-{ot.number}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 font-mono">{ot.number}</h1>
               <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLOR[ot.status as WorkOrderStatus]}`}>
                 {STATUS_LABEL[ot.status as WorkOrderStatus]}
               </span>

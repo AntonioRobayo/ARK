@@ -138,7 +138,7 @@ export default async function WorkOrdersPage({
                 <tr key={ot.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <Link href={`/work-orders/${ot.id}`} className="font-mono font-semibold text-slate-800 hover:text-slate-600">
-                      OT-{ot.number}
+                      {ot.number}
                     </Link>
                   </td>
                   <td className="px-4 py-3">

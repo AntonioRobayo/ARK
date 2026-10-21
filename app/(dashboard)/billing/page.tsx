@@ -118,7 +118,7 @@ export default async function BillingPage({
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-gray-500">
-                      {inv.work_order ? `OT-${inv.work_order.number}` : '—'}
+                      {inv.work_order ? inv.work_order.number : '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-700">
                       {customer ? `${customer.first_name} ${customer.last_name}` : '—'}
