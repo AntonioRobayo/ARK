@@ -147,12 +147,12 @@ export default async function WorkOrderDetailPage({
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/work-orders" className="text-gray-400 hover:text-gray-600 text-sm">{t('detail.backToOTs')}</Link>
+          <Link href="/work-orders" className="text-gray-400 hover:text-gray-600 text-sm shrink-0">{t('detail.backToOTs')}</Link>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900 font-mono">{ot.number}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 font-mono whitespace-nowrap">{ot.number}</h1>
               <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLOR[ot.status as WorkOrderStatus]}`}>
                 {STATUS_LABEL[ot.status as WorkOrderStatus]}
               </span>
@@ -170,12 +170,12 @@ export default async function WorkOrderDetailPage({
         <StatusTransitionButtons otId={ot.id} transitions={transitions} />
       </div>
 
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Columna izquierda (2/3) */}
-        <div className="col-span-2 space-y-5">
+        <div className="md:col-span-2 space-y-5">
 
           {/* Info vehículo + cliente */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white border border-gray-200 rounded-xl p-4">
               <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Vehículo</p>
               <p className="font-mono font-bold text-xl text-gray-900">{ot.vehicle?.plate ?? '—'}</p>
@@ -204,7 +204,7 @@ export default async function WorkOrderDetailPage({
           {/* Recepción */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('detail.reception')}</p>
-            <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-gray-400 text-xs">{t('detail.fuel')}</p>
                 <p className="font-medium text-gray-700 mt-1">{ot.fuel_level ?? '—'}</p>
