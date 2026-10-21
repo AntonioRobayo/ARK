@@ -96,9 +96,11 @@ export default async function SettingsUsersPage({
     (usersData?.users ?? []).map(u => [u.id, u.email ?? ''])
   )
 
+  // Users who were invited to this tenant but have no user_profile yet
+  const memberIds = new Set((members ?? []).map(m => m.id))
   const pendingInvites = (usersData?.users ?? []).filter(u => {
-    if (u.email_confirmed_at) return false
     if (!u.invited_at) return false
+    if (memberIds.has(u.id)) return false
     const meta = u.user_metadata as Record<string, unknown> | null
     return meta?.tenant_id === myProfile.tenant_id
   }).map(u => ({
