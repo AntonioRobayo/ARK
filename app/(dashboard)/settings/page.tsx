@@ -1,19 +1,12 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
-import { createClient } from '@/lib/supabase/server'
 
 export default async function SettingsPage() {
   const t = await getTranslations('settings')
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = user
-    ? await supabase.from('user_profile').select('role').eq('id', user.id).single()
-    : { data: null }
-  const canManageUsers = profile?.role === 'owner' || profile?.role === 'shop_manager'
-
   const sections = [
     { href: '/settings/profile',                   title: t('cards.profile'),        description: t('cards.profileDesc'),        icon: '👤' },
+    { href: '/settings/users',                     title: t('cards.users'),          description: t('cards.usersDesc'),          icon: '👥' },
     { href: '/settings/services',                  title: t('cards.services'),       description: t('cards.servicesDesc'),       icon: '🔧' },
     { href: '/settings/taxes',                     title: t('cards.taxes'),          description: t('cards.taxesDesc'),          icon: '📊' },
     { href: '/settings/payment-methods',           title: t('cards.paymentMethods'), description: t('cards.paymentMethodsDesc'), icon: '💳' },
@@ -22,7 +15,6 @@ export default async function SettingsPage() {
     { href: '/settings/language',                  title: t('cards.language'),       description: t('cards.languageDesc'),       icon: '🌐' },
     { href: '/settings/integrations',              title: t('cards.integrations'),   description: t('cards.integrationsDesc'),   icon: '🔗' },
     { href: '/settings/branches',                  title: t('cards.branches'),       description: t('cards.branchesDesc'),       icon: '🏢' },
-    ...(canManageUsers ? [{ href: '/settings/users', title: t('cards.users'), description: t('cards.usersDesc'), icon: '👥' }] : []),
   ]
 
   return (
