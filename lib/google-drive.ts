@@ -139,11 +139,12 @@ export async function getOrCreateFolder(
 
 // Section names in Spanish for folder naming
 export const SECTION_NAMES: Record<string, string> = {
-  recepcion: 'Recepción',
-  diagnostico: 'Diagnóstico',
-  trabajo: 'Trabajo',
-  repuestos: 'Repuestos',
-  entrega: 'Entrega',
+  recepcion:         'Recepción',
+  diagnostico:       'Diagnóstico',
+  trabajo:           'Trabajo',
+  repuestos:         'Repuestos',
+  repuestos_cliente: 'Repuestos del cliente',
+  entrega:           'Entrega',
   custodia: 'Custodia',
   documentos: 'Documentos',
 }

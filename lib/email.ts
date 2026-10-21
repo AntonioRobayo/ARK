@@ -424,3 +424,227 @@ export async function sendOtStatusEmail({
   const html = arkEmailLayout(`Actualización OT ${otNumber}`, body, '🔧')
   await sendEmail({ to, subject: `OT ${otNumber} — ${status} | ARK Workshop`, html })
 }
+
+// ─── OT abierta — email al cliente ───────────────────────────────────────────
+
+export interface OtPhoto { thumbUrl: string; name: string }
+export interface OtCustomerPart { description: string; quantity: number; condition: string; notes?: string | null }
+
+export interface OtCustodyItem { description: string; location?: string | null }
+
+export async function sendOtOpenedEmail({
+  to, customerName, workshopName, otNumber, vehiclePlate, vehicleLabel,
+  receptionNotes, estimatedDelivery, technicianName,
+  photos, customerParts, custodyItems,
+}: {
+  to: string
+  customerName: string
+  workshopName: string
+  otNumber: string
+  vehiclePlate: string
+  vehicleLabel: string
+  receptionNotes?: string | null
+  estimatedDelivery?: string | null
+  technicianName?: string | null
+  photos: OtPhoto[]
+  customerParts: OtCustomerPart[]
+  custodyItems: OtCustodyItem[]
+}) {
+  const CONDITION_LABEL: Record<string, string> = { new: 'Nuevo', used: 'Usado', damaged: 'Dañado' }
+
+  const photosHtml = photos.length > 0 ? `
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Fotos de recepción</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+      <tr>
+        ${photos.slice(0, 6).map(p => `
+          <td style="padding:2px;">
+            <img src="${p.thumbUrl}" alt="${p.name}"
+              style="width:100px;height:75px;object-fit:cover;border-radius:6px;display:block;border:1px solid #E5E7EB;" />
+          </td>`).join('')}
+      </tr>
+    </table>` : ''
+
+  const partsHtml = customerParts.length > 0 ? `
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Repuestos traídos por el cliente</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:12px 16px;">
+        ${customerParts.map((p, i) => `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            ${i > 0 ? 'style="border-top:1px solid #E5E7EB;margin-top:8px;padding-top:8px;"' : ''}>
+            <tr>
+              <td style="font-size:13px;color:#1F2937;font-weight:600;">${p.description}${p.quantity > 1 ? ` <span style="color:#9CA3AF;font-weight:400;">× ${p.quantity}</span>` : ''}</td>
+              <td align="right" style="font-size:12px;color:#6B7280;">${CONDITION_LABEL[p.condition] ?? p.condition}</td>
+            </tr>
+            ${p.notes ? `<tr><td colspan="2" style="font-size:12px;color:#9CA3AF;padding-top:2px;">${p.notes}</td></tr>` : ''}
+          </table>`).join('')}
+      </td></tr>
+    </table>` : ''
+
+  const body = `
+    <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
+      Hola <strong>${customerName}</strong>, tu vehículo ha ingresado al taller
+      <strong style="color:#1F2937;">${workshopName}</strong>.
+      A continuación el resumen de recepción:
+    </p>
+
+    ${dataBox([
+      { label: 'OT',          value: otNumber },
+      { label: 'Vehículo',    value: `${vehicleLabel} · ${vehiclePlate}` },
+      ...(technicianName  ? [{ label: 'Técnico',    value: technicianName }] : []),
+      ...(estimatedDelivery ? [{ label: 'Entrega estimada', value: new Date(estimatedDelivery).toLocaleDateString('es-CO', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) }] : []),
+    ])}
+
+    ${receptionNotes ? `
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Notas de recepción</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:14px 16px;font-size:13px;color:#4B5563;line-height:1.6;">${receptionNotes}</td></tr>
+    </table>` : ''}
+
+    ${partsHtml}
+
+    ${custodyItems.length > 0 ? `
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Objetos dejados en custodia</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background-color:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:12px 16px;">
+        <p style="margin:0 0 8px;font-size:12px;color:#92400E;">
+          Los siguientes objetos fueron registrados al momento del ingreso. Consérvelos hasta la entrega del vehículo.
+        </p>
+        ${custodyItems.map((c, i) => `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            ${i > 0 ? 'style="border-top:1px solid #FDE68A;margin-top:6px;padding-top:6px;"' : ''}>
+            <tr>
+              <td style="font-size:13px;color:#92400E;font-weight:600;">📦 ${c.description}</td>
+              ${c.location ? `<td align="right" style="font-size:12px;color:#B45309;">${c.location}</td>` : ''}
+            </tr>
+          </table>`).join('')}
+      </td></tr>
+    </table>` : ''}
+
+    ${photosHtml}
+
+    <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">
+      Este correo es un registro de ingreso. Nos pondremos en contacto si hay novedades durante la revisión.
+    </p>
+  `
+
+  const html = arkEmailLayout(`Tu vehículo ingresó al taller`, body, '🔑')
+  await sendEmail({
+    to,
+    subject: `OT ${otNumber} — Ingreso de vehículo | ${workshopName}`,
+    html,
+  })
+}
+
+// ─── OT cerrada — email al cliente ───────────────────────────────────────────
+
+export interface OtServiceItem { description: string; quantity: number; unitPrice: number; subtotal: number }
+
+export async function sendOtClosedEmail({
+  to, customerName, workshopName, otNumber, vehiclePlate, vehicleLabel,
+  services, customerParts, photos, totalAmount, paidAmount,
+}: {
+  to: string
+  customerName: string
+  workshopName: string
+  otNumber: string
+  vehiclePlate: string
+  vehicleLabel: string
+  services: OtServiceItem[]
+  customerParts: OtCustomerPart[]
+  photos: OtPhoto[]
+  totalAmount: number
+  paidAmount: number
+}) {
+  const fmt = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
+  const CONDITION_LABEL: Record<string, string> = { new: 'Nuevo', used: 'Usado', damaged: 'Dañado' }
+
+  const servicesHtml = services.length > 0 ? `
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Servicios realizados</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:12px 16px;">
+        ${services.map((s, i) => `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            ${i > 0 ? 'style="border-top:1px solid #E5E7EB;margin-top:8px;padding-top:8px;"' : ''}>
+            <tr>
+              <td style="font-size:13px;color:#1F2937;">${s.description}${s.quantity > 1 ? ` × ${s.quantity}` : ''}</td>
+              <td align="right" style="font-size:13px;font-weight:600;color:#1F2937;">${fmt(s.subtotal)}</td>
+            </tr>
+          </table>`).join('')}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+          style="border-top:2px solid #E5E7EB;margin-top:10px;padding-top:10px;">
+          <tr>
+            <td style="font-size:14px;font-weight:700;color:#1F2937;">Total</td>
+            <td align="right" style="font-size:14px;font-weight:700;color:#1F2937;">${fmt(totalAmount)}</td>
+          </tr>
+          ${paidAmount > 0 ? `<tr>
+            <td style="font-size:12px;color:#059669;">Pagado</td>
+            <td align="right" style="font-size:12px;font-weight:600;color:#059669;">${fmt(paidAmount)}</td>
+          </tr>` : ''}
+          ${totalAmount - paidAmount > 0 ? `<tr>
+            <td style="font-size:12px;color:#DC2626;">Saldo pendiente</td>
+            <td align="right" style="font-size:12px;font-weight:600;color:#DC2626;">${fmt(totalAmount - paidAmount)}</td>
+          </tr>` : ''}
+        </table>
+      </td></tr>
+    </table>` : ''
+
+  const partsHtml = customerParts.length > 0 ? `
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Repuestos instalados (traídos por el cliente)</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:24px;">
+      <tr><td style="padding:12px 16px;">
+        ${customerParts.map((p, i) => `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+            ${i > 0 ? 'style="border-top:1px solid #E5E7EB;margin-top:8px;padding-top:8px;"' : ''}>
+            <tr>
+              <td style="font-size:13px;color:#1F2937;font-weight:600;">${p.description}${p.quantity > 1 ? ` × ${p.quantity}` : ''}</td>
+              <td align="right" style="font-size:12px;color:#6B7280;">${CONDITION_LABEL[p.condition] ?? p.condition}</td>
+            </tr>
+          </table>`).join('')}
+      </td></tr>
+    </table>` : ''
+
+  const photosHtml = photos.length > 0 ? `
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Registro fotográfico</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+      <tr>
+        ${photos.slice(0, 6).map(p => `
+          <td style="padding:2px;">
+            <img src="${p.thumbUrl}" alt="${p.name}"
+              style="width:100px;height:75px;object-fit:cover;border-radius:6px;display:block;border:1px solid #E5E7EB;" />
+          </td>`).join('')}
+      </tr>
+    </table>` : ''
+
+  const body = `
+    <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
+      Hola <strong>${customerName}</strong>, tu vehículo
+      <strong style="color:#1F2937;">${vehicleLabel} · ${vehiclePlate}</strong>
+      está listo. Aquí el resumen de lo trabajado:
+    </p>
+
+    ${dataBox([
+      { label: 'OT',       value: otNumber },
+      { label: 'Vehículo', value: `${vehicleLabel} · ${vehiclePlate}` },
+    ])}
+
+    ${servicesHtml}
+    ${partsHtml}
+    ${photosHtml}
+
+    <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">
+      Gracias por confiar en <strong>${workshopName}</strong>. Guarda este correo como soporte de los trabajos realizados.
+    </p>
+  `
+
+  const html = arkEmailLayout(`Tu vehículo está listo`, body, '✅')
+  await sendEmail({
+    to,
+    subject: `OT ${otNumber} — Vehículo listo | ${workshopName}`,
+    html,
+  })
+}

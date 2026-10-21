@@ -12,6 +12,7 @@ import { StatusTransitionButtons } from '@/components/work-orders/StatusTransiti
 import { TimeTracker } from '@/components/work-orders/TimeTracker'
 import { OTGallery } from '@/components/work-orders/OTGallery'
 import { FindingsSection } from '@/components/work-orders/FindingsSection'
+import { CustomerPartsSection } from '@/components/work-orders/CustomerPartsSection'
 
 export default async function WorkOrderDetailPage({
   params,
@@ -37,6 +38,7 @@ export default async function WorkOrderDetailPage({
     { data: driveAttachments },
     { data: findings },
     { data: auditLog },
+    { data: customerParts },
   ] = await Promise.all([
     adminClient
       .from('work_order')
@@ -86,9 +88,14 @@ export default async function WorkOrderDetailPage({
     adminClient
       .from('tenant_audit_log')
       .select('id, event, created_at, details')
-      .like('event', 'finding.%')
+      .or('event.like.finding.%,event.like.customer_part.%')
       .filter('details->>work_order_id', 'eq', id)
       .order('created_at', { ascending: false }),
+    adminClient
+      .from('work_order_customer_part')
+      .select('id, description, quantity, condition, notes, created_at')
+      .eq('work_order_id', id)
+      .order('created_at', { ascending: true }),
   ])
 
   if (!ot) notFound()
@@ -110,8 +117,9 @@ export default async function WorkOrderDetailPage({
   const activeQuotation = (quotations ?? [])[0] ?? null
 
   const AUDIT_EVENT_LABEL: Record<string, string> = {
-    'finding.added':    'Hallazgo registrado',
-    'finding.notified': 'Hallazgos notificados al cliente',
+    'finding.added':      'Hallazgo registrado',
+    'finding.notified':   'Hallazgos notificados al cliente',
+    'customer_part.added': 'Repuesto del cliente registrado',
   }
 
   const mergedTimeline = [
@@ -223,6 +231,15 @@ export default async function WorkOrderDetailPage({
               </div>
             )}
           </div>
+
+          {/* Repuestos del cliente */}
+          <CustomerPartsSection
+            otId={id}
+            vehicleId={ot.vehicle_id}
+            parts={customerParts ?? []}
+            attachments={(driveAttachments ?? []) as any[]}
+            driveEnabled={driveEnabled}
+          />
 
           {/* Hallazgos de diagnóstico */}
           <FindingsSection
@@ -434,7 +451,7 @@ export default async function WorkOrderDetailPage({
                       {entry._type === 'audit' && entry.event === 'finding.notified' && entry.details?.count && (
                         <p className="text-xs text-gray-400 mt-0.5">{entry.details.count} hallazgo{entry.details.count !== 1 ? 's' : ''} enviado{entry.details.count !== 1 ? 's' : ''} por email</p>
                       )}
-                      {entry._type === 'audit' && entry.event === 'finding.added' && entry.details?.description && (
+                      {entry._type === 'audit' && (entry.event === 'finding.added' || entry.event === 'customer_part.added') && entry.details?.description && (
                         <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.details.description}</p>
                       )}
                       {entry._type === 'status' && entry.reason && (

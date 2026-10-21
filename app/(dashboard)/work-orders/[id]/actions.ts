@@ -57,7 +57,96 @@ export async function changeStatus(formData: FormData) {
     reason,
   })
 
+  // Email de cierre al cliente
+  if (toStatus === 'closed' || toStatus === 'delivered_with_balance') {
+    void (async () => {
+      try {
+        const { data: fullOt } = await adminClient
+          .from('work_order')
+          .select(`
+            number, tenant_id,
+            customer:customer_id(first_name, last_name, email),
+            vehicle:vehicle_id(plate, brand, model, year)
+          `)
+          .eq('id', otId).single()
+        if (!fullOt) return
+        const customer = Array.isArray(fullOt.customer) ? fullOt.customer[0] : fullOt.customer
+        const vehicle  = Array.isArray(fullOt.vehicle)  ? fullOt.vehicle[0]  : fullOt.vehicle
+        if (!customer?.email) return
+
+        const [{ data: tenant }, { data: quotation }, { data: customerParts }, { data: photos }, { data: invoice }] =
+          await Promise.all([
+            adminClient.from('tenants').select('name').eq('id', fullOt.tenant_id).single(),
+            adminClient.from('quotation').select('quotation_item(description, quantity, unit_price, subtotal)').eq('work_order_id', otId).eq('status', 'approved').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+            adminClient.from('work_order_customer_part').select('description, quantity, condition, notes').eq('work_order_id', otId),
+            adminClient.from('work_order_drive_attachment').select('drive_thumb_url, original_name').eq('work_order_id', otId).in('section', ['trabajo', 'entrega']).limit(6),
+            adminClient.from('invoice').select('total, paid_amount').eq('work_order_id', otId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+          ])
+
+        const { sendOtClosedEmail } = await import('@/lib/email')
+        await sendOtClosedEmail({
+          to: customer.email,
+          customerName: `${customer.first_name} ${customer.last_name}`,
+          workshopName: tenant?.name ?? 'ARK Workshop',
+          otNumber: String(fullOt.number),
+          vehiclePlate: vehicle?.plate ?? '',
+          vehicleLabel: [vehicle?.brand, vehicle?.model, vehicle?.year].filter(Boolean).join(' '),
+          services: (quotation?.quotation_item ?? []).map((i: any) => ({
+            description: i.description, quantity: i.quantity,
+            unitPrice: i.unit_price, subtotal: i.subtotal,
+          })),
+          customerParts: (customerParts ?? []).map(p => ({
+            description: p.description, quantity: p.quantity,
+            condition: p.condition, notes: p.notes,
+          })),
+          photos: (photos ?? []).map(p => ({ thumbUrl: p.drive_thumb_url, name: p.original_name })),
+          totalAmount:  invoice?.total ?? 0,
+          paidAmount:   invoice?.paid_amount ?? 0,
+        })
+      } catch { /* email failure should not block status change */ }
+    })()
+  }
+
   redirect(`/work-orders/${otId}`)
+}
+
+// ─── Repuestos del cliente ────────────────────────────────────────────────────
+
+export async function addCustomerPart(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const admin = createAdminClient()
+  const otId       = formData.get('ot_id') as string
+  const description = (formData.get('description') as string)?.trim()
+  const quantity    = parseInt(formData.get('quantity') as string) || 1
+  const condition   = (formData.get('condition') as string) || 'new'
+  const notes       = (formData.get('notes') as string)?.trim() || null
+
+  if (!description || !otId) redirect(`/work-orders/${otId}?error=part_empty`)
+
+  const { data: ot } = await admin.from('work_order').select('tenant_id').eq('id', otId).single()
+  if (!ot) redirect('/work-orders')
+
+  await admin.from('work_order_customer_part').insert({
+    work_order_id: otId,
+    tenant_id:     ot.tenant_id,
+    description,
+    quantity,
+    condition,
+    notes,
+    created_by: user.id,
+  })
+
+  await admin.from('tenant_audit_log').insert({
+    tenant_id: ot.tenant_id,
+    event:     'customer_part.added',
+    actor_id:  user.id,
+    details:   { work_order_id: otId, description, quantity, condition },
+  })
+
+  revalidatePath(`/work-orders/${otId}`)
 }
 
 // ─── Hallazgos de diagnóstico ─────────────────────────────────────────────────

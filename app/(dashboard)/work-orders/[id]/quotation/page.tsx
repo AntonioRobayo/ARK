@@ -19,7 +19,7 @@ export default async function QuotationPage({
   const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
   if (!myProfile?.tenant_id) redirect('/superadmin')
 
-  const [{ data: ot }, { data: quotations }, { data: services }, { data: taxRates }] = await Promise.all([
+  const [{ data: ot }, { data: quotations }, { data: services }, { data: taxRates }, { data: customerParts }] = await Promise.all([
     adminClient.from('work_order')
       .select('id, number, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)')
       .eq('id', id).eq('tenant_id', myProfile.tenant_id).single(),
@@ -31,6 +31,7 @@ export default async function QuotationPage({
       .order('created_at', { ascending: false }),
     adminClient.from('service_catalog').select('id, name, base_price, category').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
     adminClient.from('tax_rate').select('id, name, rate, is_default').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
+    adminClient.from('work_order_customer_part').select('id, description, quantity, condition, notes').eq('work_order_id', id).order('created_at', { ascending: true }),
   ])
 
   if (!ot) notFound()
@@ -191,6 +192,31 @@ export default async function QuotationPage({
               </div>
             )}
           </div>
+
+          {/* Repuestos del cliente */}
+          {(customerParts ?? []).length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+              <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-3">Repuestos traídos por el cliente</p>
+              <div className="space-y-2">
+                {(customerParts ?? []).map((p: any) => (
+                  <div key={p.id} className="flex items-center gap-3 text-sm">
+                    <span className={`flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded border ${
+                      p.condition === 'new'     ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      p.condition === 'used'    ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                                  'bg-red-50 text-red-700 border-red-200'
+                    }`}>
+                      {p.condition === 'new' ? 'Nuevo' : p.condition === 'used' ? 'Usado' : 'Dañado'}
+                    </span>
+                    <span className="text-gray-700 font-medium">
+                      {p.description}{p.quantity > 1 ? <span className="text-gray-400 font-normal"> × {p.quantity}</span> : ''}
+                    </span>
+                    {p.notes && <span className="text-gray-400 text-xs">· {p.notes}</span>}
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-amber-600 mt-2">Estos repuestos no tienen costo — son de propiedad del cliente.</p>
+            </div>
+          )}
 
           {/* Agregar ítem */}
           {canEdit && (
