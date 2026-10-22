@@ -52,7 +52,6 @@ export async function updateAppointmentStatus(formData: FormData) {
 
   await adminClient.from('appointment').update({ status }).eq('id', id)
   revalidatePath('/appointments')
-  redirect('/appointments')
 }
 
 export async function convertToWorkOrder(formData: FormData) {

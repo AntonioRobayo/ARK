@@ -30,7 +30,6 @@ export async function upsertPaymentMethod(formData: FormData) {
   }
 
   revalidatePath('/settings/payment-methods')
-  redirect('/settings/payment-methods')
 }
 
 export async function togglePaymentMethod(formData: FormData) {
@@ -43,5 +42,4 @@ export async function togglePaymentMethod(formData: FormData) {
   const current = formData.get('is_active') === 'true'
   await adminClient.from('payment_method').update({ is_active: !current }).eq('id', id)
   revalidatePath('/settings/payment-methods')
-  redirect('/settings/payment-methods')
 }

@@ -99,7 +99,6 @@ export async function revokeInvite(formData: FormData) {
 
   await adminClient.auth.admin.deleteUser(targetUserId)
   revalidatePath('/settings/users')
-  redirect('/settings/users')
 }
 
 export async function resendInvite(formData: FormData) {

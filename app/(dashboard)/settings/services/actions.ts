@@ -34,7 +34,6 @@ export async function upsertService(formData: FormData) {
   }
 
   revalidatePath('/settings/services')
-  redirect('/settings/services')
 }
 
 export async function toggleService(formData: FormData) {
@@ -47,5 +46,4 @@ export async function toggleService(formData: FormData) {
   const current = formData.get('is_active') === 'true'
   await adminClient.from('service_catalog').update({ is_active: !current }).eq('id', id)
   revalidatePath('/settings/services')
-  redirect('/settings/services')
 }

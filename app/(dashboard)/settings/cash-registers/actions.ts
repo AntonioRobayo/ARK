@@ -30,7 +30,6 @@ export async function upsertCashRegister(formData: FormData) {
   }
 
   revalidatePath('/settings/cash-registers')
-  redirect('/settings/cash-registers')
 }
 
 export async function toggleCashRegister(formData: FormData) {
@@ -43,5 +42,4 @@ export async function toggleCashRegister(formData: FormData) {
   const current = formData.get('is_active') === 'true'
   await adminClient.from('cash_register').update({ is_active: !current }).eq('id', id)
   revalidatePath('/settings/cash-registers')
-  redirect('/settings/cash-registers')
 }

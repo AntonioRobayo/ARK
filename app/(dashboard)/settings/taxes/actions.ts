@@ -38,7 +38,6 @@ export async function upsertTaxRate(formData: FormData) {
   }
 
   revalidatePath('/settings/taxes')
-  redirect('/settings/taxes')
 }
 
 export async function toggleTaxRate(formData: FormData) {
@@ -51,5 +50,4 @@ export async function toggleTaxRate(formData: FormData) {
   const current = formData.get('is_active') === 'true'
   await adminClient.from('tax_rate').update({ is_active: !current }).eq('id', id)
   revalidatePath('/settings/taxes')
-  redirect('/settings/taxes')
 }

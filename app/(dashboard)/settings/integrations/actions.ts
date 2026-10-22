@@ -88,5 +88,4 @@ export async function disconnectDrive() {
     .eq('id', profile.tenant_id)
 
   revalidatePath('/settings/integrations')
-  redirect('/settings/integrations')
 }

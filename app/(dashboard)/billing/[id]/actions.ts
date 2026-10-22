@@ -57,7 +57,6 @@ export async function recordPayment(formData: FormData) {
   }
 
   revalidatePath(`/billing/${invoiceId}`)
-  redirect(`/billing/${invoiceId}`)
 }
 
 export async function voidInvoice(formData: FormData) {
@@ -69,5 +68,4 @@ export async function voidInvoice(formData: FormData) {
   const invoiceId = formData.get('invoice_id') as string
   await adminClient.from('invoice').update({ status: 'void' }).eq('id', invoiceId)
   revalidatePath(`/billing/${invoiceId}`)
-  redirect(`/billing/${invoiceId}`)
 }
