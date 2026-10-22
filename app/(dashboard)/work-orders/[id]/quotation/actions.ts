@@ -165,7 +165,7 @@ export async function changeQuotationStatus(formData: FormData) {
   }
 
   revalidatePath(`/work-orders/${workOrderId}`)
-  redirect(`/work-orders/${workOrderId}/quotation`)
+  redirect(`/work-orders/${workOrderId}/quotation${newStatus === 'sent' ? '?sent=1' : ''}`)
 }
 
 async function recalcQuotationTotals(adminClient: any, quotationId: string) {
