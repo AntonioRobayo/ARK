@@ -47,26 +47,64 @@ export default async function QuotationPage({
 
   return (
     <div className="max-w-4xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href={`/work-orders/${id}`} className="text-gray-400 hover:text-gray-600 text-sm">{t('back', { n: ot.number })}</Link>
-        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-        {quotation && (
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-            quotation.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
-            quotation.status === 'draft' ? 'bg-amber-50 text-amber-600' :
-            'bg-gray-50 text-gray-500'
-          }`}>
-            {quotation.status === 'approved' ? 'Aprobada' : quotation.status === 'draft' ? 'Borrador' :
-             quotation.status === 'sent' ? 'Enviada' : quotation.status}
-          </span>
-        )}
-      </div>
+      {/* Header: título + badges + acciones en la misma fila */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <Link href={`/work-orders/${id}`} className="text-gray-400 hover:text-gray-600 text-sm">{t('back', { n: ot.number })}</Link>
+            <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+            {quotation && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                quotation.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
+                quotation.status === 'draft'    ? 'bg-amber-50 text-amber-600' :
+                quotation.status === 'sent'     ? 'bg-blue-50 text-blue-600' :
+                                                  'bg-gray-50 text-gray-500'
+              }`}>
+                {quotation.status === 'approved' ? 'Aprobada' :
+                 quotation.status === 'draft'    ? 'Borrador' :
+                 quotation.status === 'sent'     ? 'Enviada'  : quotation.status}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>{ot.number}</span><span>·</span>
+            <span>{(ot.customer as any)?.first_name} {(ot.customer as any)?.last_name}</span><span>·</span>
+            <span className="font-mono">{(ot.vehicle as any)?.plate}</span>
+            <span>{(ot.vehicle as any)?.brand} {(ot.vehicle as any)?.model}</span>
+          </div>
+        </div>
 
-      <div className="flex items-center gap-2 mb-5 text-sm text-gray-500">
-        <span>{ot.number}</span><span>·</span>
-        <span>{(ot.customer as any)?.first_name} {(ot.customer as any)?.last_name}</span><span>·</span>
-        <span className="font-mono">{(ot.vehicle as any)?.plate}</span>
-        <span>{(ot.vehicle as any)?.brand} {(ot.vehicle as any)?.model}</span>
+        {/* Acciones de estado — esquina superior derecha */}
+        {quotation && (
+          <div className="flex items-center gap-2 shrink-0">
+            {quotation.status === 'draft' && (
+              <form action={changeQuotationStatus}>
+                <input type="hidden" name="quotation_id" value={quotation.id} />
+                <input type="hidden" name="work_order_id" value={id} />
+                <input type="hidden" name="status" value="sent" />
+                <button type="submit" className="flex items-center gap-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+                  ✉️ Enviar cotización
+                </button>
+              </form>
+            )}
+            {['draft', 'sent'].includes(quotation.status) && (
+              <form action={changeQuotationStatus}>
+                <input type="hidden" name="quotation_id" value={quotation.id} />
+                <input type="hidden" name="work_order_id" value={id} />
+                <input type="hidden" name="status" value="approved" />
+                <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+                  ✓ {t('approve')}
+                </button>
+              </form>
+            )}
+            {quotation.status === 'approved' && (
+              <Link href={`/billing/new?work_order_id=${id}`}
+                className="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+                {t('generateInvoice')}
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Crear cotización si no existe */}
@@ -84,35 +122,6 @@ export default async function QuotationPage({
 
       {quotation && (
         <>
-          {/* Acciones de estado */}
-          <div className="flex gap-2 mb-5">
-            {quotation.status === 'draft' && (
-              <form action={changeQuotationStatus}>
-                <input type="hidden" name="quotation_id" value={quotation.id} />
-                <input type="hidden" name="work_order_id" value={id} />
-                <input type="hidden" name="status" value="sent" />
-                <button type="submit" className="border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-                  {t('markSent')}
-                </button>
-              </form>
-            )}
-            {['draft', 'sent'].includes(quotation.status) && (
-              <form action={changeQuotationStatus}>
-                <input type="hidden" name="quotation_id" value={quotation.id} />
-                <input type="hidden" name="work_order_id" value={id} />
-                <input type="hidden" name="status" value="approved" />
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-                  {t('approve')}
-                </button>
-              </form>
-            )}
-            {quotation.status === 'approved' && (
-              <Link href={`/billing/new?work_order_id=${id}`}
-                className="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-                {t('generateInvoice')}
-              </Link>
-            )}
-          </div>
 
           {/* Tabla de ítems */}
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-5">

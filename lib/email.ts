@@ -634,3 +634,89 @@ export async function sendOtClosedEmail({
     html,
   })
 }
+
+// ─── Cotización al cliente ────────────────────────────────────────────────────
+
+export async function sendQuotationEmail({
+  to,
+  customerName,
+  workshopName,
+  otNumber,
+  quotationNumber,
+  vehiclePlate,
+  vehicleLabel,
+  items,
+  subtotal,
+  taxAmount,
+  discountAmount,
+  total,
+}: {
+  to: string
+  customerName: string
+  workshopName: string
+  otNumber: string
+  quotationNumber: string
+  vehiclePlate: string
+  vehicleLabel: string
+  items: { description: string; quantity: number; unitPrice: number; subtotal: number; itemType: string }[]
+  subtotal: number
+  taxAmount: number
+  discountAmount: number
+  total: number
+}) {
+  const fmt = (n: number) => `$${n.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`
+
+  const itemRows = items.map(i => `
+    <tr style="border-bottom:1px solid #F3F4F6;">
+      <td style="padding:10px 0;font-size:13px;color:#1F2937;">${i.description}</td>
+      <td style="padding:10px 0;font-size:13px;color:#6B7280;text-align:center;">${i.quantity}</td>
+      <td style="padding:10px 0;font-size:13px;color:#6B7280;text-align:right;">${fmt(i.unitPrice)}</td>
+      <td style="padding:10px 0;font-size:13px;font-weight:600;color:#1F2937;text-align:right;">${fmt(i.subtotal)}</td>
+    </tr>`).join('')
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
+      Hola <strong>${customerName}</strong>, te enviamos la cotización de los trabajos para tu vehículo.
+    </p>
+
+    ${dataBox([
+      { label: 'OT',        value: otNumber },
+      { label: 'Cotización', value: quotationNumber },
+      { label: 'Vehículo',   value: `${vehicleLabel} · ${vehiclePlate}` },
+    ])}
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+      style="border:1px solid #E5E7EB;border-radius:10px;margin-bottom:24px;overflow:hidden;">
+      <thead>
+        <tr style="background-color:#F9FAFB;">
+          <th style="padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Descripción</th>
+          <th style="padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-align:center;text-transform:uppercase;letter-spacing:0.05em;">Cant.</th>
+          <th style="padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-align:right;text-transform:uppercase;letter-spacing:0.05em;">Precio</th>
+          <th style="padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-align:right;text-transform:uppercase;letter-spacing:0.05em;">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody style="padding:0 12px;">${itemRows}</tbody>
+    </table>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      ${discountAmount > 0 ? `<tr><td style="font-size:13px;color:#6B7280;padding:4px 0;">Subtotal</td><td style="font-size:13px;color:#6B7280;text-align:right;padding:4px 0;">${fmt(subtotal)}</td></tr>` : ''}
+      ${taxAmount > 0 ? `<tr><td style="font-size:13px;color:#6B7280;padding:4px 0;">IVA</td><td style="font-size:13px;color:#6B7280;text-align:right;padding:4px 0;">${fmt(taxAmount)}</td></tr>` : ''}
+      ${discountAmount > 0 ? `<tr><td style="font-size:13px;color:#6B7280;padding:4px 0;">Descuento</td><td style="font-size:13px;color:#6B7280;text-align:right;padding:4px 0;">-${fmt(discountAmount)}</td></tr>` : ''}
+      <tr style="border-top:2px solid #1F2937;">
+        <td style="font-size:16px;font-weight:700;color:#1F2937;padding-top:8px;">Total</td>
+        <td style="font-size:16px;font-weight:700;color:#1F2937;text-align:right;padding-top:8px;">${fmt(total)}</td>
+      </tr>
+    </table>
+
+    <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">
+      Para cualquier consulta sobre esta cotización, comunícate con <strong>${workshopName}</strong>.
+    </p>
+  `
+
+  const html = arkEmailLayout(`Cotización ${quotationNumber}`, body, '📋')
+  await sendEmail({
+    to,
+    subject: `Cotización ${quotationNumber} — ${vehicleLabel} | ${workshopName}`,
+    html,
+  })
+}

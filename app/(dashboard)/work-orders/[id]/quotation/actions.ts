@@ -114,6 +114,53 @@ export async function changeQuotationStatus(formData: FormData) {
 
   await adminClient.from('quotation').update(update).eq('id', quotationId)
 
+  // Send quotation email when marking as sent
+  if (newStatus === 'sent') {
+    void (async () => {
+      try {
+        const { data: quotation } = await adminClient
+          .from('quotation')
+          .select(`number, subtotal, tax_amount, discount_amount, total,
+            quotation_item(description, quantity, unit_price, subtotal, item_type),
+            work_order:work_order_id(number, tenant_id,
+              customer:customer_id(first_name, last_name, email),
+              vehicle:vehicle_id(plate, brand, model, year))`)
+          .eq('id', quotationId)
+          .single()
+
+        if (!quotation) return
+        const wo = Array.isArray(quotation.work_order) ? quotation.work_order[0] : quotation.work_order as any
+        const customer = Array.isArray(wo?.customer) ? wo.customer[0] : wo?.customer
+        const vehicle = Array.isArray(wo?.vehicle) ? wo.vehicle[0] : wo?.vehicle
+        if (!customer?.email) return
+
+        const { data: tenant } = await adminClient.from('tenants').select('name').eq('id', wo.tenant_id).single()
+
+        const { sendQuotationEmail } = await import('@/lib/email')
+        await sendQuotationEmail({
+          to: customer.email,
+          customerName: `${customer.first_name} ${customer.last_name}`,
+          workshopName: tenant?.name ?? 'ARK Workshop',
+          otNumber: String(wo.number),
+          quotationNumber: String(quotation.number),
+          vehiclePlate: vehicle?.plate ?? '',
+          vehicleLabel: [vehicle?.brand, vehicle?.model, vehicle?.year].filter(Boolean).join(' '),
+          items: (quotation.quotation_item ?? []).map((i: any) => ({
+            description: i.description,
+            quantity: i.quantity,
+            unitPrice: i.unit_price,
+            subtotal: i.subtotal,
+            itemType: i.item_type,
+          })),
+          subtotal: quotation.subtotal ?? 0,
+          taxAmount: quotation.tax_amount ?? 0,
+          discountAmount: quotation.discount_amount ?? 0,
+          total: quotation.total ?? 0,
+        })
+      } catch { /* email failure should not block status change */ }
+    })()
+  }
+
   revalidatePath(`/work-orders/${workOrderId}`)
   redirect(`/work-orders/${workOrderId}/quotation`)
 }
