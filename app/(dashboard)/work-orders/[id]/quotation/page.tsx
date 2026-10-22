@@ -6,6 +6,17 @@ import { addQuotationItem, removeQuotationItem, changeQuotationStatus, upsertQuo
 import { MoneyInput } from '@/components/ui/MoneyInput'
 import { getTranslations } from 'next-intl/server'
 
+const STATUS_BADGE: Record<string, string> = {
+  approved: 'bg-emerald-50 text-emerald-600',
+  draft:    'bg-amber-50 text-amber-600',
+  sent:     'bg-blue-50 text-blue-600',
+}
+const STATUS_LABEL: Record<string, string> = {
+  approved: 'Aprobada',
+  draft:    'Borrador',
+  sent:     'Enviada',
+}
+
 export default async function QuotationPage({
   params,
   searchParams,
@@ -28,11 +39,11 @@ export default async function QuotationPage({
       .select('id, number, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)')
       .eq('id', id).eq('tenant_id', myProfile.tenant_id).single(),
     adminClient.from('quotation')
-      .select(`id, number, status, total, subtotal, tax_amount, discount_amount, notes,
+      .select(`id, number, status, total, subtotal, tax_amount, discount_amount, notes, created_at,
         quotation_item(id, description, quantity, unit_price, subtotal, item_type, tax_rate_snapshot, discount_pct, customer_response)`)
       .eq('work_order_id', id)
       .neq('status', 'cancelled')
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: true }),
     adminClient.from('service_catalog').select('id, name, base_price, category').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
     adminClient.from('tax_rate').select('id, name, rate, is_default').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
     adminClient.from('work_order_customer_part').select('id, description, quantity, condition, notes').eq('work_order_id', id).order('created_at', { ascending: true }),
@@ -42,11 +53,15 @@ export default async function QuotationPage({
   if (!ot) notFound()
 
   const t = await getTranslations('quotation')
-  const quotation = (quotations ?? [])[0] ?? null
-  const items = quotation?.quotation_item ?? []
+  const allQuotations = quotations ?? []
+  const activeQuotation = allQuotations.find(q => ['draft', 'sent'].includes(q.status)) ?? null
+  const approvedQuotations = allQuotations.filter(q => q.status === 'approved')
+  const hasAny = allQuotations.length > 0
+  const allApproved = hasAny && !activeQuotation
   const defaultTax = (taxRates ?? []).find((t: any) => t.is_default)
 
-  const canEdit = !quotation || ['draft', 'sent'].includes(quotation.status)
+  // For header display: active quotation takes priority, else most recent
+  const displayQuotation = activeQuotation ?? (allQuotations[allQuotations.length - 1] ?? null)
 
   return (
     <div className="max-w-4xl">
@@ -56,22 +71,16 @@ export default async function QuotationPage({
           <span>Cotización enviada al cliente por correo.</span>
         </div>
       )}
-      {/* Header: título + badges + acciones en la misma fila */}
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Link href={`/work-orders/${id}`} className="text-gray-400 hover:text-gray-600 text-sm">{t('back', { n: ot.number })}</Link>
             <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-            {quotation && (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                quotation.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
-                quotation.status === 'draft'    ? 'bg-amber-50 text-amber-600' :
-                quotation.status === 'sent'     ? 'bg-blue-50 text-blue-600' :
-                                                  'bg-gray-50 text-gray-500'
-              }`}>
-                {quotation.status === 'approved' ? 'Aprobada' :
-                 quotation.status === 'draft'    ? 'Borrador' :
-                 quotation.status === 'sent'     ? 'Enviada'  : quotation.status}
+            {displayQuotation && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[displayQuotation.status] ?? 'bg-gray-50 text-gray-500'}`}>
+                {STATUS_LABEL[displayQuotation.status] ?? displayQuotation.status}
               </span>
             )}
           </div>
@@ -83,41 +92,39 @@ export default async function QuotationPage({
           </div>
         </div>
 
-        {/* Acciones de estado — esquina superior derecha */}
-        {quotation && (
-          <div className="flex items-center gap-2 shrink-0">
-            {quotation.status === 'draft' && (
-              <form action={changeQuotationStatus}>
-                <input type="hidden" name="quotation_id" value={quotation.id} />
-                <input type="hidden" name="work_order_id" value={id} />
-                <input type="hidden" name="status" value="sent" />
-                <button type="submit" className="flex items-center gap-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-                  ✉️ Enviar cotización
-                </button>
-              </form>
-            )}
-            {quotation.status === 'sent' && (
-              <form action={changeQuotationStatus}>
-                <input type="hidden" name="quotation_id" value={quotation.id} />
-                <input type="hidden" name="work_order_id" value={id} />
-                <input type="hidden" name="status" value="approved" />
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-                  {t('approve')}
-                </button>
-              </form>
-            )}
-            {quotation.status === 'approved' && (
-              <Link href={`/billing/new?work_order_id=${id}`}
-                className="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-                {t('generateInvoice')}
-              </Link>
-            )}
-          </div>
-        )}
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          {activeQuotation?.status === 'draft' && (
+            <form action={changeQuotationStatus}>
+              <input type="hidden" name="quotation_id" value={activeQuotation.id} />
+              <input type="hidden" name="work_order_id" value={id} />
+              <input type="hidden" name="status" value="sent" />
+              <button type="submit" className="flex items-center gap-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+                ✉️ Enviar cotización
+              </button>
+            </form>
+          )}
+          {activeQuotation?.status === 'sent' && (
+            <form action={changeQuotationStatus}>
+              <input type="hidden" name="quotation_id" value={activeQuotation.id} />
+              <input type="hidden" name="work_order_id" value={id} />
+              <input type="hidden" name="status" value="approved" />
+              <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+                {t('approve')}
+              </button>
+            </form>
+          )}
+          {allApproved && (
+            <Link href={`/billing/new?work_order_id=${id}`}
+              className="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+              {t('generateInvoice')}
+            </Link>
+          )}
+        </div>
       </div>
 
-      {/* Crear cotización si no existe */}
-      {!quotation && (
+      {/* No quotation yet */}
+      {!hasAny && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 text-center mb-5">
           <p className="text-gray-500 mb-4">{t('noQuotation')}</p>
           <form action={upsertQuotation}>
@@ -129,220 +136,285 @@ export default async function QuotationPage({
         </div>
       )}
 
-      {quotation && (
-        <>
-
-          {/* Tabla de ítems */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-5">
+      {/* Approved quotations — read-only history cards */}
+      {approvedQuotations.map((q: any, idx: number) => {
+        const qItems = q.quotation_item ?? []
+        const isSuplement = idx > 0
+        return (
+          <div key={q.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-4">
+            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                {isSuplement && <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">Suplemento</span>}
+                <span className="text-sm font-semibold text-gray-700">Cotización {q.number}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-600">Aprobada</span>
+              </div>
+              <span className="text-sm font-bold text-gray-900">${(q.total ?? 0).toLocaleString('es-CO')}</span>
+            </div>
             <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">{t('table.description')}</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">{t('table.type')}</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.qty')}</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.price')}</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.tax')}</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.subtotal')}</th>
-                  {canEdit && <th className="w-10 px-4 py-3" />}
-                </tr>
-              </thead>
               <tbody>
-                {items.length === 0 ? (
-                  <tr>
-                    <td colSpan={canEdit ? 7 : 6} className="text-center py-8 text-gray-400 text-sm">
-                      {t('noItems')}
+                {qItems.map((item: any) => (
+                  <tr key={item.id} className="border-b border-gray-50 last:border-0">
+                    <td className="px-4 py-2.5 text-gray-700">
+                      <div className="flex items-center gap-2">
+                        {item.description}
+                        {item.customer_response === 'approved' && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-medium shrink-0">✓ Cliente aprobó</span>
+                        )}
+                        {item.customer_response === 'rejected' && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-500 font-medium shrink-0">✗ Cliente rechazó</span>
+                        )}
+                      </div>
                     </td>
+                    <td className="px-4 py-2.5">
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                        {item.item_type === 'service' ? t('service') : t('part')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-right text-gray-500">{item.quantity}</td>
+                    <td className="px-4 py-2.5 text-right text-gray-500">${(item.unit_price ?? 0).toLocaleString('es-CO')}</td>
+                    <td className="px-4 py-2.5 text-right text-gray-400">{item.tax_rate_snapshot ?? 0}%</td>
+                    <td className="px-4 py-2.5 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
                   </tr>
-                ) : (
-                  items.map((item: any) => (
-                    <tr key={item.id} className="border-b border-gray-50">
-                      <td className="px-4 py-2.5 text-gray-700">
-                        <div className="flex items-center gap-2">
-                          {item.description}
-                          {item.customer_response === 'approved' && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-medium shrink-0">✓ Cliente aprobó</span>
-                          )}
-                          {item.customer_response === 'rejected' && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-500 font-medium shrink-0">✗ Cliente rechazó</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                          item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'
-                        }`}>
-                          {item.item_type === 'service' ? t('service') : t('part')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-right text-gray-500">{item.quantity}</td>
-                      <td className="px-4 py-2.5 text-right text-gray-500">${(item.unit_price ?? 0).toLocaleString('es-CO')}</td>
-                      <td className="px-4 py-2.5 text-right text-gray-400">{item.tax_rate_snapshot ?? 0}%</td>
-                      <td className="px-4 py-2.5 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
-                      {canEdit && (
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      })}
+
+      {/* Active quotation — editable */}
+      {activeQuotation && (() => {
+        const items = activeQuotation.quotation_item ?? []
+        const isSuplement = approvedQuotations.length > 0
+        return (
+          <>
+            {isSuplement && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Suplemento en progreso</span>
+                <div className="flex-1 h-px bg-purple-100" />
+              </div>
+            )}
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-5">
+              {isSuplement && (
+                <div className="px-4 py-2.5 bg-purple-50 border-b border-purple-100 flex items-center gap-2">
+                  <span className="text-xs font-medium text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">Suplemento</span>
+                  <span className="text-sm font-semibold text-gray-700">Cotización {activeQuotation.number}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[activeQuotation.status] ?? ''}`}>
+                    {STATUS_LABEL[activeQuotation.status] ?? activeQuotation.status}
+                  </span>
+                </div>
+              )}
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">{t('table.description')}</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">{t('table.type')}</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.qty')}</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.price')}</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.tax')}</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500">{t('table.subtotal')}</th>
+                    <th className="w-10 px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-gray-400 text-sm">{t('noItems')}</td>
+                    </tr>
+                  ) : (
+                    items.map((item: any) => (
+                      <tr key={item.id} className="border-b border-gray-50">
+                        <td className="px-4 py-2.5 text-gray-700">
+                          <div className="flex items-center gap-2">
+                            {item.description}
+                            {item.customer_response === 'approved' && (
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-medium shrink-0">✓ Cliente aprobó</span>
+                            )}
+                            {item.customer_response === 'rejected' && (
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-500 font-medium shrink-0">✗ Cliente rechazó</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                            {item.item_type === 'service' ? t('service') : t('part')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-right text-gray-500">{item.quantity}</td>
+                        <td className="px-4 py-2.5 text-right text-gray-500">${(item.unit_price ?? 0).toLocaleString('es-CO')}</td>
+                        <td className="px-4 py-2.5 text-right text-gray-400">{item.tax_rate_snapshot ?? 0}%</td>
+                        <td className="px-4 py-2.5 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
                         <td className="px-4 py-2.5 text-center">
                           <form action={removeQuotationItem}>
                             <input type="hidden" name="item_id" value={item.id} />
-                            <input type="hidden" name="quotation_id" value={quotation.id} />
+                            <input type="hidden" name="quotation_id" value={activeQuotation.id} />
                             <input type="hidden" name="work_order_id" value={id} />
                             <button type="submit" className="text-red-400 hover:text-red-600 text-xs font-bold">×</button>
                           </form>
                         </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-
-            {/* Totales */}
-            {items.length > 0 && (
-              <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
-                <div className="text-sm space-y-1 text-right">
-                  <div className="flex gap-8 text-gray-500">
-                    <span>{t('subtotal')}</span>
-                    <span>${(quotation.subtotal ?? 0).toLocaleString('es-CO')}</span>
-                  </div>
-                  {quotation.tax_amount > 0 && (
-                    <div className="flex gap-8 text-gray-500">
-                      <span>{t('taxLabel')}</span>
-                      <span>${quotation.tax_amount.toLocaleString('es-CO')}</span>
-                    </div>
+                      </tr>
+                    ))
                   )}
-                  {quotation.discount_amount > 0 && (
+                </tbody>
+              </table>
+
+              {items.length > 0 && (
+                <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+                  <div className="text-sm space-y-1 text-right">
                     <div className="flex gap-8 text-gray-500">
-                      <span>{t('discount')}</span>
-                      <span>-${quotation.discount_amount.toLocaleString('es-CO')}</span>
+                      <span>{t('subtotal')}</span>
+                      <span>${(activeQuotation.subtotal ?? 0).toLocaleString('es-CO')}</span>
                     </div>
-                  )}
-                  <div className="flex gap-8 font-bold text-gray-900 text-base pt-1 border-t border-gray-200">
-                    <span>{t('total')}</span>
-                    <span>${(quotation.total ?? 0).toLocaleString('es-CO')}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Hallazgos aprobados por el cliente para cotizar */}
-          {(approvedFindings ?? []).length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5">
-              <p className="text-xs font-medium text-blue-700 uppercase tracking-wide mb-3">Hallazgos solicitados por el cliente</p>
-              <div className="space-y-2">
-                {(approvedFindings ?? []).map((f: any) => (
-                  <div key={f.id} className="flex items-center gap-3 text-sm">
-                    <span className={`flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded border ${
-                      f.severity === 'critical' ? 'bg-red-50 text-red-700 border-red-200' :
-                      f.severity === 'moderate' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                                                  'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    }`}>
-                      {f.severity === 'critical' ? 'Crítico' : f.severity === 'moderate' ? 'Moderado' : 'Menor'}
-                    </span>
-                    <span className="text-gray-700 font-medium">{f.description}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-blue-600 mt-2">El cliente solicitó cotizar estos hallazgos — agrégalos como ítems arriba.</p>
-            </div>
-          )}
-
-          {/* Repuestos del cliente */}
-          {(customerParts ?? []).length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
-              <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-3">Repuestos traídos por el cliente</p>
-              <div className="space-y-2">
-                {(customerParts ?? []).map((p: any) => (
-                  <div key={p.id} className="flex items-center gap-3 text-sm">
-                    <span className={`flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded border ${
-                      p.condition === 'new'     ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      p.condition === 'used'    ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                                  'bg-red-50 text-red-700 border-red-200'
-                    }`}>
-                      {p.condition === 'new' ? 'Nuevo' : p.condition === 'used' ? 'Usado' : 'Dañado'}
-                    </span>
-                    <span className="text-gray-700 font-medium">
-                      {p.description}{p.quantity > 1 ? <span className="text-gray-400 font-normal"> × {p.quantity}</span> : ''}
-                    </span>
-                    {p.notes && <span className="text-gray-400 text-xs">· {p.notes}</span>}
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-amber-600 mt-2">Estos repuestos no tienen costo — son de propiedad del cliente.</p>
-            </div>
-          )}
-
-          {/* Agregar ítem */}
-          {canEdit && (
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-              <p className="text-sm font-semibold text-gray-700 mb-4">{t('addItem')}</p>
-
-              {/* Quick add from service catalog */}
-              {(services ?? []).length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs text-gray-400 mb-2">{t('fromCatalog')}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(services ?? []).slice(0, 12).map((svc: any) => (
-                      <form key={svc.id} action={addQuotationItem}>
-                        <input type="hidden" name="quotation_id" value={quotation.id} />
-                        <input type="hidden" name="work_order_id" value={id} />
-                        <input type="hidden" name="description" value={svc.name} />
-                        <input type="hidden" name="quantity" value="1" />
-                        <input type="hidden" name="unit_price" value={svc.base_price ?? 0} />
-                        <input type="hidden" name="item_type" value="service" />
-                        <input type="hidden" name="tax_rate" value={defaultTax?.rate ?? 0} />
-                        <input type="hidden" name="discount_pct" value="0" />
-                        <button type="submit" className="text-xs border border-slate-200 rounded-lg px-2.5 py-1 text-gray-700 hover:bg-slate-50 hover:border-slate-300 transition-colors">
-                          + {svc.name}
-                        </button>
-                      </form>
-                    ))}
+                    {activeQuotation.tax_amount > 0 && (
+                      <div className="flex gap-8 text-gray-500">
+                        <span>{t('taxLabel')}</span>
+                        <span>${activeQuotation.tax_amount.toLocaleString('es-CO')}</span>
+                      </div>
+                    )}
+                    {activeQuotation.discount_amount > 0 && (
+                      <div className="flex gap-8 text-gray-500">
+                        <span>{t('discount')}</span>
+                        <span>-${activeQuotation.discount_amount.toLocaleString('es-CO')}</span>
+                      </div>
+                    )}
+                    <div className="flex gap-8 font-bold text-gray-900 text-base pt-1 border-t border-gray-200">
+                      <span>{t('total')}</span>
+                      <span>${(activeQuotation.total ?? 0).toLocaleString('es-CO')}</span>
+                    </div>
                   </div>
                 </div>
               )}
+            </div>
+          </>
+        )
+      })()}
 
-              {/* Manual add */}
-              <form action={addQuotationItem} className="grid grid-cols-6 gap-3 items-end">
-                <input type="hidden" name="quotation_id" value={quotation.id} />
-                <input type="hidden" name="work_order_id" value={id} />
+      {/* Hallazgos aprobados */}
+      {(approvedFindings ?? []).length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5">
+          <p className="text-xs font-medium text-blue-700 uppercase tracking-wide mb-3">Hallazgos solicitados por el cliente</p>
+          <div className="space-y-2">
+            {(approvedFindings ?? []).map((f: any) => (
+              <div key={f.id} className="flex items-center gap-3 text-sm">
+                <span className={`flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded border ${
+                  f.severity === 'critical' ? 'bg-red-50 text-red-700 border-red-200' :
+                  f.severity === 'moderate' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                              'bg-yellow-50 text-yellow-700 border-yellow-200'
+                }`}>
+                  {f.severity === 'critical' ? 'Crítico' : f.severity === 'moderate' ? 'Moderado' : 'Menor'}
+                </span>
+                <span className="text-gray-700 font-medium">{f.description}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-blue-600 mt-2">El cliente solicitó cotizar estos hallazgos — agrégalos como ítems arriba.</p>
+        </div>
+      )}
 
-                <div className="col-span-2">
-                  <label className="block text-xs text-gray-400 mb-1">{t('form.description')}</label>
-                  <input name="description" required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                    placeholder="Cambio de aceite..." />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">{t('form.type')}</label>
-                  <select name="item_type" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-                    <option value="service">{t('service')}</option>
-                    <option value="part">{t('part')}</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">{t('form.unitPrice')}</label>
-                  <MoneyInput name="unit_price" defaultValue={0} placeholder="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">{t('form.qty')}</label>
-                  <input name="quantity" type="number" min="1" step="0.01" defaultValue="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1">{t('form.taxPct')}</label>
-                    <input name="tax_rate" type="number" min="0" max="100" defaultValue={defaultTax?.rate ?? 0}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
-                  </div>
-                  <div className="flex items-end">
-                    <button type="submit" className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2 rounded-lg transition-colors">
-                      +
+      {/* Repuestos del cliente */}
+      {(customerParts ?? []).length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+          <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-3">Repuestos traídos por el cliente</p>
+          <div className="space-y-2">
+            {(customerParts ?? []).map((p: any) => (
+              <div key={p.id} className="flex items-center gap-3 text-sm">
+                <span className={`flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded border ${
+                  p.condition === 'new'     ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                  p.condition === 'used'    ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                              'bg-red-50 text-red-700 border-red-200'
+                }`}>
+                  {p.condition === 'new' ? 'Nuevo' : p.condition === 'used' ? 'Usado' : 'Dañado'}
+                </span>
+                <span className="text-gray-700 font-medium">
+                  {p.description}{p.quantity > 1 ? <span className="text-gray-400 font-normal"> × {p.quantity}</span> : ''}
+                </span>
+                {p.notes && <span className="text-gray-400 text-xs">· {p.notes}</span>}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-amber-600 mt-2">Estos repuestos no tienen costo — son de propiedad del cliente.</p>
+        </div>
+      )}
+
+      {/* Add item form — only for active quotation */}
+      {activeQuotation && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-5">
+          <p className="text-sm font-semibold text-gray-700 mb-4">{t('addItem')}</p>
+          {(services ?? []).length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs text-gray-400 mb-2">{t('fromCatalog')}</p>
+              <div className="flex flex-wrap gap-2">
+                {(services ?? []).slice(0, 12).map((svc: any) => (
+                  <form key={svc.id} action={addQuotationItem}>
+                    <input type="hidden" name="quotation_id" value={activeQuotation.id} />
+                    <input type="hidden" name="work_order_id" value={id} />
+                    <input type="hidden" name="description" value={svc.name} />
+                    <input type="hidden" name="quantity" value="1" />
+                    <input type="hidden" name="unit_price" value={svc.base_price ?? 0} />
+                    <input type="hidden" name="item_type" value="service" />
+                    <input type="hidden" name="tax_rate" value={defaultTax?.rate ?? 0} />
+                    <input type="hidden" name="discount_pct" value="0" />
+                    <button type="submit" className="text-xs border border-slate-200 rounded-lg px-2.5 py-1 text-gray-700 hover:bg-slate-50 hover:border-slate-300 transition-colors">
+                      + {svc.name}
                     </button>
-                  </div>
-                </div>
-              </form>
+                  </form>
+                ))}
+              </div>
             </div>
           )}
-        </>
+          <form action={addQuotationItem} className="grid grid-cols-6 gap-3 items-end">
+            <input type="hidden" name="quotation_id" value={activeQuotation.id} />
+            <input type="hidden" name="work_order_id" value={id} />
+            <div className="col-span-2">
+              <label className="block text-xs text-gray-400 mb-1">{t('form.description')}</label>
+              <input name="description" required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                placeholder="Cambio de aceite..." />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">{t('form.type')}</label>
+              <select name="item_type" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
+                <option value="service">{t('service')}</option>
+                <option value="part">{t('part')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">{t('form.unitPrice')}</label>
+              <MoneyInput name="unit_price" defaultValue={0} placeholder="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">{t('form.qty')}</label>
+              <input name="quantity" type="number" min="1" step="0.01" defaultValue="1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">{t('form.taxPct')}</label>
+                <input name="tax_rate" type="number" min="0" max="100" defaultValue={defaultTax?.rate ?? 0}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+              </div>
+              <div className="flex items-end">
+                <button type="submit" className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2 rounded-lg transition-colors">+</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Agregar suplemento — solo cuando todas están aprobadas */}
+      {allApproved && (
+        <div className="border border-dashed border-purple-200 rounded-xl p-5 text-center bg-purple-50/40">
+          <p className="text-sm text-gray-600 mb-1">¿Trabajo adicional identificado?</p>
+          <p className="text-xs text-gray-400 mb-4">Crea un suplemento — va por el mismo flujo de aprobación del cliente.</p>
+          <form action={upsertQuotation}>
+            <input type="hidden" name="work_order_id" value={id} />
+            <button type="submit"
+              className="bg-purple-700 hover:bg-purple-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors">
+              + Agregar suplemento
+            </button>
+          </form>
+        </div>
       )}
     </div>
   )
