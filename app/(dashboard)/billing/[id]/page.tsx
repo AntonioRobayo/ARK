@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { recordPayment, voidInvoice } from './actions'
+import { MoneyInput } from '@/components/ui/MoneyInput'
 import { getTranslations } from 'next-intl/server'
 import { LocalDateOnly } from '@/components/local-date'
 
@@ -184,7 +185,7 @@ export default async function InvoiceDetailPage({
                 <input type="hidden" name="work_order_id" value={wo?.id ?? ''} />
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">{t('detail.paymentAmount')}</label>
-                  <input name="amount" type="number" min="0.01" step="0.01" defaultValue={saldo}
+                  <MoneyInput name="amount" defaultValue={saldo} min={0.01}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
                 </div>
                 {(paymentMethods ?? []).length > 0 && (
