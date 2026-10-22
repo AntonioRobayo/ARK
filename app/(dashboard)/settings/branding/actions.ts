@@ -45,8 +45,7 @@ export async function saveBranding(formData: FormData) {
 
     if (!uploadError) {
       const { data: urlData } = admin.storage.from('assets').getPublicUrl(path)
-      // Append cache-bust to force browsers to reload image
-      logoUrl = `${urlData.publicUrl}?v=${Date.now()}`
+      logoUrl = urlData.publicUrl
     } else {
       redirect('/settings/branding?error=' + encodeURIComponent('Error subiendo el logo: ' + uploadError.message))
     }
