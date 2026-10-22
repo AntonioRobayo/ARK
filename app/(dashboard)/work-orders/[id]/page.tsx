@@ -117,9 +117,11 @@ export default async function WorkOrderDetailPage({
   const activeQuotation = (quotations ?? [])[0] ?? null
 
   const AUDIT_EVENT_LABEL: Record<string, string> = {
-    'finding.added':      'Hallazgo registrado',
-    'finding.notified':   'Hallazgos notificados al cliente',
-    'customer_part.added': 'Repuesto del cliente registrado',
+    'finding.added':            'Hallazgo registrado',
+    'finding.notified':         'Hallazgos notificados al cliente',
+    'finding.customer_approved': 'Cliente solicitó cotizar',
+    'finding.customer_noted':   'Cliente registró como nota',
+    'customer_part.added':      'Repuesto del cliente registrado',
   }
 
   const mergedTimeline = [
@@ -452,6 +454,9 @@ export default async function WorkOrderDetailPage({
                         <p className="text-xs text-gray-400 mt-0.5">{entry.details.count} hallazgo{entry.details.count !== 1 ? 's' : ''} enviado{entry.details.count !== 1 ? 's' : ''} por email</p>
                       )}
                       {entry._type === 'audit' && (entry.event === 'finding.added' || entry.event === 'customer_part.added') && entry.details?.description && (
+                        <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.details.description}</p>
+                      )}
+                      {entry._type === 'audit' && (entry.event === 'finding.customer_approved' || entry.event === 'finding.customer_noted') && entry.details?.description && (
                         <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.details.description}</p>
                       )}
                       {entry._type === 'status' && entry.reason && (

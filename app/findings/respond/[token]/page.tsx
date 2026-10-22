@@ -83,15 +83,20 @@ export default function FindingsRespondPage() {
     maxWidth: 520, width: '100%', overflow: 'hidden',
   }
   const header: React.CSSProperties = {
-    background: '#1F2937', padding: '24px 32px', textAlign: 'center',
+    background: '#1F2937', padding: '20px 32px', textAlign: 'center',
   }
+
+  const logoHeader = (
+    <div style={header}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-ark-slogan.png" alt="ARK Workshop" style={{ height: 48, width: 'auto', display: 'inline-block' }} />
+    </div>
+  )
 
   if (loading) return (
     <div style={{ ...base, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={card}>
-        <div style={header}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#FF7316', letterSpacing: '0.1em', textTransform: 'uppercase' }}>ARK Workshop</div>
-        </div>
+        {logoHeader}
         <div style={{ borderTop: '4px solid #FF7316' }} />
         <div style={{ padding: '48px 32px', textAlign: 'center', color: '#6B7280' }}>Cargando hallazgos…</div>
       </div>
@@ -101,9 +106,7 @@ export default function FindingsRespondPage() {
   if (error && !data) return (
     <div style={{ ...base, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
       <div style={card}>
-        <div style={header}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#FF7316', letterSpacing: '0.1em', textTransform: 'uppercase' }}>ARK Workshop</div>
-        </div>
+        {logoHeader}
         <div style={{ borderTop: '4px solid #FF7316' }} />
         <div style={{ padding: '40px 32px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>❓</div>
@@ -116,9 +119,7 @@ export default function FindingsRespondPage() {
   if (submitted || data?.alreadyResponded) return (
     <div style={{ ...base, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
       <div style={card}>
-        <div style={header}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#FF7316', letterSpacing: '0.1em', textTransform: 'uppercase' }}>ARK Workshop</div>
-        </div>
+        {logoHeader}
         <div style={{ borderTop: '4px solid #FF7316' }} />
         <div style={{ padding: '40px 32px', textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>{data?.alreadyResponded ? '✓' : '✅'}</div>
@@ -132,7 +133,8 @@ export default function FindingsRespondPage() {
           </p>
         </div>
         <div style={{ borderTop: '1px solid #F3F4F6', padding: '20px 32px', background: '#FAFAFA', textAlign: 'center' }}>
-          <p style={{ margin: 0, fontSize: 12, color: '#9CA3AF' }}>ARK Workshop · <em>Todo tu taller. En un solo lugar.</em></p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-ark.png" alt="ARK Workshop" style={{ height: 24, width: 'auto', opacity: 0.5 }} />
         </div>
       </div>
     </div>
@@ -141,9 +143,7 @@ export default function FindingsRespondPage() {
   return (
     <div style={{ ...base, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
       <div style={card}>
-        <div style={header}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#FF7316', letterSpacing: '0.1em', textTransform: 'uppercase' }}>ARK Workshop</div>
-        </div>
+        {logoHeader}
         <div style={{ borderTop: '4px solid #FF7316' }} />
         <div style={{ padding: '32px 32px 24px' }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -223,7 +223,8 @@ export default function FindingsRespondPage() {
           </button>
         </div>
         <div style={{ borderTop: '1px solid #F3F4F6', padding: '16px 32px', background: '#FAFAFA', textAlign: 'center' }}>
-          <p style={{ margin: 0, fontSize: 12, color: '#9CA3AF' }}>ARK Workshop · <em>Todo tu taller. En un solo lugar.</em></p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-ark.png" alt="ARK Workshop" style={{ height: 24, width: 'auto', opacity: 0.5 }} />
         </div>
       </div>
     </div>

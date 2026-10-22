@@ -218,10 +218,14 @@ export async function notifyCustomerFindings(formData: FormData) {
   const token = crypto.randomUUID()
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? ''
 
-  await admin
+  const { error: updateError } = await admin
     .from('work_order_finding')
     .update({ status: 'notified', notified_at: new Date().toISOString(), response_token: token })
     .in('id', findings.map(f => f.id))
+
+  if (updateError) {
+    redirect(`/work-orders/${otId}?error=` + encodeURIComponent(updateError.message))
+  }
 
   const { sendFindingNotificationEmail } = await import('@/lib/email')
   await sendFindingNotificationEmail({
