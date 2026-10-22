@@ -231,8 +231,7 @@ export async function notifyCustomerFindings(formData: FormData) {
     otNumber: String(ot.number),
     vehiclePlate: vehicle?.plate ?? '',
     findings: findings.map(f => ({ description: f.description, severity: f.severity as 'minor' | 'moderate' | 'critical' })),
-    approveUrl: `${base}/api/findings/respond?token=${token}&action=approve_quote`,
-    noteUrl:    `${base}/api/findings/respond?token=${token}&action=note_only`,
+    respondUrl: `${base}/findings/respond/${token}`,
   })
 
   await admin.from('tenant_audit_log').insert({

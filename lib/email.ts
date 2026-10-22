@@ -286,8 +286,7 @@ export async function sendFindingNotificationEmail({
   otNumber,
   vehiclePlate,
   findings,
-  approveUrl,
-  noteUrl,
+  respondUrl,
 }: {
   to: string
   customerName: string
@@ -295,8 +294,7 @@ export async function sendFindingNotificationEmail({
   otNumber: string
   vehiclePlate: string
   findings: { description: string; severity: 'minor' | 'moderate' | 'critical' }[]
-  approveUrl: string
-  noteUrl: string
+  respondUrl: string
 }) {
   const SEVERITY_LABEL: Record<string, string> = {
     minor:    'Menor',
@@ -340,29 +338,18 @@ export async function sendFindingNotificationEmail({
       nuestro equipo encontró lo siguiente:
     </p>
 
-    <div style="margin-bottom:28px;">${findingsHtml}</div>
+    <div style="margin-bottom:24px;">${findingsHtml}</div>
 
     <p style="margin:0 0 20px;font-size:14px;color:#6B7280;line-height:1.7;">
-      ¿Qué prefieres que hagamos?
+      Indícanos qué prefieres hacer con cada hallazgo — puedes decidir uno por uno.
     </p>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
       <tr>
-        <td align="center" bgcolor="#16A34A" style="border-radius:10px;">
-          <a href="${approveUrl}"
-            style="display:inline-block;padding:14px 32px;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:10px;background-color:#16A34A;">
-            ✅ Sí, cotícenlo
-          </a>
-        </td>
-      </tr>
-    </table>
-
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
-      <tr>
-        <td align="center" style="border-radius:10px;border:1.5px solid #E5E7EB;">
-          <a href="${noteUrl}"
-            style="display:inline-block;padding:14px 32px;font-size:14px;font-weight:600;color:#374151;text-decoration:none;border-radius:10px;background-color:#FFFFFF;">
-            📌 Solo registrar como nota
+        <td align="center" bgcolor="#1F2937" style="border-radius:10px;">
+          <a href="${respondUrl}"
+            style="display:inline-block;padding:14px 32px;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:10px;background-color:#1F2937;">
+            Ver y responder hallazgos →
           </a>
         </td>
       </tr>
@@ -372,8 +359,7 @@ export async function sendFindingNotificationEmail({
       style="background-color:#F9FAFB;border-radius:10px;border:1px solid #E5E7EB;margin-bottom:0;">
       <tr>
         <td style="padding:14px 20px;font-size:12px;color:#9CA3AF;line-height:1.6;">
-          Al elegir <strong style="color:#6B7280;">"Sí, cotícenlo"</strong> el equipo del taller preparará una cotización formal.
-          Al elegir <strong style="color:#6B7280;">"Solo registrar como nota"</strong> queda en el historial de tu vehículo para una visita futura, sin costo adicional hoy.
+          Podrás elegir para cada hallazgo si deseas que lo cotizemos o si prefieres dejarlo registrado como nota para una visita futura.
         </td>
       </tr>
     </table>
