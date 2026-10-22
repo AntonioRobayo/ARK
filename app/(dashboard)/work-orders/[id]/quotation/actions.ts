@@ -80,7 +80,6 @@ export async function addQuotationItem(formData: FormData) {
 
   await recalcQuotationTotals(adminClient, quotationId)
   revalidatePath(`/work-orders/${workOrderId}/quotation`)
-  redirect(`/work-orders/${workOrderId}/quotation`)
 }
 
 export async function removeQuotationItem(formData: FormData) {
@@ -97,7 +96,6 @@ export async function removeQuotationItem(formData: FormData) {
   await recalcQuotationTotals(adminClient, quotationId)
 
   revalidatePath(`/work-orders/${workOrderId}/quotation`)
-  redirect(`/work-orders/${workOrderId}/quotation`)
 }
 
 export async function changeQuotationStatus(formData: FormData) {
