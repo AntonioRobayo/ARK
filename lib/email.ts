@@ -29,7 +29,32 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
 
 // ─── Layout base (table-based, email-client safe) ─────────────────────────────
 
-export function arkEmailLayout(title: string, bodyHtml: string, icon = '📬', _unused?: unknown, logoHtml?: string, _workshopName?: string) {
+export function arkEmailLayout(
+  title: string,
+  bodyHtml: string,
+  icon = '📬',
+  opts?: { workshopName?: string; workshopLogoUrl?: string },
+) {
+  const workshopStrip = opts?.workshopName ? `
+    <tr>
+      <td style="padding:14px 40px;border-bottom:1px solid #F3F4F6;background-color:#FAFAFA;">
+        <table cellpadding="0" cellspacing="0" style="width:100%;">
+          <tr>
+            <td valign="middle">
+              ${opts.workshopLogoUrl
+                ? `<img src="${opts.workshopLogoUrl}" alt="${opts.workshopName}" height="32"
+                    style="display:inline-block;height:32px;width:auto;max-width:140px;object-fit:contain;vertical-align:middle;margin-right:10px;" />`
+                : ''}
+              <span style="font-size:13px;font-weight:600;color:#1F2937;vertical-align:middle;">${opts.workshopName}</span>
+            </td>
+            <td align="right" valign="middle">
+              <span style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;">en nombre de</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>` : ''
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -43,7 +68,7 @@ export function arkEmailLayout(title: string, bodyHtml: string, icon = '📬', _
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
         <tr>
           <td style="background-color:#1F2937;border-radius:16px 16px 0 0;padding:28px 40px;text-align:center;">
-            ${logoHtml ?? `<img src="${LOGO_URL}" alt="ARK Workshop" width="200" style="display:block;margin:0 auto;height:auto;" />`}
+            <img src="${LOGO_URL}" alt="ARK Workshop" width="200" style="display:block;margin:0 auto;height:auto;" />
           </td>
         </tr>
       </table>
@@ -51,6 +76,7 @@ export function arkEmailLayout(title: string, bodyHtml: string, icon = '📬', _
       <table width="100%" cellpadding="0" cellspacing="0"
         style="max-width:560px;background-color:#ffffff;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
         <tr><td height="4" style="background-color:#FF7316;font-size:0;line-height:0;">&nbsp;</td></tr>
+        ${workshopStrip}
         <tr>
           <td style="padding:40px 40px 36px;">
             <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
@@ -282,6 +308,8 @@ export async function sendLicenseExpiredEmail({
 export async function sendFindingNotificationEmail({
   to,
   customerName,
+  workshopName,
+  workshopLogoUrl,
   otNumber,
   vehiclePlate,
   findings,
@@ -290,6 +318,7 @@ export async function sendFindingNotificationEmail({
   to: string
   customerName: string
   workshopName: string
+  workshopLogoUrl?: string
   otNumber: string
   vehiclePlate: string
   findings: { description: string; severity: 'minor' | 'moderate' | 'critical' }[]
@@ -364,7 +393,7 @@ export async function sendFindingNotificationEmail({
     </table>
   `
 
-  const html = arkEmailLayout(`Hallazgos en tu vehículo — OT ${otNumber}`, body, '🔍')
+  const html = arkEmailLayout(`Hallazgos en tu vehículo — OT ${otNumber}`, body, '🔍', { workshopName, workshopLogoUrl })
   await sendEmail({
     to,
     subject: `🔍 Revisamos tu ${vehiclePlate} y encontramos algo — OT ${otNumber}`,
@@ -528,12 +557,13 @@ export async function sendOtOpenedEmail({
 export interface OtServiceItem { description: string; quantity: number; unitPrice: number; subtotal: number }
 
 export async function sendOtClosedEmail({
-  to, customerName, workshopName, otNumber, vehiclePlate, vehicleLabel,
+  to, customerName, workshopName, workshopLogoUrl, otNumber, vehiclePlate, vehicleLabel,
   services, customerParts, photos, totalAmount, paidAmount,
 }: {
   to: string
   customerName: string
   workshopName: string
+  workshopLogoUrl?: string
   otNumber: string
   vehiclePlate: string
   vehicleLabel: string
@@ -626,7 +656,7 @@ export async function sendOtClosedEmail({
     </p>
   `
 
-  const html = arkEmailLayout(`Tu vehículo está listo`, body, '✅')
+  const html = arkEmailLayout(`Tu vehículo está listo`, body, '✅', { workshopName, workshopLogoUrl })
   await sendEmail({
     to,
     subject: `OT ${otNumber} — Vehículo listo | ${workshopName}`,
@@ -727,11 +757,7 @@ export async function sendQuotationEmail({
     </table>` : ''}
   `
 
-  const logoOverride = workshopLogoUrl
-    ? `<img src="${workshopLogoUrl}" alt="${workshopName}" width="200" style="display:block;margin:0 auto;height:auto;max-height:60px;object-fit:contain;" />`
-    : undefined
-
-  const html = arkEmailLayout(`Cotización ${quotationNumber}`, body, '📋', undefined, logoOverride, workshopName)
+  const html = arkEmailLayout(`Cotización ${quotationNumber}`, body, '📋', { workshopName, workshopLogoUrl })
   await sendEmail({
     to,
     subject: `Cotización ${quotationNumber} — ${vehicleLabel} | ${workshopName}`,

@@ -87,13 +87,13 @@ export default async function QuotationPage({
                 </button>
               </form>
             )}
-            {['draft', 'sent'].includes(quotation.status) && (
+            {quotation.status === 'sent' && (
               <form action={changeQuotationStatus}>
                 <input type="hidden" name="quotation_id" value={quotation.id} />
                 <input type="hidden" name="work_order_id" value={id} />
                 <input type="hidden" name="status" value="approved" />
                 <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-                  ✓ {t('approve')}
+                  {t('approve')}
                 </button>
               </form>
             )}

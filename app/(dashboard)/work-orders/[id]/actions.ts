@@ -76,18 +76,20 @@ export async function changeStatus(formData: FormData) {
 
         const [{ data: tenant }, { data: quotation }, { data: customerParts }, { data: photos }, { data: invoice }] =
           await Promise.all([
-            adminClient.from('tenants').select('name').eq('id', fullOt.tenant_id).single(),
+            adminClient.from('tenants').select('name, settings').eq('id', fullOt.tenant_id).single(),
             adminClient.from('quotation').select('quotation_item(description, quantity, unit_price, subtotal)').eq('work_order_id', otId).eq('status', 'approved').order('created_at', { ascending: false }).limit(1).maybeSingle(),
             adminClient.from('work_order_customer_part').select('description, quantity, condition, notes').eq('work_order_id', otId),
             adminClient.from('work_order_drive_attachment').select('drive_thumb_url, original_name').eq('work_order_id', otId).in('section', ['trabajo', 'entrega']).limit(6),
             adminClient.from('invoice').select('total, paid_amount').eq('work_order_id', otId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
           ])
 
+        const tenantSettings = (tenant?.settings ?? {}) as Record<string, string>
         const { sendOtClosedEmail } = await import('@/lib/email')
         await sendOtClosedEmail({
           to: customer.email,
           customerName: `${customer.first_name} ${customer.last_name}`,
           workshopName: tenant?.name ?? 'ARK Workshop',
+          workshopLogoUrl: tenantSettings.logo_url,
           otNumber: String(fullOt.number),
           vehiclePlate: vehicle?.plate ?? '',
           vehicleLabel: [vehicle?.brand, vehicle?.model, vehicle?.year].filter(Boolean).join(' '),
@@ -218,20 +220,25 @@ export async function notifyCustomerFindings(formData: FormData) {
   const token = crypto.randomUUID()
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? ''
 
-  const { error: updateError } = await admin
-    .from('work_order_finding')
-    .update({ status: 'notified', notified_at: new Date().toISOString(), response_token: token })
-    .in('id', findings.map(f => f.id))
+  const [{ error: updateError }, { data: tenant }] = await Promise.all([
+    admin.from('work_order_finding')
+      .update({ status: 'notified', notified_at: new Date().toISOString(), response_token: token })
+      .in('id', findings.map(f => f.id)),
+    admin.from('tenants').select('name, settings').eq('id', ot.tenant_id).single(),
+  ])
 
   if (updateError) {
     redirect(`/work-orders/${otId}?error=` + encodeURIComponent(updateError.message))
   }
 
+  const tenantSettings = (tenant?.settings ?? {}) as Record<string, string>
+
   const { sendFindingNotificationEmail } = await import('@/lib/email')
   await sendFindingNotificationEmail({
     to: customer.email,
     customerName: `${customer.first_name} ${customer.last_name}`,
-    workshopName: '',
+    workshopName: tenant?.name ?? 'ARK Workshop',
+    workshopLogoUrl: tenantSettings.logo_url,
     otNumber: String(ot.number),
     vehiclePlate: vehicle?.plate ?? '',
     findings: findings.map(f => ({ description: f.description, severity: f.severity as 'minor' | 'moderate' | 'critical' })),
