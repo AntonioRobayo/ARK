@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
 
   const { data: findings } = await admin
     .from('work_order_finding')
-    .select('id, status')
+    .select('id, status, work_order_id')
     .eq('response_token', token)
     .eq('status', 'notified')
 
