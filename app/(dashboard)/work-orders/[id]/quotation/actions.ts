@@ -108,9 +108,13 @@ export async function changeQuotationStatus(formData: FormData) {
   const workOrderId = formData.get('work_order_id') as string
   const newStatus = formData.get('status') as string
 
+  const responseToken = newStatus === 'sent' ? crypto.randomUUID() : undefined
   const update: Record<string, any> = { status: newStatus }
   if (newStatus === 'approved') update.approved_at = new Date().toISOString()
-  if (newStatus === 'sent') update.sent_at = new Date().toISOString()
+  if (newStatus === 'sent') {
+    update.sent_at = new Date().toISOString()
+    update.response_token = responseToken
+  }
 
   await adminClient.from('quotation').update(update).eq('id', quotationId)
 
@@ -121,7 +125,7 @@ export async function changeQuotationStatus(formData: FormData) {
         const { data: quotation } = await adminClient
           .from('quotation')
           .select(`number, subtotal, tax_amount, discount_amount, total,
-            quotation_item(description, quantity, unit_price, subtotal, item_type),
+            quotation_item(id, description, quantity, unit_price, subtotal, item_type),
             work_order:work_order_id(number, tenant_id,
               customer:customer_id(first_name, last_name, email),
               vehicle:vehicle_id(plate, brand, model, year))`)
@@ -136,6 +140,7 @@ export async function changeQuotationStatus(formData: FormData) {
 
         const { data: tenant } = await adminClient.from('tenants').select('name, settings').eq('id', wo.tenant_id).single()
         const tenantSettings = (tenant?.settings ?? {}) as Record<string, string>
+        const base = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? ''
 
         const { sendQuotationEmail } = await import('@/lib/email')
         await sendQuotationEmail({
@@ -144,6 +149,7 @@ export async function changeQuotationStatus(formData: FormData) {
           workshopName: tenant?.name ?? 'ARK Workshop',
           workshopLogoUrl: tenantSettings.logo_url,
           termsAndConditions: tenantSettings.terms_and_conditions,
+          respondUrl: responseToken ? `${base}/quotation/respond/${responseToken}` : undefined,
           otNumber: String(wo.number),
           quotationNumber: String(quotation.number),
           vehiclePlate: vehicle?.plate ?? '',

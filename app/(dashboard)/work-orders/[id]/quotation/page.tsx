@@ -29,7 +29,7 @@ export default async function QuotationPage({
       .eq('id', id).eq('tenant_id', myProfile.tenant_id).single(),
     adminClient.from('quotation')
       .select(`id, number, status, total, subtotal, tax_amount, discount_amount, notes,
-        quotation_item(id, description, quantity, unit_price, subtotal, item_type, tax_rate_snapshot, discount_pct)`)
+        quotation_item(id, description, quantity, unit_price, subtotal, item_type, tax_rate_snapshot, discount_pct, customer_response)`)
       .eq('work_order_id', id)
       .neq('status', 'cancelled')
       .order('created_at', { ascending: false }),
@@ -156,7 +156,17 @@ export default async function QuotationPage({
                 ) : (
                   items.map((item: any) => (
                     <tr key={item.id} className="border-b border-gray-50">
-                      <td className="px-4 py-2.5 text-gray-700">{item.description}</td>
+                      <td className="px-4 py-2.5 text-gray-700">
+                        <div className="flex items-center gap-2">
+                          {item.description}
+                          {item.customer_response === 'approved' && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-medium shrink-0">✓ Cliente aprobó</span>
+                          )}
+                          {item.customer_response === 'rejected' && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-500 font-medium shrink-0">✗ Cliente rechazó</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-2.5">
                         <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                           item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'

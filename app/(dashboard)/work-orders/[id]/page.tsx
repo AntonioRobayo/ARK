@@ -117,11 +117,12 @@ export default async function WorkOrderDetailPage({
   const activeQuotation = (quotations ?? [])[0] ?? null
 
   const AUDIT_EVENT_LABEL: Record<string, string> = {
-    'finding.added':            'Hallazgo registrado',
-    'finding.notified':         'Hallazgos notificados al cliente',
-    'finding.customer_approved': 'Cliente solicitó cotizar',
-    'finding.customer_noted':   'Cliente registró como nota',
-    'customer_part.added':      'Repuesto del cliente registrado',
+    'finding.added':                 'Hallazgo registrado',
+    'finding.notified':              'Hallazgos notificados al cliente',
+    'finding.customer_approved':     'Cliente solicitó cotizar',
+    'finding.customer_noted':        'Cliente registró como nota',
+    'customer_part.added':           'Repuesto del cliente registrado',
+    'quotation.customer_responded':  'Cliente respondió la cotización',
   }
 
   const mergedTimeline = [
@@ -458,6 +459,13 @@ export default async function WorkOrderDetailPage({
                       )}
                       {entry._type === 'audit' && (entry.event === 'finding.customer_approved' || entry.event === 'finding.customer_noted') && entry.details?.description && (
                         <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.details.description}</p>
+                      )}
+                      {entry._type === 'audit' && entry.event === 'quotation.customer_responded' && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {entry.details?.items_approved > 0 && `${entry.details.items_approved} aprobado${entry.details.items_approved > 1 ? 's' : ''}`}
+                          {entry.details?.items_approved > 0 && entry.details?.items_rejected > 0 && ' · '}
+                          {entry.details?.items_rejected > 0 && `${entry.details.items_rejected} rechazado${entry.details.items_rejected > 1 ? 's' : ''}`}
+                        </p>
                       )}
                       {entry._type === 'status' && entry.reason && (
                         <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.reason}</p>

@@ -672,6 +672,7 @@ export async function sendQuotationEmail({
   workshopName,
   workshopLogoUrl,
   termsAndConditions,
+  respondUrl,
   otNumber,
   quotationNumber,
   vehiclePlate,
@@ -687,6 +688,7 @@ export async function sendQuotationEmail({
   workshopName: string
   workshopLogoUrl?: string
   termsAndConditions?: string
+  respondUrl?: string
   otNumber: string
   quotationNumber: string
   vehiclePlate: string
@@ -740,6 +742,18 @@ export async function sendQuotationEmail({
         <td style="font-size:16px;font-weight:700;color:#1F2937;text-align:right;padding-top:8px;">${fmt(total)}</td>
       </tr>
     </table>
+
+    ${respondUrl ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+      <tr>
+        <td align="center" bgcolor="#1F2937" style="border-radius:10px;">
+          <a href="${respondUrl}"
+            style="display:inline-block;padding:14px 32px;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:10px;background-color:#1F2937;">
+            Revisar y aprobar cotización →
+          </a>
+        </td>
+      </tr>
+    </table>` : ''}
 
     <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">
       Para cualquier consulta sobre esta cotización, comunícate con <strong>${workshopName}</strong>.
