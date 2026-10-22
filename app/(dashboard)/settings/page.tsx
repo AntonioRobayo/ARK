@@ -17,6 +17,7 @@ export default async function SettingsPage() {
     { href: '/settings/integrations',              title: t('cards.integrations'),   description: t('cards.integrationsDesc'),   icon: '🔗' },
     { href: '/settings/branches',                  title: t('cards.branches'),       description: t('cards.branchesDesc'),       icon: '🏢' },
     { href: '/settings/logs',                      title: t('cards.logs'),           description: t('cards.logsDesc'),           icon: '📋' },
+    { href: '/settings/branding',                  title: t('cards.branding'),       description: t('cards.brandingDesc'),       icon: '🎨' },
   ]
 
   return (

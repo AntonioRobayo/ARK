@@ -573,7 +573,9 @@
       "logs": "Activity log",
       "logsDesc": "History of changes and actions in the workshop",
       "users": "Users",
-      "usersDesc": "Invite, activate and deactivate workshop members"
+      "usersDesc": "Invite, activate and deactivate workshop members",
+      "branding": "Brand & identity",
+      "brandingDesc": "Workshop logo and quotation terms"
     },
     "profile": {
       "title": "My profile",

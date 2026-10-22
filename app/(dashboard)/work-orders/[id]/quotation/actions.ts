@@ -134,13 +134,16 @@ export async function changeQuotationStatus(formData: FormData) {
         const vehicle = Array.isArray(wo?.vehicle) ? wo.vehicle[0] : wo?.vehicle
         if (!customer?.email) return
 
-        const { data: tenant } = await adminClient.from('tenants').select('name').eq('id', wo.tenant_id).single()
+        const { data: tenant } = await adminClient.from('tenants').select('name, settings').eq('id', wo.tenant_id).single()
+        const tenantSettings = (tenant?.settings ?? {}) as Record<string, string>
 
         const { sendQuotationEmail } = await import('@/lib/email')
         await sendQuotationEmail({
           to: customer.email,
           customerName: `${customer.first_name} ${customer.last_name}`,
           workshopName: tenant?.name ?? 'ARK Workshop',
+          workshopLogoUrl: tenantSettings.logo_url,
+          termsAndConditions: tenantSettings.terms_and_conditions,
           otNumber: String(wo.number),
           quotationNumber: String(quotation.number),
           vehiclePlate: vehicle?.plate ?? '',

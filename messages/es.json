@@ -595,7 +595,9 @@
       "logs": "Registro de actividad",
       "logsDesc": "Historial de cambios y acciones en el taller",
       "users": "Usuarios",
-      "usersDesc": "Invita, activa y desactiva miembros del taller"
+      "usersDesc": "Invita, activa y desactiva miembros del taller",
+      "branding": "Marca e identidad",
+      "brandingDesc": "Logo del taller y términos de cotización"
     },
     "profile": {
       "title": "Mi perfil",

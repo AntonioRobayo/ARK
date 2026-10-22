@@ -573,7 +573,9 @@
       "logs": "Registro de atividade",
       "logsDesc": "Histórico de alterações e ações na oficina",
       "users": "Usuários",
-      "usersDesc": "Convide, ative e desative membros da oficina"
+      "usersDesc": "Convide, ative e desative membros da oficina",
+      "branding": "Marca e identidade",
+      "brandingDesc": "Logo da oficina e termos de orçamento"
     },
     "profile": {
       "title": "Meu perfil",

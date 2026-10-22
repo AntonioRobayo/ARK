@@ -29,7 +29,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
 
 // ─── Layout base (table-based, email-client safe) ─────────────────────────────
 
-export function arkEmailLayout(title: string, bodyHtml: string, icon = '📬') {
+export function arkEmailLayout(title: string, bodyHtml: string, icon = '📬', _unused?: unknown, logoHtml?: string, _workshopName?: string) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -43,8 +43,7 @@ export function arkEmailLayout(title: string, bodyHtml: string, icon = '📬') {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
         <tr>
           <td style="background-color:#1F2937;border-radius:16px 16px 0 0;padding:28px 40px;text-align:center;">
-            <img src="${LOGO_URL}" alt="ARK Workshop" width="200"
-              style="display:block;margin:0 auto;height:auto;" />
+            ${logoHtml ?? `<img src="${LOGO_URL}" alt="ARK Workshop" width="200" style="display:block;margin:0 auto;height:auto;" />`}
           </td>
         </tr>
       </table>
@@ -641,6 +640,8 @@ export async function sendQuotationEmail({
   to,
   customerName,
   workshopName,
+  workshopLogoUrl,
+  termsAndConditions,
   otNumber,
   quotationNumber,
   vehiclePlate,
@@ -654,6 +655,8 @@ export async function sendQuotationEmail({
   to: string
   customerName: string
   workshopName: string
+  workshopLogoUrl?: string
+  termsAndConditions?: string
   otNumber: string
   quotationNumber: string
   vehiclePlate: string
@@ -711,9 +714,24 @@ export async function sendQuotationEmail({
     <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">
       Para cualquier consulta sobre esta cotización, comunícate con <strong>${workshopName}</strong>.
     </p>
+
+    ${termsAndConditions ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="background-color:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;margin-top:24px;">
+      <tr>
+        <td style="padding:14px 20px;">
+          <p style="margin:0 0 6px;font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;">Términos y condiciones</p>
+          <p style="margin:0;font-size:12px;color:#6B7280;line-height:1.6;white-space:pre-line;">${termsAndConditions}</p>
+        </td>
+      </tr>
+    </table>` : ''}
   `
 
-  const html = arkEmailLayout(`Cotización ${quotationNumber}`, body, '📋')
+  const logoOverride = workshopLogoUrl
+    ? `<img src="${workshopLogoUrl}" alt="${workshopName}" width="200" style="display:block;margin:0 auto;height:auto;max-height:60px;object-fit:contain;" />`
+    : undefined
+
+  const html = arkEmailLayout(`Cotización ${quotationNumber}`, body, '📋', undefined, logoOverride, workshopName)
   await sendEmail({
     to,
     subject: `Cotización ${quotationNumber} — ${vehicleLabel} | ${workshopName}`,
