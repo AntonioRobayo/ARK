@@ -70,7 +70,8 @@ export async function createVehicle(formData: FormData) {
     vehicleId = vehicle.id
   }
 
-  await Promise.allSettled([
+  // Catalog upserts are non-critical (autocomplete only) — don't block redirect
+  void Promise.allSettled([
     ensureCatalogValue('vehicle_brand', brand, brand),
     ensureCatalogValue('vehicle_type', vehicleType, vehicleType),
     fuelType ? ensureCatalogValue('fuel_type', fuelType, fuelType) : Promise.resolve(),
