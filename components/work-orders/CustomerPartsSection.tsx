@@ -26,13 +26,14 @@ export interface CustomerPart {
 
 interface Props {
   otId: string
+  tenantId: string
   vehicleId: string
   parts: CustomerPart[]
   attachments: any[]
   driveEnabled: boolean
 }
 
-export function CustomerPartsSection({ otId, vehicleId, parts, attachments, driveEnabled }: Props) {
+export function CustomerPartsSection({ otId, tenantId, vehicleId, parts, attachments, driveEnabled }: Props) {
   const formRef = useRef<HTMLFormElement>(null)
 
   const repuestosPhotos = attachments.filter(a => a.section === 'repuestos_cliente')
@@ -90,6 +91,7 @@ export function CustomerPartsSection({ otId, vehicleId, parts, attachments, driv
       {/* Formulario agregar */}
       <form ref={formRef} action={addCustomerPart} className="border-t border-gray-100 pt-3 space-y-2">
         <input type="hidden" name="ot_id" value={otId} />
+        <input type="hidden" name="tenant_id" value={tenantId} />
         <div className="flex gap-2">
           <input
             type="text"

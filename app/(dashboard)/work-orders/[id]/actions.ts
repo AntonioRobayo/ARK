@@ -121,19 +121,17 @@ export async function addCustomerPart(formData: FormData) {
 
   const admin = createAdminClient()
   const otId       = formData.get('ot_id') as string
+  const tenantId   = formData.get('tenant_id') as string
   const description = (formData.get('description') as string)?.trim()
   const quantity    = parseInt(formData.get('quantity') as string) || 1
   const condition   = (formData.get('condition') as string) || 'new'
   const notes       = (formData.get('notes') as string)?.trim() || null
 
-  if (!description || !otId) redirect(`/work-orders/${otId}?error=part_empty`)
-
-  const { data: ot } = await admin.from('work_order').select('tenant_id').eq('id', otId).single()
-  if (!ot) redirect('/work-orders')
+  if (!description || !otId || !tenantId) redirect(`/work-orders/${otId ?? ''}?error=part_empty`)
 
   await admin.from('work_order_customer_part').insert({
     work_order_id: otId,
-    tenant_id:     ot.tenant_id,
+    tenant_id:     tenantId,
     description,
     quantity,
     condition,
@@ -141,8 +139,9 @@ export async function addCustomerPart(formData: FormData) {
     created_by: user.id,
   })
 
-  await admin.from('tenant_audit_log').insert({
-    tenant_id: ot.tenant_id,
+  // Audit log is non-critical — don't block the response
+  void admin.from('tenant_audit_log').insert({
+    tenant_id: tenantId,
     event:     'customer_part.added',
     actor_id:  user.id,
     details:   { work_order_id: otId, description, quantity, condition },
@@ -184,6 +183,65 @@ export async function addFinding(formData: FormData) {
   })
 
   revalidatePath(`/work-orders/${otId}`)
+}
+
+export async function notifyReception(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const otId = formData.get('ot_id') as string
+  const admin = createAdminClient()
+
+  const { data: ot } = await admin
+    .from('work_order')
+    .select(`
+      id, number, reception_notes, estimated_delivery_at, tenant_id,
+      customer:customer_id(first_name, last_name, email),
+      vehicle:vehicle_id(id, plate, brand, model, year),
+      technician:technician_id(first_name, last_name)
+    `)
+    .eq('id', otId)
+    .single()
+
+  if (!ot) redirect('/work-orders')
+
+  const customer = Array.isArray(ot.customer) ? ot.customer[0] : ot.customer as any
+  if (!customer?.email) redirect(`/work-orders/${otId}?error=no_customer_email`)
+
+  const vehicle    = Array.isArray(ot.vehicle)    ? ot.vehicle[0]    : ot.vehicle    as any
+  const technician = Array.isArray(ot.technician) ? ot.technician[0] : ot.technician as any
+
+  const [{ data: tenant }, { data: custodyRows }, { data: photos }, { data: customerParts }] = await Promise.all([
+    admin.from('tenants').select('name, settings').eq('id', ot.tenant_id).single(),
+    admin.from('custody_item').select('description, location').eq('work_order_id', otId),
+    admin.from('work_order_drive_attachment').select('drive_thumb_url, original_name').eq('work_order_id', otId).eq('section', 'recepcion'),
+    admin.from('work_order_customer_part').select('description, quantity, condition, notes').eq('work_order_id', otId),
+  ])
+
+  const tenantSettings = (tenant?.settings ?? {}) as Record<string, string>
+
+  const { sendOtOpenedEmail } = await import('@/lib/email')
+  await sendOtOpenedEmail({
+    to: customer.email,
+    customerName: `${customer.first_name} ${customer.last_name}`,
+    workshopName: tenant?.name ?? 'ARK Workshop',
+    workshopLogoUrl: tenantSettings.logo_url,
+    otNumber: String(ot.number),
+    vehiclePlate: vehicle?.plate ?? '',
+    vehicleLabel: [vehicle?.brand, vehicle?.model, vehicle?.year].filter(Boolean).join(' '),
+    receptionNotes: ot.reception_notes,
+    estimatedDelivery: ot.estimated_delivery_at,
+    technicianName: technician ? `${technician.first_name} ${technician.last_name ?? ''}` : null,
+    photos: (photos ?? []).map((p: any) => ({ thumbUrl: p.drive_thumb_url, name: p.original_name })),
+    customerParts: (customerParts ?? []).map((p: any) => ({ description: p.description, quantity: p.quantity, condition: p.condition, notes: p.notes })),
+    custodyItems: (custodyRows ?? []).map((c: any) => ({ description: c.description, location: c.location })),
+  })
+
+  await admin.from('work_order').update({ reception_notified_at: new Date().toISOString() }).eq('id', otId)
+
+  revalidatePath(`/work-orders/${otId}`)
+  redirect(`/work-orders/${otId}?reception_notified=1`)
 }
 
 export async function notifyCustomerFindings(formData: FormData) {

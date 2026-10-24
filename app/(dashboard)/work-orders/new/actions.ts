@@ -156,35 +156,5 @@ export async function createWorkOrder(formData: FormData) {
     details: { work_order_id: ot.id, number: String(nextNum) },
   })
 
-  // Email de ingreso al cliente (fire-and-forget)
-  void (async () => {
-    try {
-      const [{ data: customer }, { data: vehicle }, { data: tenant }, { data: custodyRows }, { data: photos }] =
-        await Promise.all([
-          adminClient.from('customer').select('first_name, last_name, email').eq('id', formData.get('customer_id') as string).single(),
-          adminClient.from('vehicle').select('plate, brand, model, year').eq('id', vehicleId).single(),
-          adminClient.from('tenants').select('name').eq('id', profile.tenant_id).single(),
-          adminClient.from('custody_item').select('description, location').eq('work_order_id', ot.id),
-          adminClient.from('work_order_drive_attachment').select('drive_thumb_url, original_name').eq('work_order_id', ot.id).eq('section', 'recepcion'),
-        ])
-      if (!customer?.email) return
-      const { sendOtOpenedEmail } = await import('@/lib/email')
-      await sendOtOpenedEmail({
-        to: customer.email,
-        customerName: `${customer.first_name} ${customer.last_name}`,
-        workshopName: tenant?.name ?? 'ARK Workshop',
-        otNumber: String(nextNum),
-        vehiclePlate: vehicle?.plate ?? '',
-        vehicleLabel: [vehicle?.brand, vehicle?.model, vehicle?.year].filter(Boolean).join(' '),
-        receptionNotes: (formData.get('reception_notes') as string) || null,
-        estimatedDelivery: (formData.get('estimated_delivery_at') as string) || null,
-        technicianName: null,
-        photos: (photos ?? []).map(p => ({ thumbUrl: p.drive_thumb_url, name: p.original_name })),
-        customerParts: [],
-        custodyItems: (custodyRows ?? []).map(c => ({ description: c.description, location: c.location })),
-      })
-    } catch { /* email failure should not block OT creation */ }
-  })()
-
   redirect(`/work-orders/${ot.id}`)
 }

@@ -9,6 +9,7 @@ import type { WorkOrderStatus } from '@/types/database'
 import { LocalDate, LocalDateOnly } from '@/components/local-date'
 import { getTranslations } from 'next-intl/server'
 import { StatusTransitionButtons } from '@/components/work-orders/StatusTransitionButtons'
+import { notifyReception } from './actions'
 import { TimeTracker } from '@/components/work-orders/TimeTracker'
 import { OTGallery } from '@/components/work-orders/OTGallery'
 import { FindingsSection } from '@/components/work-orders/FindingsSection'
@@ -19,10 +20,10 @@ export default async function WorkOrderDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; notified?: string }>
+  searchParams: Promise<{ error?: string; notified?: string; reception_notified?: string }>
 }) {
   const { id } = await params
-  const { notified, error: pageError } = await searchParams
+  const { notified, reception_notified, error: pageError } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -114,7 +115,12 @@ export default async function WorkOrderDetailPage({
 
   const t = await getTranslations('workOrders')
   const transitions = STATUS_TRANSITIONS[ot.status as WorkOrderStatus] ?? []
-  const activeQuotation = (quotations ?? [])[0] ?? null
+  const allQuotations = quotations ?? []
+  // Summary card shows the most recent approved quotation (confirmed work).
+  // If there's also a draft/sent supplement, it's noted separately.
+  const mostRecentApproved = allQuotations.find(q => q.status === 'approved') ?? null
+  const draftOrSentQuotation = allQuotations.find(q => ['draft', 'sent'].includes(q.status)) ?? null
+  const activeQuotation = mostRecentApproved ?? draftOrSentQuotation ?? allQuotations[0] ?? null
 
   const AUDIT_EVENT_LABEL: Record<string, string> = {
     'finding.added':                 'Hallazgo registrado',
@@ -136,6 +142,11 @@ export default async function WorkOrderDetailPage({
 
   return (
     <div className="max-w-5xl">
+      {reception_notified === '1' && (
+        <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
+          ✅ Correo de ingreso enviado al cliente. Ahora puede agregar fotos desde la sección de Drive.
+        </div>
+      )}
       {notified === '1' && (
         <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
           ✅ Email enviado al cliente con los hallazgos. Cuando responda, el estado se actualizará aquí automáticamente.
@@ -150,28 +161,26 @@ export default async function WorkOrderDetailPage({
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/work-orders" className="text-gray-400 hover:text-gray-600 text-sm shrink-0">{t('detail.backToOTs')}</Link>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 font-mono whitespace-nowrap">{ot.number}</h1>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLOR[ot.status as WorkOrderStatus]}`}>
-                {STATUS_LABEL[ot.status as WorkOrderStatus]}
-              </span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_COLOR[ot.priority ?? 'normal']}`}>
-                {PRIORITY_LABEL[ot.priority ?? 'normal']}
-              </span>
-            </div>
-            <p className="text-sm text-gray-400 mt-0.5">
-              {ot.branch?.name} · Creada <LocalDateOnly date={ot.created_at} options={{ day:'2-digit', month:'long', year:'numeric' }} />
-            </p>
+      <div className="flex items-center gap-4 mb-4">
+        <Link href="/work-orders" className="text-gray-400 hover:text-gray-600 text-sm shrink-0">{t('detail.backToOTs')}</Link>
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 font-mono whitespace-nowrap">{ot.number}</h1>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLOR[ot.status as WorkOrderStatus]}`}>
+              {STATUS_LABEL[ot.status as WorkOrderStatus]}
+            </span>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_COLOR[ot.priority ?? 'normal']}`}>
+              {PRIORITY_LABEL[ot.priority ?? 'normal']}
+            </span>
           </div>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {ot.branch?.name} · Creada <LocalDateOnly date={ot.created_at} options={{ day:'2-digit', month:'long', year:'numeric' }} />
+          </p>
         </div>
-
-        {/* Acciones de estado */}
-        <StatusTransitionButtons otId={ot.id} transitions={transitions} />
       </div>
+
+      {/* Acciones de estado — bloque contextual */}
+      <StatusTransitionButtons otId={ot.id} currentStatus={ot.status as WorkOrderStatus} transitions={transitions} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Columna izquierda (2/3) */}
@@ -233,11 +242,31 @@ export default async function WorkOrderDetailPage({
                 </p>
               </div>
             )}
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-3">
+              {(ot as any).reception_notified_at ? (
+                <p className="text-xs text-emerald-600 font-medium">
+                  ✅ Cliente notificado · <LocalDate date={(ot as any).reception_notified_at} options={{ day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }} />
+                </p>
+              ) : ot.customer?.email ? (
+                <form action={notifyReception}>
+                  <input type="hidden" name="ot_id" value={ot.id} />
+                  <button
+                    type="submit"
+                    className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Notificar ingreso al cliente →
+                  </button>
+                </form>
+              ) : (
+                <p className="text-xs text-gray-400">Sin email — no se puede notificar</p>
+              )}
+            </div>
           </div>
 
           {/* Repuestos del cliente */}
           <CustomerPartsSection
             otId={id}
+            tenantId={ot.tenant_id}
             vehicleId={ot.vehicle_id}
             parts={customerParts ?? []}
             attachments={(driveAttachments ?? []) as any[]}
@@ -273,12 +302,19 @@ export default async function WorkOrderDetailPage({
                   </p>
                 )}
               </div>
-              <Link
-                href={`/work-orders/${id}/quotation`}
-                className="text-xs text-slate-600 hover:text-slate-800 font-medium border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                {activeQuotation ? t('detail.manageQuotation') : t('detail.createQuotation')}
-              </Link>
+              <div className="flex items-center gap-2">
+                {draftOrSentQuotation && mostRecentApproved && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium">
+                    Suplemento en borrador
+                  </span>
+                )}
+                <Link
+                  href={`/work-orders/${id}/quotation`}
+                  className="text-xs text-slate-600 hover:text-slate-800 font-medium border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  {activeQuotation ? t('detail.manageQuotation') : t('detail.createQuotation')}
+                </Link>
+              </div>
             </div>
 
             {items.length === 0 ? (

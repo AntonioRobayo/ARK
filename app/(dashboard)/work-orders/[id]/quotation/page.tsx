@@ -129,6 +129,7 @@ export default async function QuotationPage({
           <p className="text-gray-500 mb-4">{t('noQuotation')}</p>
           <form action={upsertQuotation}>
             <input type="hidden" name="work_order_id" value={id} />
+            <input type="hidden" name="tenant_id" value={myProfile.tenant_id} />
             <button type="submit" className="bg-slate-800 hover:bg-slate-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors">
               {t('create')}
             </button>
@@ -249,6 +250,8 @@ export default async function QuotationPage({
                             <input type="hidden" name="item_id" value={item.id} />
                             <input type="hidden" name="quotation_id" value={activeQuotation.id} />
                             <input type="hidden" name="work_order_id" value={id} />
+                            <input type="hidden" name="item_subtotal" value={item.subtotal ?? 0} />
+                            <input type="hidden" name="current_total" value={activeQuotation.total ?? 0} />
                             <button type="submit" className="text-red-400 hover:text-red-600 text-xs font-bold">×</button>
                           </form>
                         </td>
@@ -362,9 +365,10 @@ export default async function QuotationPage({
               </div>
             </div>
           )}
-          <form action={addQuotationItem} className="grid grid-cols-6 gap-3 items-end">
+          <form key={activeQuotation.quotation_item?.length ?? 0} action={addQuotationItem} className="grid grid-cols-6 gap-3 items-end">
             <input type="hidden" name="quotation_id" value={activeQuotation.id} />
             <input type="hidden" name="work_order_id" value={id} />
+            <input type="hidden" name="current_total" value={activeQuotation.total ?? 0} />
             <div className="col-span-2">
               <label className="block text-xs text-gray-400 mb-1">{t('form.description')}</label>
               <input name="description" required
@@ -409,6 +413,7 @@ export default async function QuotationPage({
           <p className="text-xs text-gray-400 mb-4">Crea un suplemento — va por el mismo flujo de aprobación del cliente.</p>
           <form action={upsertQuotation}>
             <input type="hidden" name="work_order_id" value={id} />
+            <input type="hidden" name="tenant_id" value={myProfile.tenant_id} />
             <button type="submit"
               className="bg-purple-700 hover:bg-purple-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors">
               + Agregar suplemento

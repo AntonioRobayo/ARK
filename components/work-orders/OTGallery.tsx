@@ -122,7 +122,7 @@ export function OTGallery({ workOrderId, vehicleId, attachments, driveEnabled }:
           ))}
         </div>
       ) : (
-        <p className="text-xs text-gray-300 text-center py-3 mb-3">Sin fotos en esta sección</p>
+        <p className="text-xs text-gray-400 text-center py-4 mb-2">Sin archivos en esta sección</p>
       )}
 
       {/* Uploader */}

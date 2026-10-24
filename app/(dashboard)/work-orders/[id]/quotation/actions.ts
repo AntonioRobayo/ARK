@@ -11,21 +11,21 @@ export async function upsertQuotation(formData: FormData) {
   if (!user) redirect('/auth/login')
 
   const adminClient = createAdminClient()
-  const { data: profile } = await adminClient
-    .from('user_profile').select('tenant_id').eq('id', user.id).single()
-  if (!profile?.tenant_id) return
 
   const workOrderId = formData.get('work_order_id') as string
+  const tenantId    = formData.get('tenant_id') as string
   const quotationId = formData.get('quotation_id') as string | null
   const notes = (formData.get('notes') as string)?.trim() || null
 
+  if (!tenantId) return
+
   if (!quotationId) {
     const { data: numRow } = await adminClient.rpc('next_document_number', {
-      p_tenant_id: profile.tenant_id,
+      p_tenant_id: tenantId,
       p_doc_type: 'COT',
     })
     await adminClient.from('quotation').insert({
-      tenant_id: profile.tenant_id,
+      tenant_id: tenantId,
       work_order_id: workOrderId,
       number: numRow,
       status: 'draft',
@@ -50,35 +50,40 @@ export async function addQuotationItem(formData: FormData) {
   if (!user) redirect('/auth/login')
 
   const adminClient = createAdminClient()
-  const quotationId = formData.get('quotation_id') as string
-  const workOrderId = formData.get('work_order_id') as string
-  const description = (formData.get('description') as string).trim()
-  const quantity = Number(formData.get('quantity') ?? 1)
-  const unitPrice = Number(formData.get('unit_price') ?? 0)
-  const itemType = (formData.get('item_type') as string) || 'service'
+  const quotationId   = formData.get('quotation_id') as string
+  const workOrderId   = formData.get('work_order_id') as string
+  const description   = (formData.get('description') as string).trim()
+  const quantity      = Number(formData.get('quantity') ?? 1)
+  const unitPrice     = Number(formData.get('unit_price') ?? 0)
+  const itemType      = (formData.get('item_type') as string) || 'service'
   const taxRateSnapshot = Number(formData.get('tax_rate') ?? 0)
-  const discountPct = Number(formData.get('discount_pct') ?? 0)
+  const discountPct   = Number(formData.get('discount_pct') ?? 0)
+  const currentTotal  = Number(formData.get('current_total') ?? 0)
 
   const subtotalBeforeDiscount = quantity * unitPrice
   const discountAmount = subtotalBeforeDiscount * (discountPct / 100)
   const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount
   const taxAmount = subtotalAfterDiscount * (taxRateSnapshot / 100)
   const subtotal = subtotalAfterDiscount + taxAmount
+  const newTotal = currentTotal + subtotal
 
-  await adminClient.from('quotation_item').insert({
-    quotation_id: quotationId,
-    description,
-    quantity,
-    unit_price: unitPrice,
-    item_type: itemType,
-    tax_rate_snapshot: taxRateSnapshot,
-    discount_pct: discountPct,
-    subtotal,
-    authorization_status: 'approved',
-    is_customer_supplied: false,
-  })
+  // Insert item + update totals in parallel — no need to SELECT all items to recalc
+  await Promise.all([
+    adminClient.from('quotation_item').insert({
+      quotation_id: quotationId,
+      description,
+      quantity,
+      unit_price: unitPrice,
+      item_type: itemType,
+      tax_rate_snapshot: taxRateSnapshot,
+      discount_pct: discountPct,
+      subtotal,
+      authorization_status: 'approved',
+      is_customer_supplied: false,
+    }),
+    adminClient.from('quotation').update({ subtotal: newTotal, total: newTotal }).eq('id', quotationId),
+  ])
 
-  await recalcQuotationTotals(adminClient, quotationId)
   revalidatePath(`/work-orders/${workOrderId}/quotation`)
 }
 
@@ -88,12 +93,18 @@ export async function removeQuotationItem(formData: FormData) {
   if (!user) redirect('/auth/login')
 
   const adminClient = createAdminClient()
-  const itemId = formData.get('item_id') as string
-  const quotationId = formData.get('quotation_id') as string
-  const workOrderId = formData.get('work_order_id') as string
+  const itemId       = formData.get('item_id') as string
+  const quotationId  = formData.get('quotation_id') as string
+  const workOrderId  = formData.get('work_order_id') as string
+  const itemSubtotal = Number(formData.get('item_subtotal') ?? 0)
+  const currentTotal = Number(formData.get('current_total') ?? 0)
+  const newTotal     = Math.max(0, currentTotal - itemSubtotal)
 
-  await adminClient.from('quotation_item').delete().eq('id', itemId)
-  await recalcQuotationTotals(adminClient, quotationId)
+  // Delete item + update totals in parallel
+  await Promise.all([
+    adminClient.from('quotation_item').delete().eq('id', itemId),
+    adminClient.from('quotation').update({ subtotal: newTotal, total: newTotal }).eq('id', quotationId),
+  ])
 
   revalidatePath(`/work-orders/${workOrderId}/quotation`)
 }
@@ -174,13 +185,3 @@ export async function changeQuotationStatus(formData: FormData) {
   redirect(`/work-orders/${workOrderId}/quotation${newStatus === 'sent' ? '?sent=1' : ''}`)
 }
 
-async function recalcQuotationTotals(adminClient: any, quotationId: string) {
-  const { data: items } = await adminClient
-    .from('quotation_item').select('subtotal').eq('quotation_id', quotationId)
-
-  const total = (items ?? []).reduce((s: number, i: any) => s + (i.subtotal ?? 0), 0)
-  await adminClient.from('quotation').update({
-    subtotal: total,
-    total,
-  }).eq('id', quotationId)
-}

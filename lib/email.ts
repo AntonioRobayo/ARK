@@ -362,7 +362,7 @@ export async function sendFindingNotificationEmail({
   const body = `
     <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
       Hola <strong style="color:#1F2937;">${customerName}</strong>, durante la revisión de tu
-      <strong style="color:#1F2937;">${vehiclePlate}</strong> (OT ${otNumber})
+      <strong style="color:#1F2937;">${vehiclePlate}</strong> (${otNumber})
       nuestro equipo encontró lo siguiente:
     </p>
 
@@ -393,10 +393,10 @@ export async function sendFindingNotificationEmail({
     </table>
   `
 
-  const html = arkEmailLayout(`Hallazgos en tu vehículo — OT ${otNumber}`, body, '🔍', { workshopName, workshopLogoUrl })
+  const html = arkEmailLayout(`Hallazgos en tu vehículo — ${otNumber}`, body, '🔍', { workshopName, workshopLogoUrl })
   await sendEmail({
     to,
-    subject: `🔍 Revisamos tu ${vehiclePlate} y encontramos algo — OT ${otNumber}`,
+    subject: `🔍 Revisamos tu ${vehiclePlate} y encontramos algo — ${otNumber}`,
     html,
   })
 }
@@ -435,8 +435,8 @@ export async function sendOtStatusEmail({
     </p>
   `
 
-  const html = arkEmailLayout(`Actualización OT ${otNumber}`, body, '🔧')
-  await sendEmail({ to, subject: `OT ${otNumber} — ${status} | ARK Workshop`, html })
+  const html = arkEmailLayout(`Actualización ${otNumber}`, body, '🔧')
+  await sendEmail({ to, subject: `${otNumber} — ${status} | ARK Workshop`, html })
 }
 
 // ─── OT abierta — email al cliente ───────────────────────────────────────────
@@ -447,13 +447,14 @@ export interface OtCustomerPart { description: string; quantity: number; conditi
 export interface OtCustodyItem { description: string; location?: string | null }
 
 export async function sendOtOpenedEmail({
-  to, customerName, workshopName, otNumber, vehiclePlate, vehicleLabel,
+  to, customerName, workshopName, workshopLogoUrl, otNumber, vehiclePlate, vehicleLabel,
   receptionNotes, estimatedDelivery, technicianName,
   photos, customerParts, custodyItems,
 }: {
   to: string
   customerName: string
   workshopName: string
+  workshopLogoUrl?: string | null
   otNumber: string
   vehiclePlate: string
   vehicleLabel: string
@@ -539,15 +540,33 @@ export async function sendOtOpenedEmail({
 
     ${photosHtml}
 
-    <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">
-      Este correo es un registro de ingreso. Nos pondremos en contacto si hay novedades durante la revisión.
+    <p style="margin:0 0 20px;font-size:13px;color:#9CA3AF;line-height:1.6;">
+      Te mantendremos informado sobre el avance del servicio.
     </p>
+
+    ${(() => {
+      const base = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? ''
+      return base ? `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 8px;">
+      <tr>
+        <td align="center" style="border-radius:10px;" bgcolor="#FF7316">
+          <a href="${base}/portal" target="_blank"
+            style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:0.01em;">
+            Ver estado en el portal →
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:6px 0 0;font-size:11px;color:#9CA3AF;text-align:center;">
+      Ingresa con el mismo correo al que llegó este mensaje.
+    </p>` : ''
+    })()}
   `
 
-  const html = arkEmailLayout(`Tu vehículo ingresó al taller`, body, '🔑')
+  const html = arkEmailLayout(`Tu vehículo ingresó al taller`, body, '🔑', { workshopName, workshopLogoUrl: workshopLogoUrl ?? undefined })
   await sendEmail({
     to,
-    subject: `OT ${otNumber} — Ingreso de vehículo | ${workshopName}`,
+    subject: `${otNumber} — Ingreso de vehículo | ${workshopName}`,
     html,
   })
 }
@@ -659,7 +678,7 @@ export async function sendOtClosedEmail({
   const html = arkEmailLayout(`Tu vehículo está listo`, body, '✅', { workshopName, workshopLogoUrl })
   await sendEmail({
     to,
-    subject: `OT ${otNumber} — Vehículo listo | ${workshopName}`,
+    subject: `${otNumber} — Vehículo listo | ${workshopName}`,
     html,
   })
 }
