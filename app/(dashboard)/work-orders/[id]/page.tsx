@@ -15,6 +15,7 @@ import { OTGallery } from '@/components/work-orders/OTGallery'
 import { FindingsSection } from '@/components/work-orders/FindingsSection'
 import { CustomerPartsSection } from '@/components/work-orders/CustomerPartsSection'
 import { AutoRefreshOnce } from '@/components/work-orders/AutoRefreshOnce'
+import { Collapsible } from '@/components/ui/Collapsible'
 
 export default async function WorkOrderDetailPage({
   params,
@@ -233,10 +234,9 @@ export default async function WorkOrderDetailPage({
             </div>
           </div>
 
-          {/* Recepción */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{t('detail.reception')}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+          {/* Recepción — colapsable */}
+          <Collapsible title={t('detail.reception')}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm pt-1">
               <div>
                 <p className="text-gray-400 text-xs">{t('detail.fuel')}</p>
                 <p className="font-medium text-gray-700 mt-1">{ot.fuel_level ?? '—'}</p>
@@ -281,9 +281,7 @@ export default async function WorkOrderDetailPage({
                 <p className="text-xs text-gray-400">Sin email — no se puede notificar</p>
               )}
             </div>
-          </div>
-
-          {/* Hallazgos de diagnóstico */}
+          </Collapsible>
 
           {/* Hallazgos de diagnóstico */}
           <FindingsSection
