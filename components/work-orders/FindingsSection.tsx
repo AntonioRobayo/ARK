@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useOptimistic } from 'react'
 import { addFinding, deleteFinding, updateFinding, notifyCustomerFindings } from '@/app/(dashboard)/work-orders/[id]/actions'
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -48,11 +48,34 @@ export function FindingsSection({ otId, findings, customerEmail, customerName, o
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDesc, setEditDesc] = useState('')
   const [editSev, setEditSev] = useState('moderate')
+  const [newDesc, setNewDesc] = useState('')
+  const [newSev, setNewSev] = useState('moderate')
   const [isPending, startTransition] = useTransition()
 
-  const pendingCount  = findings.filter(f => f.status === 'pending').length
-  const notifiedCount = findings.filter(f => f.status === 'notified').length
-  const hasFindings   = findings.length > 0
+  const [optimisticFindings, addOptimistic] = useOptimistic(
+    findings,
+    (state: Finding[], item: Finding) => [...state, item],
+  )
+
+  const pendingCount  = optimisticFindings.filter(f => f.status === 'pending').length
+  const notifiedCount = optimisticFindings.filter(f => f.status === 'notified').length
+  const hasFindings   = optimisticFindings.length > 0
+
+  const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const description = newDesc.trim()
+    if (!description) return
+    const fd = new FormData()
+    fd.append('ot_id', otId)
+    fd.append('description', description)
+    fd.append('severity', newSev)
+    setNewDesc('')
+    setNewSev('moderate')
+    startTransition(async () => {
+      addOptimistic({ id: `temp-${Date.now()}`, description, severity: newSev, status: 'pending', notified_at: null, customer_responded_at: null })
+      await addFinding(fd)
+    })
+  }
 
   const startEdit = (f: Finding) => {
     setEditingId(f.id)
@@ -111,7 +134,7 @@ export function FindingsSection({ otId, findings, customerEmail, customerName, o
       {/* Lista de hallazgos */}
       {hasFindings && (
         <div className="space-y-2 mb-4">
-          {findings.map(f => {
+          {optimisticFindings.map(f => {
             const isPendingFinding = f.status === 'pending'
             const isEditing = editingId === f.id
 
@@ -214,19 +237,19 @@ export function FindingsSection({ otId, findings, customerEmail, customerName, o
       )}
 
       {/* Formulario agregar hallazgo */}
-      <form action={addFinding} className="space-y-2 border-t border-gray-100 pt-3">
-        <input type="hidden" name="ot_id" value={otId} />
+      <form onSubmit={handleAdd} className="space-y-2 border-t border-gray-100 pt-3">
         <div className="flex gap-2">
           <input
             type="text"
-            name="description"
+            value={newDesc}
+            onChange={e => setNewDesc(e.target.value)}
             required
             placeholder="Describe el hallazgo…"
             className="flex-1 min-w-0 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
           />
           <select
-            name="severity"
-            defaultValue="moderate"
+            value={newSev}
+            onChange={e => setNewSev(e.target.value)}
             className="text-sm border border-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white shrink-0"
           >
             <option value="minor">Menor</option>
@@ -236,9 +259,10 @@ export function FindingsSection({ otId, findings, customerEmail, customerName, o
         </div>
         <button
           type="submit"
-          className="w-full text-sm bg-slate-800 hover:bg-slate-700 text-white font-medium px-3 py-2 rounded-lg transition-colors"
+          disabled={!newDesc.trim() || isPending}
+          className="w-full text-sm bg-slate-800 hover:bg-slate-700 text-white font-medium px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
         >
-          + Agregar
+          {isPending ? 'Guardando…' : '+ Agregar'}
         </button>
       </form>
     </div>
