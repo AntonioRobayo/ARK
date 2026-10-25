@@ -41,6 +41,7 @@ export default async function WorkOrderDetailPage({
     { data: findings },
     { data: auditLog },
     { data: customerParts },
+    { data: custodyItems },
   ] = await Promise.all([
     adminClient
       .from('work_order')
@@ -90,12 +91,17 @@ export default async function WorkOrderDetailPage({
     adminClient
       .from('tenant_audit_log')
       .select('id, event, created_at, details')
-      .or('event.like.finding.%,event.like.customer_part.%')
+      .or('event.like.finding.%,event.like.customer_part.%,event.like.custody_item.%')
       .filter('details->>work_order_id', 'eq', id)
       .order('created_at', { ascending: false }),
     adminClient
       .from('work_order_customer_part')
       .select('id, description, quantity, condition, notes, created_at')
+      .eq('work_order_id', id)
+      .order('created_at', { ascending: true }),
+    adminClient
+      .from('custody_item')
+      .select('id, description, location')
       .eq('work_order_id', id)
       .order('created_at', { ascending: true }),
   ])
@@ -129,6 +135,7 @@ export default async function WorkOrderDetailPage({
     'finding.customer_approved':     'Cliente solicitó cotizar',
     'finding.customer_noted':        'Cliente registró como nota',
     'customer_part.added':           'Repuesto del cliente registrado',
+    'custody_item.added':            'Objeto en custodia registrado',
     'quotation.customer_responded':  'Cliente respondió la cotización',
   }
 
@@ -276,15 +283,7 @@ export default async function WorkOrderDetailPage({
             </div>
           </div>
 
-          {/* Repuestos del cliente */}
-          <CustomerPartsSection
-            otId={id}
-            tenantId={ot.tenant_id}
-            vehicleId={ot.vehicle_id}
-            parts={customerParts ?? []}
-            attachments={(driveAttachments ?? []) as any[]}
-            driveEnabled={driveEnabled}
-          />
+          {/* Hallazgos de diagnóstico */}
 
           {/* Hallazgos de diagnóstico */}
           <FindingsSection
@@ -453,6 +452,49 @@ export default async function WorkOrderDetailPage({
               </Link>
             </div>
           </div>
+
+          {/* Repuestos del cliente + Objetos en custodia */}
+          {((customerParts ?? []).length > 0 || (custodyItems ?? []).length > 0) && (
+            <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
+              {(customerParts ?? []).length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+                    Repuestos del cliente
+                    <span className="ml-1.5 text-gray-300 font-normal normal-case">{customerParts!.length} pieza{customerParts!.length !== 1 ? 's' : ''}</span>
+                  </p>
+                  <div className="space-y-1">
+                    {(customerParts ?? []).map((p: any) => (
+                      <div key={p.id} className="flex items-center gap-2">
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded border shrink-0 ${
+                          p.condition === 'new'     ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          p.condition === 'used'    ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                          'bg-red-50 text-red-700 border-red-200'
+                        }`}>
+                          {p.condition === 'new' ? 'Nuevo' : p.condition === 'used' ? 'Usado' : 'Dañado'}
+                        </span>
+                        <span className="text-sm text-gray-700 flex-1 truncate">{p.description}</span>
+                        {p.quantity > 1 && <span className="text-xs text-gray-400 shrink-0">× {p.quantity}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(custodyItems ?? []).length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Objetos en custodia</p>
+                  <div className="space-y-1">
+                    {(custodyItems ?? []).map((c: any) => (
+                      <div key={c.id} className="flex items-center gap-2">
+                        <span className="text-base shrink-0">📦</span>
+                        <span className="text-sm text-gray-700 flex-1">{c.description}</span>
+                        {c.location && <span className="text-xs text-gray-400 shrink-0">{c.location}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Tiempo registrado */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">

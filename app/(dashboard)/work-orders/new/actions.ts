@@ -143,13 +143,33 @@ export async function createWorkOrder(formData: FormData) {
         )
       : Promise.resolve(),
 
-    // Audit log
+    // Audit log — OT creation
     adminClient.from('tenant_audit_log').insert({
       tenant_id: profile.tenant_id,
       event:     'work_order.created',
       actor_id:  user.id,
       details:   { work_order_id: ot.id, number: String(nextNum) },
     }),
+
+    // Audit log — individual customer parts
+    ...customerParts.filter(p => p.description.trim()).map(p =>
+      adminClient.from('tenant_audit_log').insert({
+        tenant_id: profile.tenant_id,
+        event:     'customer_part.added',
+        actor_id:  user.id,
+        details:   { work_order_id: ot.id, description: p.description, quantity: p.quantity },
+      })
+    ),
+
+    // Audit log — individual custody items
+    ...custodyItems.filter(i => i.description.trim()).map(i =>
+      adminClient.from('tenant_audit_log').insert({
+        tenant_id: profile.tenant_id,
+        event:     'custody_item.added',
+        actor_id:  user.id,
+        details:   { work_order_id: ot.id, description: i.description },
+      })
+    ),
   ]
 
   await Promise.all(parallelOps)
