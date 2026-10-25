@@ -39,23 +39,21 @@ export async function changeStatus(formData: FormData) {
     updateData.delivered_at = new Date().toISOString()
   }
 
-  const { error } = await adminClient
-    .from('work_order')
-    .update(updateData)
-    .eq('id', otId)
+  // Update + status log in parallel (both need ot.status, independent of each other)
+  const [{ error }] = await Promise.all([
+    adminClient.from('work_order').update(updateData).eq('id', otId),
+    adminClient.from('work_order_status_log').insert({
+      work_order_id: otId,
+      from_status:   ot.status,
+      to_status:     toStatus,
+      changed_by:    user.id,
+      reason,
+    }),
+  ])
 
   if (error) {
     redirect(`/work-orders/${otId}?error=` + encodeURIComponent(error.message))
   }
-
-  // Log del cambio
-  await adminClient.from('work_order_status_log').insert({
-    work_order_id: otId,
-    from_status:   ot.status,
-    to_status:     toStatus,
-    changed_by:    user.id,
-    reason,
-  })
 
   // Email de cierre al cliente
   if (toStatus === 'closed' || toStatus === 'delivered_with_balance') {
