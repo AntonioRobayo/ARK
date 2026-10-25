@@ -717,7 +717,7 @@ export async function sendOtCancelledEmail({
     </p>
   `
 
-  const html = arkEmailLayout(`${otNumber} — Cancelada`, body, '❌', { workshopName, workshopLogoUrl })
+  const html = arkEmailLayout(`${otNumber} — Cancelada`, body, '❌', { workshopName, workshopLogoUrl: workshopLogoUrl ?? undefined })
   await sendEmail({ to, subject: `${otNumber} — Orden cancelada | ${workshopName}`, html })
 }
 
