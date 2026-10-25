@@ -19,15 +19,18 @@ export async function upsertQuotation(formData: FormData) {
   const adminClient = createAdminClient()
 
   if (!quotationId) {
-    const [{ data: { user } }, { data: numRow }] = await Promise.all([
+    const [{ data: { user } }, { count }, { data: otRow }] = await Promise.all([
       supabase.auth.getUser(),
-      adminClient.rpc('next_document_number', { p_tenant_id: tenantId, p_doc_type: 'COT' }),
+      adminClient.from('quotation').select('id', { count: 'exact', head: true }).eq('work_order_id', workOrderId),
+      adminClient.from('work_order').select('number').eq('id', workOrderId).single(),
     ])
     if (!user) redirect('/auth/login')
+    const seq = (count ?? 0) + 1
+    const quotationNumber = `${otRow?.number}-COT-${seq}`
     await adminClient.from('quotation').insert({
       tenant_id: tenantId,
       work_order_id: workOrderId,
-      number: numRow,
+      number: quotationNumber,
       status: 'draft',
       subtotal: 0,
       tax_amount: 0,

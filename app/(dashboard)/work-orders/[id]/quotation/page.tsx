@@ -56,14 +56,17 @@ export default async function QuotationPage({
 
   // Auto-create quotation if none exists — skip the empty-state click
   if (!quotations || quotations.length === 0) {
-    const { data: numRow } = await adminClient.rpc('next_document_number', {
-      p_tenant_id: myProfile.tenant_id,
-      p_doc_type: 'COT',
-    })
+    // Count ALL quotations (including cancelled) to avoid reusing numbers
+    const { count } = await adminClient
+      .from('quotation')
+      .select('id', { count: 'exact', head: true })
+      .eq('work_order_id', id)
+    const seq = (count ?? 0) + 1
+    const quotationNumber = `${ot.number}-COT-${seq}`
     await adminClient.from('quotation').insert({
       tenant_id:        myProfile.tenant_id,
       work_order_id:    id,
-      number:           numRow,
+      number:           quotationNumber,
       status:           'draft',
       subtotal:         0,
       tax_amount:       0,
