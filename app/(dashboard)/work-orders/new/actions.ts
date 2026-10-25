@@ -121,6 +121,25 @@ export async function createWorkOrder(formData: FormData) {
     }
   }
 
+  // Insertar repuestos del cliente
+  const partsRaw = formData.get('customer_parts_data') as string
+  if (partsRaw) {
+    const parts: { description: string; quantity: number; condition: string; notes: string }[] = JSON.parse(partsRaw)
+    if (parts.length > 0) {
+      await adminClient.from('work_order_customer_part').insert(
+        parts.map(p => ({
+          tenant_id:     profile.tenant_id,
+          work_order_id: ot.id,
+          description:   p.description,
+          quantity:      p.quantity,
+          condition:     p.condition,
+          notes:         p.notes || null,
+          created_by:    user.id,
+        }))
+      )
+    }
+  }
+
   // Insertar checklist de recepción
   const checklistRaw = formData.get('checklist_data') as string
   if (checklistRaw) {
@@ -156,5 +175,51 @@ export async function createWorkOrder(formData: FormData) {
     details: { work_order_id: ot.id, number: String(nextNum) },
   })
 
-  redirect(`/work-orders/${ot.id}`)
+  // Email automático de recepción al cliente
+  void (async () => {
+    try {
+      const { data: fullOt } = await adminClient
+        .from('work_order')
+        .select(`
+          number, reception_notes, estimated_delivery_at, tenant_id,
+          customer:customer_id(first_name, last_name, email),
+          vehicle:vehicle_id(plate, brand, model, year),
+          technician:technician_id(first_name, last_name)
+        `)
+        .eq('id', ot.id).single()
+      if (!fullOt) return
+      const customer   = Array.isArray(fullOt.customer)   ? fullOt.customer[0]   : fullOt.customer as any
+      const vehicle    = Array.isArray(fullOt.vehicle)    ? fullOt.vehicle[0]    : fullOt.vehicle    as any
+      const technician = Array.isArray(fullOt.technician) ? fullOt.technician[0] : fullOt.technician as any
+      if (!customer?.email) return
+
+      const [{ data: tenant }, { data: custodyRows }, { data: insertedParts }] = await Promise.all([
+        adminClient.from('tenants').select('name, settings').eq('id', fullOt.tenant_id).single(),
+        adminClient.from('custody_item').select('description, location').eq('work_order_id', ot.id),
+        adminClient.from('work_order_customer_part').select('description, quantity, condition, notes').eq('work_order_id', ot.id),
+      ])
+
+      const tenantSettings = (tenant?.settings ?? {}) as Record<string, string>
+      const { sendOtOpenedEmail } = await import('@/lib/email')
+      await sendOtOpenedEmail({
+        to:           customer.email,
+        customerName: `${customer.first_name} ${customer.last_name ?? ''}`.trim(),
+        workshopName: tenant?.name ?? 'ARK Workshop',
+        workshopLogoUrl: tenantSettings.logo_url,
+        otNumber:     String(fullOt.number),
+        vehiclePlate: vehicle?.plate ?? '',
+        vehicleLabel: [vehicle?.brand, vehicle?.model, vehicle?.year].filter(Boolean).join(' '),
+        receptionNotes:   fullOt.reception_notes,
+        estimatedDelivery: fullOt.estimated_delivery_at,
+        technicianName: technician ? `${technician.first_name} ${technician.last_name ?? ''}`.trim() : null,
+        photos:       [],
+        customerParts: (insertedParts ?? []).map((p: any) => ({ description: p.description, quantity: p.quantity, condition: p.condition, notes: p.notes })),
+        custodyItems:  (custodyRows  ?? []).map((c: any) => ({ description: c.description, location: c.location })),
+      })
+
+      await adminClient.from('work_order').update({ reception_notified_at: new Date().toISOString() }).eq('id', ot.id)
+    } catch { /* email failure should not block OT creation */ }
+  })()
+
+  redirect(`/work-orders/${ot.id}?reception=new`)
 }

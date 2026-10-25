@@ -26,6 +26,13 @@ interface Tech {
 interface FuelOption { value: string; label: string }
 interface Branch { id: string; name: string }
 
+interface CustomerPart {
+  description: string
+  quantity: number
+  condition: string
+  notes: string
+}
+
 interface Props {
   customerId: string
   vehicleId: string
@@ -39,11 +46,18 @@ interface Props {
 
 type ChecklistStatus = 'ok' | 'issue' | 'na'
 
+const CONDITION_OPTIONS = [
+  { value: 'new',     label: 'Nuevo' },
+  { value: 'used',    label: 'Usado' },
+  { value: 'damaged', label: 'Dañado' },
+]
+
 export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMileage, techs, checklist, fuelLevelOptions, branches }: Props) {
   const t = useTranslations('workOrders')
 
   const [custodyItems, setCustodyItems] = useState<{ description: string; location: string }[]>([])
   const [checklistResponses, setChecklistResponses] = useState<Record<string, ChecklistStatus>>({})
+  const [customerParts, setCustomerParts] = useState<CustomerPart[]>([])
 
   const addCustodyItem = () => {
     setCustodyItems(prev => [...prev, { description: '', location: '' }])
@@ -61,10 +75,16 @@ export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMil
     setChecklistResponses(prev => ({ ...prev, [itemId]: status }))
   }
 
+  const addCustomerPart = () => setCustomerParts(prev => [...prev, { description: '', quantity: 1, condition: 'new', notes: '' }])
+  const removeCustomerPart = (i: number) => setCustomerParts(prev => prev.filter((_, idx) => idx !== i))
+  const updateCustomerPart = (i: number, field: keyof CustomerPart, value: string | number) =>
+    setCustomerParts(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
+
   const custodyJson = JSON.stringify(custodyItems.filter(i => i.description.trim()))
   const checklistJson = checklist
     ? JSON.stringify({ templateId: checklist.id, responses: checklistResponses })
     : JSON.stringify(null)
+  const customerPartsJson = JSON.stringify(customerParts.filter(p => p.description.trim()))
 
   return (
     <form action={createWorkOrder} className="space-y-5">
@@ -73,6 +93,7 @@ export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMil
       {appointmentId && <input type="hidden" name="appointment_id" value={appointmentId} />}
       <input type="hidden" name="custody_items" value={custodyJson} />
       <input type="hidden" name="checklist_data" value={checklistJson} />
+      <input type="hidden" name="customer_parts_data" value={customerPartsJson} />
       {branches.length === 1 && <input type="hidden" name="branch_id" value={branches[0].id} />}
 
       {branches.length > 1 && (
@@ -163,6 +184,60 @@ export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMil
           className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
           placeholder={t('new.observationsPlaceholder')}
         />
+      </div>
+
+      {/* Repuestos del cliente */}
+      <div className="border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Repuestos del cliente</h3>
+          <button
+            type="button"
+            onClick={addCustomerPart}
+            className="text-xs text-slate-600 hover:text-slate-800 border border-slate-300 rounded px-2 py-1 transition-colors"
+          >
+            + Agregar repuesto
+          </button>
+        </div>
+        {customerParts.length === 0 ? (
+          <p className="text-xs text-gray-400 italic">Sin repuestos registrados.</p>
+        ) : (
+          <div className="space-y-2">
+            {customerParts.map((part, i) => (
+              <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-start">
+                <input
+                  type="text"
+                  value={part.description}
+                  onChange={e => updateCustomerPart(i, 'description', e.target.value)}
+                  placeholder="Descripción del repuesto"
+                  className="px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                />
+                <input
+                  type="number"
+                  value={part.quantity}
+                  min={1}
+                  onChange={e => updateCustomerPart(i, 'quantity', parseInt(e.target.value) || 1)}
+                  className="w-14 px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 text-center"
+                />
+                <select
+                  value={part.condition}
+                  onChange={e => updateCustomerPart(i, 'condition', e.target.value)}
+                  className="px-2 py-1.5 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                >
+                  {CONDITION_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => removeCustomerPart(i)}
+                  className="text-red-400 hover:text-red-600 text-sm w-6 h-6 flex items-center justify-center mt-0.5"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Objetos en custodia */}
