@@ -124,8 +124,6 @@ export default async function WorkOrderDetailPage({
   const t = await getTranslations('workOrders')
   const transitions = STATUS_TRANSITIONS[ot.status as WorkOrderStatus] ?? []
   const allQuotations = quotations ?? []
-  // Summary card shows the most recent approved quotation (confirmed work).
-  // If there's also a draft/sent supplement, it's noted separately.
   const mostRecentApproved = allQuotations.find(q => q.status === 'approved') ?? null
   const draftOrSentQuotation = allQuotations.find(q => ['draft', 'sent'].includes(q.status)) ?? null
   const activeQuotation = mostRecentApproved ?? draftOrSentQuotation ?? allQuotations[0] ?? null
@@ -145,8 +143,9 @@ export default async function WorkOrderDetailPage({
     ...(auditLog ?? []).map((e: any) => ({ ...e, _type: 'audit' as const })),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   const totalMinutes = (timeEntries ?? []).reduce((s, e) => s + (e.minutes ?? 0), 0)
-  const items = activeQuotation?.quotation_item ?? []
-  const totalServices = items.reduce((s: number, i: any) => s + (i.subtotal ?? 0), 0)
+  // Aggregate items from ALL non-cancelled quotations so supplements appear in the summary
+  const items = allQuotations.flatMap((q: any) => q.quotation_item ?? [])
+  const totalServices = allQuotations.reduce((s: number, q: any) => s + (q.total ?? 0), 0)
   const activeInvoice = (invoices ?? [])[0] ?? null
 
   return (
@@ -365,7 +364,7 @@ export default async function WorkOrderDetailPage({
                     {activeQuotation?.discount_amount ? ` · ${t('detail.discount')} $${activeQuotation.discount_amount.toLocaleString('es-CO')}` : ''}
                   </div>
                   <span className="text-sm font-bold text-gray-900">
-                    {t('detail.total', { amount: (activeQuotation?.total ?? totalServices).toLocaleString('es-CO') })}
+                    {t('detail.total', { amount: totalServices.toLocaleString('es-CO') })}
                   </span>
                 </div>
               </>
