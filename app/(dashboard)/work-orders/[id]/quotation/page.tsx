@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound, redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { addQuotationItem, removeQuotationItem, changeQuotationStatus, upsertQuotation } from './actions'
 import { MoneyInput } from '@/components/ui/MoneyInput'
@@ -52,6 +53,27 @@ export default async function QuotationPage({
   ])
 
   if (!ot) notFound()
+
+  // Auto-create quotation if none exists — skip the empty-state click
+  if (!quotations || quotations.length === 0) {
+    const { data: numRow } = await adminClient.rpc('next_document_number', {
+      p_tenant_id: myProfile.tenant_id,
+      p_doc_type: 'COT',
+    })
+    await adminClient.from('quotation').insert({
+      tenant_id:        myProfile.tenant_id,
+      work_order_id:    id,
+      number:           numRow,
+      status:           'draft',
+      subtotal:         0,
+      tax_amount:       0,
+      discount_amount:  0,
+      total:            0,
+      created_by:       user.id,
+    })
+    revalidatePath(`/work-orders/${id}`)
+    redirect(`/work-orders/${id}/quotation`)
+  }
 
   const t = await getTranslations('quotation')
   const allQuotations = quotations ?? []
