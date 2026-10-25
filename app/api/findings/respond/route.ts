@@ -112,24 +112,27 @@ export async function POST(req: NextRequest) {
 
   await Promise.all(updates)
 
-  // Fetch tenant_id + finding descriptions for audit log
-  const otId = findings[0]?.work_order_id ?? null
-  if (otId) {
-    const { data: fullFindings } = await admin
-      .from('work_order_finding')
-      .select('id, description, work_order:work_order_id(tenant_id)')
-      .in('id', decidedFindings.map(f => f.id))
+  // Audit log — best-effort, never blocks the response
+  try {
+    const otId = findings[0]?.work_order_id ?? null
+    if (otId && decidedFindings.length > 0) {
+      const { data: fullFindings } = await admin
+        .from('work_order_finding')
+        .select('id, description, tenant_id')
+        .in('id', decidedFindings.map(f => f.id))
 
-    const tenantId = (fullFindings?.[0]?.work_order as any)?.tenant_id
-    if (tenantId && fullFindings) {
-      const auditEntries = fullFindings.map(f => ({
-        tenant_id: tenantId,
-        event: decisions[f.id] === 'approve_quote' ? 'finding.customer_approved' : 'finding.customer_noted',
-        details: { work_order_id: otId, finding_id: f.id, description: f.description },
-      }))
-      await admin.from('tenant_audit_log').insert(auditEntries)
+      const tenantId = fullFindings?.[0]?.tenant_id
+      if (tenantId && fullFindings) {
+        await admin.from('tenant_audit_log').insert(
+          fullFindings.map(f => ({
+            tenant_id: tenantId,
+            event: decisions[f.id] === 'approve_quote' ? 'finding.customer_approved' : 'finding.customer_noted',
+            details: { work_order_id: otId, finding_id: f.id, description: (f as any).description },
+          }))
+        )
+      }
     }
-  }
+  } catch { /* audit failure must not block the customer response */ }
 
   return NextResponse.json({ ok: true })
 }
