@@ -143,8 +143,6 @@ export default async function WorkOrderDetailPage({
     ...(auditLog ?? []).map((e: any) => ({ ...e, _type: 'audit' as const })),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   const totalMinutes = (timeEntries ?? []).reduce((s, e) => s + (e.minutes ?? 0), 0)
-  // Aggregate items from ALL non-cancelled quotations so supplements appear in the summary
-  const items = allQuotations.flatMap((q: any) => q.quotation_item ?? [])
   const totalServices = allQuotations.reduce((s: number, q: any) => s + (q.total ?? 0), 0)
   const activeInvoice = (invoices ?? [])[0] ?? null
 
@@ -295,22 +293,7 @@ export default async function WorkOrderDetailPage({
           {/* Cotización / Servicios */}
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{t('detail.quotation')}</p>
-                {activeQuotation && (
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {activeQuotation.number} ·{' '}
-                    <span className={`font-medium ${
-                      activeQuotation.status === 'approved' ? 'text-emerald-600' :
-                      activeQuotation.status === 'draft' ? 'text-amber-600' : 'text-gray-500'
-                    }`}>
-                      {activeQuotation.status === 'approved' ? t('detail.approved') :
-                       activeQuotation.status === 'draft' ? t('detail.draft') :
-                       activeQuotation.status === 'sent' ? t('detail.sent') : activeQuotation.status}
-                    </span>
-                  </p>
-                )}
-              </div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{t('detail.quotation')}</p>
               <div className="flex items-center gap-2">
                 {draftOrSentQuotation && mostRecentApproved && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium">
@@ -326,48 +309,76 @@ export default async function WorkOrderDetailPage({
               </div>
             </div>
 
-            {items.length === 0 ? (
+            {allQuotations.length === 0 ? (
               <p className="text-sm text-gray-400 py-4 text-center">{t('detail.noServices')}</p>
             ) : (
-              <>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-gray-400 border-b border-gray-100">
-                      <th className="text-left pb-2 font-medium">Descripción</th>
-                      <th className="text-left pb-2 font-medium">Tipo</th>
-                      <th className="text-right pb-2 font-medium">Cant.</th>
-                      <th className="text-right pb-2 font-medium">P. Unit.</th>
-                      <th className="text-right pb-2 font-medium">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item: any) => (
-                      <tr key={item.id} className="border-b border-gray-50">
-                        <td className="py-2 text-gray-700">{item.description}</td>
-                        <td className="py-2">
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                            item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'
-                          }`}>
-                            {item.item_type === 'service' ? t('detail.itemType.service') : t('detail.itemType.part')}
-                          </span>
-                        </td>
-                        <td className="py-2 text-right text-gray-500">{item.quantity}</td>
-                        <td className="py-2 text-right text-gray-500">${(item.unit_price ?? 0).toLocaleString('es-CO')}</td>
-                        <td className="py-2 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-1">
-                  <div className="text-xs text-gray-400">
-                    {activeQuotation?.tax_amount ? `${t('detail.tax')} $${activeQuotation.tax_amount.toLocaleString('es-CO')}` : ''}
-                    {activeQuotation?.discount_amount ? ` · ${t('detail.discount')} $${activeQuotation.discount_amount.toLocaleString('es-CO')}` : ''}
+              <div className="space-y-3">
+                {allQuotations.map((q: any, idx: number) => {
+                  const qItems = q.quotation_item ?? []
+                  const isSuplement = idx > 0
+                  return (
+                    <div key={q.id}>
+                      {/* Quotation header row */}
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {isSuplement && (
+                          <span className="text-xs font-medium text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">Suplemento</span>
+                        )}
+                        <span className="text-xs text-gray-500 font-medium">{q.number}</span>
+                        <span className={`text-xs font-medium ${
+                          q.status === 'approved' ? 'text-emerald-600' :
+                          q.status === 'draft' ? 'text-amber-600' : 'text-gray-500'
+                        }`}>
+                          · {q.status === 'approved' ? t('detail.approved') :
+                             q.status === 'draft' ? t('detail.draft') :
+                             q.status === 'sent' ? t('detail.sent') : q.status}
+                        </span>
+                      </div>
+                      {qItems.length === 0 ? (
+                        <p className="text-xs text-gray-400 py-2 pl-1">{t('detail.noServices')}</p>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-xs text-gray-400 border-b border-gray-100">
+                              <th className="text-left pb-1.5 font-medium">Descripción</th>
+                              <th className="text-left pb-1.5 font-medium">Tipo</th>
+                              <th className="text-right pb-1.5 font-medium">Cant.</th>
+                              <th className="text-right pb-1.5 font-medium">P. Unit.</th>
+                              <th className="text-right pb-1.5 font-medium">Subtotal</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {qItems.map((item: any) => (
+                              <tr key={item.id} className="border-b border-gray-50">
+                                <td className="py-2 text-gray-700">{item.description}</td>
+                                <td className="py-2">
+                                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                    item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'
+                                  }`}>
+                                    {item.item_type === 'service' ? t('detail.itemType.service') : t('detail.itemType.part')}
+                                  </span>
+                                </td>
+                                <td className="py-2 text-right text-gray-500">{item.quantity}</td>
+                                <td className="py-2 text-right text-gray-500">${(item.unit_price ?? 0).toLocaleString('es-CO')}</td>
+                                <td className="py-2 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                      <div className="text-right text-xs text-gray-500 pt-1">
+                        ${(q.total ?? 0).toLocaleString('es-CO')}
+                      </div>
+                    </div>
+                  )
+                })}
+                {allQuotations.length > 1 && (
+                  <div className="flex justify-end pt-2 border-t border-gray-100">
+                    <span className="text-sm font-bold text-gray-900">
+                      {t('detail.total', { amount: totalServices.toLocaleString('es-CO') })}
+                    </span>
                   </div>
-                  <span className="text-sm font-bold text-gray-900">
-                    {t('detail.total', { amount: totalServices.toLocaleString('es-CO') })}
-                  </span>
-                </div>
-              </>
+                )}
+              </div>
             )}
           </div>
 
