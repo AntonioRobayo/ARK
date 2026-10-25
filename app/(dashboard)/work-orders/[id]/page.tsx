@@ -14,17 +14,16 @@ import { TimeTracker } from '@/components/work-orders/TimeTracker'
 import { OTGallery } from '@/components/work-orders/OTGallery'
 import { FindingsSection } from '@/components/work-orders/FindingsSection'
 import { CustomerPartsSection } from '@/components/work-orders/CustomerPartsSection'
-import { ReceptionBanner } from '@/components/work-orders/ReceptionBanner'
 
 export default async function WorkOrderDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; notified?: string; reception_notified?: string; reception?: string }>
+  searchParams: Promise<{ error?: string; notified?: string; reception_notified?: string }>
 }) {
   const { id } = await params
-  const { notified, reception_notified, error: pageError, reception } = await searchParams
+  const { notified, reception_notified, error: pageError } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -143,13 +142,6 @@ export default async function WorkOrderDetailPage({
 
   return (
     <div className="max-w-5xl">
-      {reception === 'new' && (
-        <ReceptionBanner
-          otId={id}
-          vehicleId={ot.vehicle_id}
-          driveEnabled={driveEnabled}
-        />
-      )}
       {reception_notified === '1' && (
         <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
           ✅ Correo de ingreso enviado al cliente. Ahora puede agregar fotos desde la sección de Drive.
