@@ -6,7 +6,7 @@ export const STATUS_LABEL: Record<WorkOrderStatus, string> = {
   in_diagnosis:           'En diagnóstico',
   quotation_sent:         'Cotización enviada',
   awaiting_authorization: 'Esperando autorización',
-  authorized:             'Autorizado',
+  authorized:             'Trabajo aprobado',
   in_execution:           'En ejecución',
   blocked_parts:          'Bloqueado — repuestos',
   blocked_technician:     'Bloqueado — técnico',

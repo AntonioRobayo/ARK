@@ -31,6 +31,20 @@ export async function changeStatus(formData: FormData) {
     redirect(`/work-orders/${otId}?error=` + encodeURIComponent(`Transición no permitida: ${ot.status} → ${toStatus}`))
   }
 
+  // Require an approved quotation before marking as authorized
+  if (toStatus === 'authorized') {
+    const { data: approvedQuote } = await adminClient
+      .from('quotation')
+      .select('id')
+      .eq('work_order_id', otId)
+      .eq('status', 'approved')
+      .limit(1)
+      .maybeSingle()
+    if (!approvedQuote) {
+      redirect(`/work-orders/${otId}?error=` + encodeURIComponent('Debe existir una cotización aprobada antes de marcar el trabajo como aprobado'))
+    }
+  }
+
   // Actualizar estado
   const updateData: Record<string, unknown> = { status: toStatus }
   if (toStatus === 'cancelled')              updateData.cancelled_at = new Date().toISOString()
