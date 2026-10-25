@@ -86,8 +86,10 @@ export async function createWorkOrder(formData: FormData) {
   const customerParts: { description: string; quantity: number; condition: string; notes: string }[] =
     partsRaw ? JSON.parse(partsRaw) : []
 
-  // Capture reception photos before redirect (files are only in memory during this request)
+  // Capture all photo batches before redirect (files are only in memory during this request)
   const receptionPhotos = formData.getAll('reception_photos').filter(f => f instanceof File && f.size > 0) as File[]
+  const repuestosPhotos  = formData.getAll('repuestos_photos').filter(f => f instanceof File && f.size > 0) as File[]
+  const custodiaPhotos   = formData.getAll('custodia_photos').filter(f => f instanceof File && f.size > 0) as File[]
 
   // Run all post-creation inserts in parallel
   const parallelOps = [
@@ -202,47 +204,55 @@ export async function createWorkOrder(formData: FormData) {
         adminClient.from('work_order_customer_part').select('description, quantity, condition, notes').eq('work_order_id', ot.id),
       ])
 
-      // Upload reception photos to Drive if Drive is configured and photos were provided
+      // Upload photos to Drive if Drive is configured
       const photoEmailItems: { thumbUrl: string; name: string }[] = []
-      if (receptionPhotos.length > 0 && tenant?.gdrive_enabled && tenant?.gdrive_root_folder_id) {
+      const allPhotoBatches: { files: File[]; section: string; includeInEmail: boolean }[] = [
+        { files: receptionPhotos, section: 'recepcion',         includeInEmail: true },
+        { files: repuestosPhotos,  section: 'repuestos_cliente', includeInEmail: false },
+        { files: custodiaPhotos,   section: 'custodia',          includeInEmail: false },
+      ]
+      const hasPhotos = allPhotoBatches.some(b => b.files.length > 0)
+      if (hasPhotos && tenant?.gdrive_enabled && tenant?.gdrive_root_folder_id) {
         const { getServiceAccountToken, getOtSectionFolder, uploadFileToDrive, driveThumbnailUrl } = await import('@/lib/google-drive')
         let accessToken: string
         try { accessToken = await getServiceAccountToken() } catch { accessToken = '' }
 
         if (accessToken) {
-          for (const photoFile of receptionPhotos) {
-            try {
-              const folderId = await getOtSectionFolder({
-                accessToken,
-                tenantId:    fullOt.tenant_id,
-                tenantName:  tenant.name,
-                vehicleId:   fullOt.vehicle_id,
-                vehiclePlate: vehicle?.plate ?? vehicleId.slice(0, 8).toUpperCase(),
-                vehicleName: vehicle ? `${vehicle.brand} ${vehicle.model}` : '',
-                otId:        ot.id,
-                otNumber:    Number(fullOt.number) || 0,
-                section:     'recepcion',
-              })
-              const arrayBuffer = await photoFile.arrayBuffer()
-              const ext      = photoFile.name.split('.').pop() ?? 'jpg'
-              const filename = `${Date.now()}.${ext}`
-              const driveFile = await uploadFileToDrive(accessToken, folderId, arrayBuffer, filename, photoFile.type)
-              const thumbUrl  = driveThumbnailUrl(driveFile.id)
+          for (const batch of allPhotoBatches) {
+            for (const photoFile of batch.files) {
+              try {
+                const folderId = await getOtSectionFolder({
+                  accessToken,
+                  tenantId:    fullOt.tenant_id,
+                  tenantName:  tenant.name,
+                  vehicleId:   fullOt.vehicle_id,
+                  vehiclePlate: vehicle?.plate ?? vehicleId.slice(0, 8).toUpperCase(),
+                  vehicleName: vehicle ? `${vehicle.brand} ${vehicle.model}` : '',
+                  otId:        ot.id,
+                  otNumber:    Number(fullOt.number) || 0,
+                  section:     batch.section,
+                })
+                const arrayBuffer = await photoFile.arrayBuffer()
+                const ext      = photoFile.name.split('.').pop() ?? 'jpg'
+                const filename = `${Date.now()}.${ext}`
+                const driveFile = await uploadFileToDrive(accessToken, folderId, arrayBuffer, filename, photoFile.type)
+                const thumbUrl  = driveThumbnailUrl(driveFile.id)
 
-              await adminClient.from('work_order_drive_attachment').insert({
-                tenant_id:      fullOt.tenant_id,
-                work_order_id:  ot.id,
-                vehicle_id:     fullOt.vehicle_id,
-                section:        'recepcion',
-                drive_file_id:  driveFile.id,
-                drive_thumb_url: thumbUrl,
-                original_name:  photoFile.name,
-                mime_type:      photoFile.type,
-                size_kb:        Math.round(photoFile.size / 1024),
-                uploaded_by:    user.id,
-              })
-              photoEmailItems.push({ thumbUrl, name: photoFile.name })
-            } catch { /* skip failed photo, others continue */ }
+                await adminClient.from('work_order_drive_attachment').insert({
+                  tenant_id:      fullOt.tenant_id,
+                  work_order_id:  ot.id,
+                  vehicle_id:     fullOt.vehicle_id,
+                  section:        batch.section,
+                  drive_file_id:  driveFile.id,
+                  drive_thumb_url: thumbUrl,
+                  original_name:  photoFile.name,
+                  mime_type:      photoFile.type,
+                  size_kb:        Math.round(photoFile.size / 1024),
+                  uploaded_by:    user.id,
+                })
+                if (batch.includeInEmail) photoEmailItems.push({ thumbUrl, name: photoFile.name })
+              } catch { /* skip failed photo, others continue */ }
+            }
           }
         }
       }
