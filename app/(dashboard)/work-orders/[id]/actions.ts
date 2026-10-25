@@ -121,14 +121,16 @@ export async function changeStatus(formData: FormData) {
         const customer = Array.isArray(fullOt.customer) ? fullOt.customer[0] : fullOt.customer
         const vehicle  = Array.isArray(fullOt.vehicle)  ? fullOt.vehicle[0]  : fullOt.vehicle
         if (!customer?.email) return
-        const { data: tenant } = await adminClient.from('tenants').select('name').eq('id', fullOt.tenant_id).single()
+        const { data: tenant } = await adminClient.from('tenants').select('name, settings').eq('id', fullOt.tenant_id).single()
+        const tenantSettings = (tenant?.settings ?? {}) as Record<string, string>
         const { sendOtCancelledEmail } = await import('@/lib/email')
         await sendOtCancelledEmail({
-          to:           customer.email,
-          customerName: `${customer.first_name} ${customer.last_name ?? ''}`.trim(),
-          workshopName: tenant?.name ?? 'ARK Workshop',
-          otNumber:     String(fullOt.number),
-          vehiclePlate: vehicle?.plate ?? '',
+          to:              customer.email,
+          customerName:    `${customer.first_name} ${customer.last_name ?? ''}`.trim(),
+          workshopName:    tenant?.name ?? 'ARK Workshop',
+          workshopLogoUrl: tenantSettings.logo_url,
+          otNumber:        String(fullOt.number),
+          vehiclePlate:    vehicle?.plate ?? '',
           reason,
         })
       } catch { /* email failure should not block status change */ }

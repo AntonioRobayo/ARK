@@ -688,11 +688,12 @@ export async function sendOtClosedEmail({
 // ─── OT cancelada — email al cliente ─────────────────────────────────────────
 
 export async function sendOtCancelledEmail({
-  to, customerName, workshopName, otNumber, vehiclePlate, reason,
+  to, customerName, workshopName, workshopLogoUrl, otNumber, vehiclePlate, reason,
 }: {
   to: string
   customerName: string
   workshopName: string
+  workshopLogoUrl?: string | null
   otNumber: string
   vehiclePlate: string
   reason?: string | null
@@ -716,7 +717,7 @@ export async function sendOtCancelledEmail({
     </p>
   `
 
-  const html = arkEmailLayout(`${otNumber} — Cancelada`, body, '❌')
+  const html = arkEmailLayout(`${otNumber} — Cancelada`, body, '❌', { workshopName, workshopLogoUrl })
   await sendEmail({ to, subject: `${otNumber} — Orden cancelada | ${workshopName}`, html })
 }
 
