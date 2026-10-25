@@ -7,10 +7,6 @@ import { revalidatePath } from 'next/cache'
 
 export async function upsertQuotation(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
-
-  const adminClient = createAdminClient()
 
   const workOrderId = formData.get('work_order_id') as string
   const tenantId    = formData.get('tenant_id') as string
@@ -19,11 +15,15 @@ export async function upsertQuotation(formData: FormData) {
 
   if (!tenantId) return
 
+  // Auth + RPC in parallel when creating
+  const adminClient = createAdminClient()
+
   if (!quotationId) {
-    const { data: numRow } = await adminClient.rpc('next_document_number', {
-      p_tenant_id: tenantId,
-      p_doc_type: 'COT',
-    })
+    const [{ data: { user } }, { data: numRow }] = await Promise.all([
+      supabase.auth.getUser(),
+      adminClient.rpc('next_document_number', { p_tenant_id: tenantId, p_doc_type: 'COT' }),
+    ])
+    if (!user) redirect('/auth/login')
     await adminClient.from('quotation').insert({
       tenant_id: tenantId,
       work_order_id: workOrderId,
@@ -37,6 +37,8 @@ export async function upsertQuotation(formData: FormData) {
       created_by: user.id,
     })
   } else {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/auth/login')
     await adminClient.from('quotation').update({ notes }).eq('id', quotationId)
   }
 

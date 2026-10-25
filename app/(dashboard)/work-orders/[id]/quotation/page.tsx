@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { addQuotationItem, removeQuotationItem, changeQuotationStatus, upsertQuotation } from './actions'
 import { MoneyInput } from '@/components/ui/MoneyInput'
+import { SubmitButton } from '@/components/ui/SubmitButton'
 import { getTranslations } from 'next-intl/server'
 
 const STATUS_BADGE: Record<string, string> = {
@@ -99,9 +100,9 @@ export default async function QuotationPage({
               <input type="hidden" name="quotation_id" value={activeQuotation.id} />
               <input type="hidden" name="work_order_id" value={id} />
               <input type="hidden" name="status" value="sent" />
-              <button type="submit" className="flex items-center gap-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+              <SubmitButton pendingLabel="Enviando…" className="flex items-center gap-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50">
                 ✉️ Enviar cotización
-              </button>
+              </SubmitButton>
             </form>
           )}
           {activeQuotation?.status === 'sent' && (
@@ -109,9 +110,9 @@ export default async function QuotationPage({
               <input type="hidden" name="quotation_id" value={activeQuotation.id} />
               <input type="hidden" name="work_order_id" value={id} />
               <input type="hidden" name="status" value="approved" />
-              <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+              <SubmitButton pendingLabel="Aprobando…" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50">
                 {t('approve')}
-              </button>
+              </SubmitButton>
             </form>
           )}
           {allApproved && (
@@ -130,9 +131,9 @@ export default async function QuotationPage({
           <form action={upsertQuotation}>
             <input type="hidden" name="work_order_id" value={id} />
             <input type="hidden" name="tenant_id" value={myProfile.tenant_id} />
-            <button type="submit" className="bg-slate-800 hover:bg-slate-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors">
+            <SubmitButton pendingLabel="Creando cotización…" className="bg-slate-800 hover:bg-slate-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50">
               {t('create')}
-            </button>
+            </SubmitButton>
           </form>
         </div>
       )}
@@ -414,10 +415,9 @@ export default async function QuotationPage({
           <form action={upsertQuotation}>
             <input type="hidden" name="work_order_id" value={id} />
             <input type="hidden" name="tenant_id" value={myProfile.tenant_id} />
-            <button type="submit"
-              className="bg-purple-700 hover:bg-purple-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors">
+            <SubmitButton pendingLabel="Creando suplemento…" className="bg-purple-700 hover:bg-purple-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50">
               + Agregar suplemento
-            </button>
+            </SubmitButton>
           </form>
         </div>
       )}
