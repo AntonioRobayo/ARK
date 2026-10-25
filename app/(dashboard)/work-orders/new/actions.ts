@@ -285,5 +285,5 @@ export async function createWorkOrder(formData: FormData) {
     } catch { /* background task — don't block the redirect */ }
   })
 
-  redirect(`/work-orders/${ot.id}`)
+  redirect(`/work-orders/${ot.id}?new=1`)
 }

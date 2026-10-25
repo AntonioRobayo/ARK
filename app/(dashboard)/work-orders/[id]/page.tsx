@@ -14,16 +14,17 @@ import { TimeTracker } from '@/components/work-orders/TimeTracker'
 import { OTGallery } from '@/components/work-orders/OTGallery'
 import { FindingsSection } from '@/components/work-orders/FindingsSection'
 import { CustomerPartsSection } from '@/components/work-orders/CustomerPartsSection'
+import { AutoRefreshOnce } from '@/components/work-orders/AutoRefreshOnce'
 
 export default async function WorkOrderDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; notified?: string; reception_notified?: string }>
+  searchParams: Promise<{ error?: string; notified?: string; reception_notified?: string; new?: string }>
 }) {
   const { id } = await params
-  const { notified, reception_notified, error: pageError } = await searchParams
+  const { notified, reception_notified, error: pageError, new: isNew } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -142,6 +143,18 @@ export default async function WorkOrderDetailPage({
 
   return (
     <div className="max-w-5xl">
+      {isNew === '1' && (
+        <>
+          <AutoRefreshOnce delayMs={5000} />
+          <div className="mb-4 p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-center gap-2">
+            <svg className="w-4 h-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"/>
+            </svg>
+            Las fotos se están procesando en segundo plano. La página se actualizará automáticamente.
+          </div>
+        </>
+      )}
       {reception_notified === '1' && (
         <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
           ✅ Correo de ingreso enviado al cliente. Ahora puede agregar fotos desde la sección de Drive.
