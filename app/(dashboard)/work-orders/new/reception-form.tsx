@@ -1,8 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { createWorkOrder } from './actions'
+
+async function compressImage(file: File, maxW: number, maxH: number, quality: number): Promise<File> {
+  if (!file.type.startsWith('image/') || typeof OffscreenCanvas === 'undefined') return file
+  try {
+    const img = await createImageBitmap(file)
+    const scale = Math.min(1, maxW / img.width, maxH / img.height)
+    const canvas = new OffscreenCanvas(Math.round(img.width * scale), Math.round(img.height * scale))
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+    const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality })
+    return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+  } catch {
+    return file
+  }
+}
 
 interface ChecklistItem {
   id: string
@@ -55,12 +70,41 @@ const CONDITION_OPTIONS = [
 export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMileage, techs, checklist, fuelLevelOptions, branches }: Props) {
   const t = useTranslations('workOrders')
 
+  const [isPending, startTransition] = useTransition()
+  const [isCompressing, setIsCompressing] = useState(false)
+
   const [custodyItems, setCustodyItems] = useState<{ description: string; location: string }[]>([])
   const [checklistResponses, setChecklistResponses] = useState<Record<string, ChecklistStatus>>({})
   const [customerParts, setCustomerParts] = useState<CustomerPart[]>([])
-  const [photoCount, setPhotoCount]         = useState(0)
-  const [partsPhotoCount, setPartsPhotoCount]   = useState(0)
+  const [photoCount, setPhotoCount]               = useState(0)
+  const [partsPhotoCount, setPartsPhotoCount]     = useState(0)
   const [custodyPhotoCount, setCustodyPhotoCount] = useState(0)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setIsCompressing(true)
+
+    const original = new FormData(e.currentTarget)
+    const newFd    = new FormData()
+
+    // Copy all non-file fields as-is
+    for (const [key, val] of original.entries()) {
+      if (!(val instanceof File)) newFd.append(key, val)
+    }
+
+    // Compress each photo batch before sending
+    for (const fieldName of ['reception_photos', 'repuestos_photos', 'custodia_photos']) {
+      for (const f of original.getAll(fieldName)) {
+        if (f instanceof File && f.size > 0) {
+          const compressed = await compressImage(f, 1920, 1080, 0.82)
+          newFd.append(fieldName, compressed)
+        }
+      }
+    }
+
+    setIsCompressing(false)
+    startTransition(async () => { await createWorkOrder(newFd) })
+  }
 
   const addCustodyItem = () => {
     setCustodyItems(prev => [...prev, { description: '', location: '' }])
@@ -90,7 +134,7 @@ export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMil
   const customerPartsJson = JSON.stringify(customerParts.filter(p => p.description.trim()))
 
   return (
-    <form action={createWorkOrder} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <input type="hidden" name="customer_id" value={customerId} />
       <input type="hidden" name="vehicle_id" value={vehicleId} />
       {appointmentId && <input type="hidden" name="appointment_id" value={appointmentId} />}
@@ -382,9 +426,10 @@ export function ReceptionForm({ customerId, vehicleId, appointmentId, currentMil
 
       <button
         type="submit"
-        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-lg text-sm transition-colors"
+        disabled={isCompressing || isPending}
+        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-lg text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {t('new.create')}
+        {isCompressing ? 'Comprimiendo fotos…' : isPending ? 'Creando orden…' : t('new.create')}
       </button>
     </form>
   )
