@@ -205,12 +205,14 @@ export async function createWorkOrder(formData: FormData) {
       ])
 
       // Upload photos to Drive if Drive is configured
-      const photoEmailItems: { thumbUrl: string; name: string }[] = []
-      const allPhotoBatches: { files: File[]; section: string; includeInEmail: boolean }[] = [
-        { files: receptionPhotos, section: 'recepcion',         includeInEmail: true },
-        { files: repuestosPhotos,  section: 'repuestos_cliente', includeInEmail: false },
-        { files: custodiaPhotos,   section: 'custodia',          includeInEmail: false },
+      const allPhotoBatches: { files: File[]; section: string; label: string }[] = [
+        { files: receptionPhotos, section: 'recepcion',         label: 'Fotos de recepción' },
+        { files: repuestosPhotos,  section: 'repuestos_cliente', label: 'Fotos de repuestos' },
+        { files: custodiaPhotos,   section: 'custodia',          label: 'Fotos de objetos en custodia' },
       ]
+      const photoSectionItems: Record<string, { thumbUrl: string; name: string }[]> = {
+        recepcion: [], repuestos_cliente: [], custodia: [],
+      }
       const hasPhotos = allPhotoBatches.some(b => b.files.length > 0)
       if (hasPhotos && tenant?.gdrive_enabled && tenant?.gdrive_root_folder_id) {
         const { getServiceAccountToken, getOtSectionFolder, uploadFileToDrive, driveThumbnailUrl } = await import('@/lib/google-drive')
@@ -250,7 +252,7 @@ export async function createWorkOrder(formData: FormData) {
                   size_kb:        Math.round(photoFile.size / 1024),
                   uploaded_by:    user.id,
                 })
-                if (batch.includeInEmail) photoEmailItems.push({ thumbUrl, name: photoFile.name })
+                photoSectionItems[batch.section].push({ thumbUrl, name: photoFile.name })
               } catch { /* skip failed photo, others continue */ }
             }
           }
@@ -272,7 +274,9 @@ export async function createWorkOrder(formData: FormData) {
         receptionNotes:   fullOt.reception_notes,
         estimatedDelivery: fullOt.estimated_delivery_at,
         technicianName:  technician ? `${technician.first_name} ${technician.last_name ?? ''}`.trim() : null,
-        photos:          photoEmailItems,
+        photoSections:   allPhotoBatches
+          .map(b => ({ label: b.label, photos: photoSectionItems[b.section] }))
+          .filter(s => s.photos.length > 0),
         customerParts:   (insertedParts ?? []).map((p: any) => ({ description: p.description, quantity: p.quantity, condition: p.condition, notes: p.notes })),
         custodyItems:    (custodyRows  ?? []).map((c: any) => ({ description: c.description, location: c.location })),
       })

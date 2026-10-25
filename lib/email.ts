@@ -446,10 +446,12 @@ export interface OtCustomerPart { description: string; quantity: number; conditi
 
 export interface OtCustodyItem { description: string; location?: string | null }
 
+export interface OtPhotoSection { label: string; photos: OtPhoto[] }
+
 export async function sendOtOpenedEmail({
   to, customerName, workshopName, workshopLogoUrl, otNumber, vehiclePlate, vehicleLabel,
   receptionNotes, estimatedDelivery, technicianName,
-  photos, customerParts, custodyItems,
+  photoSections, customerParts, custodyItems,
 }: {
   to: string
   customerName: string
@@ -461,23 +463,23 @@ export async function sendOtOpenedEmail({
   receptionNotes?: string | null
   estimatedDelivery?: string | null
   technicianName?: string | null
-  photos: OtPhoto[]
+  photoSections: OtPhotoSection[]
   customerParts: OtCustomerPart[]
   custodyItems: OtCustodyItem[]
 }) {
   const CONDITION_LABEL: Record<string, string> = { new: 'Nuevo', used: 'Usado', damaged: 'Dañado' }
 
-  const photosHtml = photos.length > 0 ? `
-    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Fotos de recepción</p>
+  const photosHtml = photoSections.filter(s => s.photos.length > 0).map(s => `
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">${s.label}</p>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
       <tr>
-        ${photos.slice(0, 6).map(p => `
+        ${s.photos.slice(0, 6).map(p => `
           <td style="padding:2px;">
             <img src="${p.thumbUrl}" alt="${p.name}"
               style="width:100px;height:75px;object-fit:cover;border-radius:6px;display:block;border:1px solid #E5E7EB;" />
           </td>`).join('')}
       </tr>
-    </table>` : ''
+    </table>`).join('')
 
   const partsHtml = customerParts.length > 0 ? `
     <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.07em;">Repuestos traídos por el cliente</p>
