@@ -683,6 +683,41 @@ export async function sendOtClosedEmail({
   })
 }
 
+// ─── OT cancelada — email al cliente ─────────────────────────────────────────
+
+export async function sendOtCancelledEmail({
+  to, customerName, workshopName, otNumber, vehiclePlate, reason,
+}: {
+  to: string
+  customerName: string
+  workshopName: string
+  otNumber: string
+  vehiclePlate: string
+  reason?: string | null
+}) {
+  const rows = [
+    { label: 'Orden de trabajo', value: otNumber },
+    { label: 'Vehículo',         value: vehiclePlate },
+    { label: 'Taller',           value: workshopName },
+    ...(reason ? [{ label: 'Motivo', value: reason }] : []),
+  ]
+
+  const body = `
+    <p style="margin:0 0 18px;font-size:15px;color:#4B5563;line-height:1.7;">
+      Hola <strong style="color:#1F2937;">${customerName}</strong>,
+      te informamos que la orden de trabajo de tu vehículo
+      <strong style="color:#1F2937;">${vehiclePlate}</strong> ha sido cancelada.
+    </p>
+    ${dataBox(rows)}
+    <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">
+      Si tienes dudas, comunícate directamente con el taller.
+    </p>
+  `
+
+  const html = arkEmailLayout(`${otNumber} — Cancelada`, body, '❌')
+  await sendEmail({ to, subject: `${otNumber} — Orden cancelada | ${workshopName}`, html })
+}
+
 // ─── Cotización al cliente ────────────────────────────────────────────────────
 
 export async function sendQuotationEmail({

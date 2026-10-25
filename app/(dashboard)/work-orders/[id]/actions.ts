@@ -109,6 +109,32 @@ export async function changeStatus(formData: FormData) {
     })()
   }
 
+  // Email de cancelación al cliente
+  if (toStatus === 'cancelled') {
+    void (async () => {
+      try {
+        const { data: fullOt } = await adminClient
+          .from('work_order')
+          .select(`number, tenant_id, customer:customer_id(first_name, last_name, email), vehicle:vehicle_id(plate)`)
+          .eq('id', otId).single()
+        if (!fullOt) return
+        const customer = Array.isArray(fullOt.customer) ? fullOt.customer[0] : fullOt.customer
+        const vehicle  = Array.isArray(fullOt.vehicle)  ? fullOt.vehicle[0]  : fullOt.vehicle
+        if (!customer?.email) return
+        const { data: tenant } = await adminClient.from('tenants').select('name').eq('id', fullOt.tenant_id).single()
+        const { sendOtCancelledEmail } = await import('@/lib/email')
+        await sendOtCancelledEmail({
+          to:           customer.email,
+          customerName: `${customer.first_name} ${customer.last_name ?? ''}`.trim(),
+          workshopName: tenant?.name ?? 'ARK Workshop',
+          otNumber:     String(fullOt.number),
+          vehiclePlate: vehicle?.plate ?? '',
+          reason,
+        })
+      } catch { /* email failure should not block status change */ }
+    })()
+  }
+
   redirect(`/work-orders/${otId}`)
 }
 
@@ -182,6 +208,43 @@ export async function addFinding(formData: FormData) {
     details: { work_order_id: otId, description, severity },
   })
 
+  revalidatePath(`/work-orders/${otId}`)
+}
+
+export async function deleteFinding(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const admin = createAdminClient()
+  const findingId = formData.get('finding_id') as string
+  const otId      = formData.get('ot_id') as string
+
+  // Only allow deleting pending findings
+  const { data: finding } = await admin.from('work_order_finding').select('status').eq('id', findingId).single()
+  if (!finding || finding.status !== 'pending') redirect(`/work-orders/${otId}?error=finding_locked`)
+
+  await admin.from('work_order_finding').delete().eq('id', findingId)
+  revalidatePath(`/work-orders/${otId}`)
+}
+
+export async function updateFinding(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const admin = createAdminClient()
+  const findingId  = formData.get('finding_id') as string
+  const otId       = formData.get('ot_id') as string
+  const description = (formData.get('description') as string)?.trim()
+  const severity   = formData.get('severity') as string
+
+  if (!description) redirect(`/work-orders/${otId}?error=finding_empty`)
+
+  const { data: finding } = await admin.from('work_order_finding').select('status').eq('id', findingId).single()
+  if (!finding || finding.status !== 'pending') redirect(`/work-orders/${otId}?error=finding_locked`)
+
+  await admin.from('work_order_finding').update({ description, severity }).eq('id', findingId)
   revalidatePath(`/work-orders/${otId}`)
 }
 
