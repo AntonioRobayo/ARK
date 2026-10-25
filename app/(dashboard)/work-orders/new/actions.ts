@@ -90,7 +90,7 @@ export async function createWorkOrder(formData: FormData) {
   const receptionPhotos = formData.getAll('reception_photos').filter(f => f instanceof File && f.size > 0) as File[]
 
   // Run all post-creation inserts in parallel
-  const parallelOps: Promise<unknown>[] = [
+  const parallelOps = [
     // Update vehicle mileage if reception km is higher
     receptionMileage
       ? adminClient.from('vehicle')
