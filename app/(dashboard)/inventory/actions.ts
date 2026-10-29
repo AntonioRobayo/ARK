@@ -90,50 +90,52 @@ export async function createItem(formData: FormData) {
   const [unitId, unitKey] = unitCombo.includes('|') ? unitCombo.split('|') : [null, null]
   const unitOfMeasure = unitKey || unitText
 
-  const { data: item, error } = await admin
-    .from('inventory_item')
-    .insert({
-      tenant_id: tenantId,
-      name,
-      type,
-      sku: sku || null,
-      unit_of_measure: unitOfMeasure,
-      unit_id: unitId || null,
-      internal_code: internalCode || null,
-      barcode: barcode || null,
-      sale_price: salePrice,
-      cost_price: costPrice,
-      min_stock: minStock,
-      description: description || null,
-    })
-    .select('id')
-    .single()
+  // Fetch location in parallel with item insert when we'll need it
+  const [{ data: item, error }, locationId] = await Promise.all([
+    admin
+      .from('inventory_item')
+      .insert({
+        tenant_id: tenantId,
+        name,
+        type,
+        sku: sku || null,
+        unit_of_measure: unitOfMeasure,
+        unit_id: unitId || null,
+        internal_code: internalCode || null,
+        barcode: barcode || null,
+        sale_price: salePrice,
+        cost_price: costPrice,
+        min_stock: minStock,
+        description: description || null,
+      })
+      .select('id')
+      .single(),
+    initialStock > 0 ? getOrCreateDefaultLocation(tenantId, branchId) : Promise.resolve(null),
+  ])
 
   if (error || !item) throw new Error(error?.message ?? 'Could not create item')
 
   // Create initial stock movement + stock record if initialStock > 0
-  if (initialStock > 0) {
-    const locationId = await getOrCreateDefaultLocation(tenantId, branchId)
-
-    await admin.from('inventory_movement').insert({
-      tenant_id: tenantId,
-      item_id: item.id,
-      location_id: locationId,
-      movement_type: 'purchase',
-      quantity: initialStock,
-      unit_cost: costPrice,
-      notes: 'Stock inicial',
-    })
-
-    // Upsert stock record
-    await admin.from('inventory_stock').upsert({
-      tenant_id: tenantId,
-      item_id: item.id,
-      location_id: locationId,
-      quantity_on_hand: initialStock,
-      quantity_reserved: 0,
-      ...(binLocation ? { bin_location: binLocation } : {}),
-    }, { onConflict: 'item_id,location_id' })
+  if (initialStock > 0 && locationId) {
+    await Promise.all([
+      admin.from('inventory_movement').insert({
+        tenant_id: tenantId,
+        item_id: item.id,
+        location_id: locationId,
+        movement_type: 'purchase',
+        quantity: initialStock,
+        unit_cost: costPrice,
+        notes: 'Stock inicial',
+      }),
+      admin.from('inventory_stock').upsert({
+        tenant_id: tenantId,
+        item_id: item.id,
+        location_id: locationId,
+        quantity_on_hand: initialStock,
+        quantity_reserved: 0,
+        ...(binLocation ? { bin_location: binLocation } : {}),
+      }, { onConflict: 'item_id,location_id' }),
+    ])
   }
 
   revalidatePath('/inventory')
@@ -153,39 +155,42 @@ export async function adjustStock(formData: FormData) {
 
   if (!itemId || !qty) return
 
-  const locationId = await getOrCreateDefaultLocation(tenantId, branchId)
-
-  await admin.from('inventory_movement').insert({
-    tenant_id: tenantId,
-    item_id: itemId,
-    location_id: locationId,
-    movement_type: movementType,
-    quantity: movementType === 'consumption' || movementType === 'write_off' ? -Math.abs(qty) : Math.abs(qty),
-    unit_cost: unitCost,
-    performed_by: user.id,
-    notes,
-    supplier_id: supplierId || null,
-    purchase_reference: purchaseReference || null,
-  })
-
-  // Update stock record
-  const { data: existing } = await admin
-    .from('inventory_stock')
-    .select('quantity_on_hand')
-    .eq('item_id', itemId)
-    .eq('location_id', locationId)
-    .single()
-
   const delta = movementType === 'consumption' || movementType === 'write_off' ? -Math.abs(qty) : Math.abs(qty)
+
+  const [locationId, { data: existing }] = await Promise.all([
+    getOrCreateDefaultLocation(tenantId, branchId),
+    admin
+      .from('inventory_stock')
+      .select('quantity_on_hand')
+      .eq('item_id', itemId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single(),
+  ])
+
   const newQty = Math.max(0, (existing?.quantity_on_hand ?? 0) + delta)
 
-  await admin.from('inventory_stock').upsert({
-    tenant_id: tenantId,
-    item_id: itemId,
-    location_id: locationId,
-    quantity_on_hand: newQty,
-    quantity_reserved: 0,
-  }, { onConflict: 'item_id,location_id' })
+  await Promise.all([
+    admin.from('inventory_movement').insert({
+      tenant_id: tenantId,
+      item_id: itemId,
+      location_id: locationId,
+      movement_type: movementType,
+      quantity: delta,
+      unit_cost: unitCost,
+      performed_by: user.id,
+      notes,
+      supplier_id: supplierId || null,
+      purchase_reference: purchaseReference || null,
+    }),
+    admin.from('inventory_stock').upsert({
+      tenant_id: tenantId,
+      item_id: itemId,
+      location_id: locationId,
+      quantity_on_hand: newQty,
+      quantity_reserved: 0,
+    }, { onConflict: 'item_id,location_id' }),
+  ])
 
   revalidatePath(`/inventory/${itemId}`)
 }
