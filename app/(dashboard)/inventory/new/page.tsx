@@ -166,7 +166,18 @@ export default async function NewInventoryItemPage() {
               />
             </div>
           </div>
-          <p className="text-xs text-gray-400">El stock inicial se registra como una entrada al almacén principal.</p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ubicación física <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            <input
+              name="bin_location"
+              placeholder="ej. Góndola 1, nivel 3, sección A"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+            />
+            <p className="text-xs text-gray-400 mt-1">Indica dónde está físicamente guardado este ítem en el almacén.</p>
+          </div>
         </div>
 
         <button

@@ -442,6 +442,12 @@ export default async function WorkOrderDetailPage({
                 className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                 <span>📋</span> {activeQuotation ? t('detail.editQuotation') : 'Crear cotización'}
               </Link>
+              {ot.status === 'in_execution' && (
+                <Link href={`/work-orders/${id}/parts`}
+                  className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                  <span>🔧</span> Repuestos utilizados
+                </Link>
+              )}
               {activeQuotation?.status === 'approved' && !activeInvoice && (
                 <Link href={`/billing/new?work_order_id=${id}`}
                   className="flex items-center gap-2 text-sm text-gray-700 hover:text-slate-800 p-2 rounded-lg hover:bg-gray-50 transition-colors">

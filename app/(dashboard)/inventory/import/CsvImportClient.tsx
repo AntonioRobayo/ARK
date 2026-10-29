@@ -34,6 +34,7 @@ interface ParsedRow {
   min_stock: string
   initial_stock: string
   description: string
+  bin_location: string
   errors: string[]
 }
 
@@ -94,6 +95,7 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
     const minIdx    = idx(['min_stock', 'stock_minimo'])
     const initIdx   = idx(['initial_stock', 'stock_inicial'])
     const descIdx   = idx(['description', 'descripcion'])
+    const binIdx    = idx(['bin_location', 'ubicacion', 'ubicación'])
 
     const skusSeen = new Set<string>()
     const parsed2: ParsedRow[] = []
@@ -139,6 +141,7 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
         min_stock: minRaw,
         initial_stock: initRaw,
         description: get(descIdx),
+        bin_location: get(binIdx),
         errors,
       })
     }
@@ -163,6 +166,7 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
         min_stock: r.min_stock ? Number(r.min_stock) : 0,
         initial_stock: r.initial_stock ? Number(r.initial_stock) : 0,
         description: r.description || null,
+        bin_location: r.bin_location || null,
       }
     })
   }
@@ -175,10 +179,10 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
   }
 
   const templateCsv = [
-    'name,sku,internal_code,type,unit,sale_price,cost_price,min_stock,initial_stock,description',
-    'Filtro de aceite Honda,FILT-001,REP-001,part,unit,25000,15000,2,5,Filtro estándar',
-    'Aceite 20W-50 1L,,,,liter,18000,12000,3,10,',
-    'Kit de frenos delanteros,FREN-KIT-001,,part,set,85000,55000,1,2,',
+    'name,sku,internal_code,type,unit,sale_price,cost_price,min_stock,initial_stock,description,bin_location',
+    'Filtro de aceite Honda,FILT-001,REP-001,part,unit,25000,15000,2,5,Filtro estándar,Góndola 1 nivel 2',
+    'Aceite 20W-50 1L,,,,liter,18000,12000,3,10,,',
+    'Kit de frenos delanteros,FREN-KIT-001,,part,set,85000,55000,1,2,,',
   ].join('\n')
 
   function downloadTemplate() {
@@ -285,6 +289,7 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
                   <th className="text-right px-4 py-2.5 font-medium text-gray-500">Costo</th>
                   <th className="text-right px-4 py-2.5 font-medium text-gray-500">Mín</th>
                   <th className="text-right px-4 py-2.5 font-medium text-gray-500">Stock ini.</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-gray-500">Ubicación</th>
                   <th className="px-4 py-2.5 font-medium text-gray-500">Estado</th>
                 </tr>
               </thead>
@@ -301,6 +306,7 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
                       <td className="px-4 py-2.5 text-right text-gray-500">{row.cost_price || '—'}</td>
                       <td className="px-4 py-2.5 text-right text-gray-500">{row.min_stock || '0'}</td>
                       <td className="px-4 py-2.5 text-right text-gray-500">{row.initial_stock || '0'}</td>
+                      <td className="px-4 py-2.5 text-gray-500 text-xs font-mono">{row.bin_location || '—'}</td>
                       <td className="px-4 py-2.5">
                         {hasError ? (
                           <div className="text-red-500 text-xs space-y-0.5">

@@ -70,7 +70,7 @@ export async function getOrCreateDefaultLocation(tenantId: string, branchId: str
 }
 
 export async function createItem(formData: FormData) {
-  const { admin, tenantId } = await getTenantAndBranch()
+  const { admin, tenantId, branchId } = await getTenantAndBranch()
 
   const name = formData.get('name') as string
   const type = (formData.get('type') as string) || 'part'
@@ -82,6 +82,7 @@ export async function createItem(formData: FormData) {
   const minStock = formData.get('min_stock') ? Number(formData.get('min_stock')) : 0
   const description = (formData.get('description') as string) || null
   const initialStock = formData.get('initial_stock') ? Number(formData.get('initial_stock')) : 0
+  const binLocation = (formData.get('bin_location') as string)?.trim() || null
 
   // unit_combo = "{unit_id}|{unit_key}" — from unit_catalog select
   const unitCombo = (formData.get('unit_combo') as string) || ''
@@ -112,8 +113,7 @@ export async function createItem(formData: FormData) {
 
   // Create initial stock movement + stock record if initialStock > 0
   if (initialStock > 0) {
-    const { tenantId: tid, branchId } = await getTenantAndBranch()
-    const locationId = await getOrCreateDefaultLocation(tid, branchId)
+    const locationId = await getOrCreateDefaultLocation(tenantId, branchId)
 
     await admin.from('inventory_movement').insert({
       tenant_id: tenantId,
@@ -132,9 +132,11 @@ export async function createItem(formData: FormData) {
       location_id: locationId,
       quantity_on_hand: initialStock,
       quantity_reserved: 0,
+      ...(binLocation ? { bin_location: binLocation } : {}),
     }, { onConflict: 'item_id,location_id' })
   }
 
+  revalidatePath('/inventory')
   redirect(`/inventory/${item.id}`)
 }
 

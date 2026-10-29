@@ -17,6 +17,7 @@ export interface ImportRow {
   min_stock: number
   initial_stock: number
   description: string | null
+  bin_location: string | null
 }
 
 export async function bulkImportItems(formData: FormData) {
@@ -108,6 +109,7 @@ export async function bulkImportItems(formData: FormData) {
       location_id: locationId,
       quantity_on_hand: r.initial_stock,
       quantity_reserved: 0,
+      bin_location: r.bin_location || null,
     }))
 
     await Promise.all([

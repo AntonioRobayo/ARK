@@ -64,6 +64,7 @@ export async function addQuotationItem(formData: FormData) {
   const taxRateSnapshot = Number(formData.get('tax_rate') ?? 0)
   const discountPct   = Number(formData.get('discount_pct') ?? 0)
   const currentTotal  = Number(formData.get('current_total') ?? 0)
+  const inventoryItemId = (formData.get('inventory_item_id') as string) || null
 
   const subtotalBeforeDiscount = quantity * unitPrice
   const discountAmount = subtotalBeforeDiscount * (discountPct / 100)
@@ -85,6 +86,7 @@ export async function addQuotationItem(formData: FormData) {
       subtotal,
       authorization_status: 'approved',
       is_customer_supplied: false,
+      ...(inventoryItemId ? { inventory_item_id: inventoryItemId } : {}),
     }),
     adminClient.from('quotation').update({ subtotal: newTotal, total: newTotal }).eq('id', quotationId),
   ])
@@ -133,6 +135,53 @@ export async function changeQuotationStatus(formData: FormData) {
   }
 
   await adminClient.from('quotation').update(update).eq('id', quotationId)
+
+  // Reserve inventory stock when approving
+  if (newStatus === 'approved') {
+    void (async () => {
+      try {
+        const [{ data: itemsWithInventory }, { data: quot }] = await Promise.all([
+          adminClient
+            .from('quotation_item')
+            .select('id, inventory_item_id, quantity')
+            .eq('quotation_id', quotationId)
+            .not('inventory_item_id', 'is', null),
+          adminClient
+            .from('quotation')
+            .select('work_order:work_order_id(tenant_id)')
+            .eq('id', quotationId)
+            .single(),
+        ])
+        const tenantId = (Array.isArray(quot?.work_order) ? quot.work_order[0] : quot?.work_order as any)?.tenant_id
+        if (itemsWithInventory?.length && tenantId) {
+          const reservations = itemsWithInventory.map(i => ({
+            tenant_id: tenantId,
+            item_id: i.inventory_item_id!,
+            quotation_item_id: i.id,
+            quantity: i.quantity,
+            forced: false,
+            status: 'active',
+          }))
+          await adminClient.from('inventory_reservation').insert(reservations)
+          for (const i of itemsWithInventory) {
+            const { data: stockRow } = await adminClient
+              .from('inventory_stock')
+              .select('id, quantity_reserved')
+              .eq('item_id', i.inventory_item_id!)
+              .order('created_at', { ascending: true })
+              .limit(1)
+              .single()
+            if (stockRow) {
+              await adminClient
+                .from('inventory_stock')
+                .update({ quantity_reserved: (stockRow.quantity_reserved ?? 0) + Number(i.quantity) })
+                .eq('id', stockRow.id)
+            }
+          }
+        }
+      } catch { /* reservation failure should not block status change */ }
+    })()
+  }
 
   // Send quotation email when marking as sent
   if (newStatus === 'sent') {

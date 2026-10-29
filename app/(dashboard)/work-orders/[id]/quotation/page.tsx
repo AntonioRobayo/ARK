@@ -4,8 +4,8 @@ import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { addQuotationItem, removeQuotationItem, changeQuotationStatus, upsertQuotation } from './actions'
-import { MoneyInput } from '@/components/ui/MoneyInput'
 import { SubmitButton } from '@/components/ui/SubmitButton'
+import { AddItemForm } from '@/components/quotation/AddItemForm'
 import { getTranslations } from 'next-intl/server'
 
 const STATUS_BADGE: Record<string, string> = {
@@ -367,69 +367,16 @@ export default async function QuotationPage({
 
       {/* Add item form — only for active quotation */}
       {activeQuotation && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-5">
-          <p className="text-sm font-semibold text-gray-700 mb-4">{t('addItem')}</p>
-          {(services ?? []).length > 0 && (
-            <div className="mb-4">
-              <p className="text-xs text-gray-400 mb-2">{t('fromCatalog')}</p>
-              <div className="flex flex-wrap gap-2">
-                {(services ?? []).slice(0, 12).map((svc: any) => (
-                  <form key={svc.id} action={addQuotationItem}>
-                    <input type="hidden" name="quotation_id" value={activeQuotation.id} />
-                    <input type="hidden" name="work_order_id" value={id} />
-                    <input type="hidden" name="description" value={svc.name} />
-                    <input type="hidden" name="quantity" value="1" />
-                    <input type="hidden" name="unit_price" value={svc.base_price ?? 0} />
-                    <input type="hidden" name="item_type" value="service" />
-                    <input type="hidden" name="tax_rate" value={defaultTax?.rate ?? 0} />
-                    <input type="hidden" name="discount_pct" value="0" />
-                    <button type="submit" className="text-xs border border-slate-200 rounded-lg px-2.5 py-1 text-gray-700 hover:bg-slate-50 hover:border-slate-300 transition-colors">
-                      + {svc.name}
-                    </button>
-                  </form>
-                ))}
-              </div>
-            </div>
-          )}
-          <form key={activeQuotation.quotation_item?.length ?? 0} action={addQuotationItem} className="grid grid-cols-6 gap-3 items-end">
-            <input type="hidden" name="quotation_id" value={activeQuotation.id} />
-            <input type="hidden" name="work_order_id" value={id} />
-            <input type="hidden" name="current_total" value={activeQuotation.total ?? 0} />
-            <div className="col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">{t('form.description')}</label>
-              <input name="description" required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                placeholder="Cambio de aceite..." />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">{t('form.type')}</label>
-              <select name="item_type" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-                <option value="service">{t('service')}</option>
-                <option value="part">{t('part')}</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">{t('form.unitPrice')}</label>
-              <MoneyInput name="unit_price" defaultValue={0} placeholder="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">{t('form.qty')}</label>
-              <input name="quantity" type="number" min="1" step="0.01" defaultValue="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">{t('form.taxPct')}</label>
-                <input name="tax_rate" type="number" min="0" max="100" defaultValue={defaultTax?.rate ?? 0}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
-              </div>
-              <div className="flex items-end">
-                <button type="submit" className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2 rounded-lg transition-colors">+</button>
-              </div>
-            </div>
-          </form>
-        </div>
+        <AddItemForm
+          quotationId={activeQuotation.id}
+          workOrderId={id}
+          currentTotal={activeQuotation.total ?? 0}
+          services={(services ?? []).map((s: any) => ({ id: s.id, name: s.name, base_price: s.base_price }))}
+          defaultTaxRate={defaultTax?.rate ?? 0}
+          addItemAction={addQuotationItem}
+          vehicleBrand={(ot.vehicle as any)?.brand ?? undefined}
+          vehicleModel={(ot.vehicle as any)?.model ?? undefined}
+        />
       )}
 
       {/* Agregar suplemento — solo cuando todas están aprobadas */}
