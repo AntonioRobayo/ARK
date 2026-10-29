@@ -164,6 +164,24 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
       )}
 
       <form onSubmit={handleSubmit} className="grid grid-cols-6 gap-3 items-end">
+        {/* Type — first so the user picks context before typing */}
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Tipo</label>
+          <select
+            value={itemType}
+            onChange={e => {
+              setItemType(e.target.value as 'service' | 'part')
+              setInventoryItemId(null)
+              setInventoryUnit(null)
+              setDescription('')
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+          >
+            <option value="service">Servicio</option>
+            <option value="part">Repuesto</option>
+          </select>
+        </div>
+
         {/* Description / inventory search */}
         <div className="col-span-2 relative">
           <label className="block text-xs text-gray-400 mb-1">Descripción</label>
@@ -234,24 +252,6 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
               )}
             </div>
           )}
-        </div>
-
-        {/* Type */}
-        <div>
-          <label className="block text-xs text-gray-400 mb-1">Tipo</label>
-          <select
-            value={itemType}
-            onChange={e => {
-              setItemType(e.target.value as 'service' | 'part')
-              setInventoryItemId(null)
-              setInventoryUnit(null)
-              setDescription('')
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
-          >
-            <option value="service">Servicio</option>
-            <option value="part">Repuesto</option>
-          </select>
         </div>
 
         {/* Price */}
