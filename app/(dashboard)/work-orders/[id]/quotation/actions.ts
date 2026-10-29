@@ -148,15 +148,27 @@ export async function changeQuotationStatus(formData: FormData) {
             .not('inventory_item_id', 'is', null),
           adminClient
             .from('quotation')
-            .select('work_order:work_order_id(tenant_id)')
+            .select('work_order_id, work_order:work_order_id(tenant_id)')
             .eq('id', quotationId)
             .single(),
         ])
+        const workOrderId = quot?.work_order_id as string | undefined
         const tenantId = (Array.isArray(quot?.work_order) ? quot.work_order[0] : quot?.work_order as any)?.tenant_id
-        if (itemsWithInventory?.length && tenantId) {
+        if (itemsWithInventory?.length && tenantId && workOrderId) {
+          const { data: locationRow } = await adminClient
+            .from('inventory_location')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .single()
+          const locationId = locationRow?.id
+          if (!locationId) return
           const reservations = itemsWithInventory.map(i => ({
             tenant_id: tenantId,
             item_id: i.inventory_item_id!,
+            location_id: locationId,
+            work_order_id: workOrderId,
             quotation_item_id: i.id,
             quantity_reserved: i.quantity,
             forced: false,
