@@ -158,7 +158,7 @@ export async function changeQuotationStatus(formData: FormData) {
             tenant_id: tenantId,
             item_id: i.inventory_item_id!,
             quotation_item_id: i.id,
-            quantity: i.quantity,
+            quantity_reserved: i.quantity,
             forced: false,
             status: 'active',
           }))
