@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { checkPermission } from '@/lib/permissions'
 
 export default async function SettingsPage() {
   const t = await getTranslations('settings')
+  const canManageSuppliers = await checkPermission('inventory.manage_suppliers')
 
   const sections = [
     { href: '/settings/profile',                   title: t('cards.profile'),        description: t('cards.profileDesc'),        icon: '👤' },
@@ -36,6 +38,14 @@ export default async function SettingsPage() {
             <p className="text-sm text-gray-400 mt-1">{s.description}</p>
           </Link>
         ))}
+        {canManageSuppliers && (
+          <Link href="/settings/suppliers"
+            className="bg-white border border-gray-200 rounded-xl p-5 hover:border-slate-300 hover:shadow-sm transition-all group">
+            <div className="text-2xl mb-3">🚚</div>
+            <p className="font-semibold text-gray-900 group-hover:text-slate-700">{t('cards.suppliers')}</p>
+            <p className="text-sm text-gray-400 mt-1">{t('cards.suppliersDesc')}</p>
+          </Link>
+        )}
       </div>
     </div>
   )

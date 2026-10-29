@@ -575,7 +575,9 @@
       "users": "Users",
       "usersDesc": "Invite, activate and deactivate workshop members",
       "branding": "Brand & identity",
-      "brandingDesc": "Workshop logo and quotation terms"
+      "brandingDesc": "Workshop logo and quotation terms",
+      "suppliers": "Suppliers",
+      "suppliersDesc": "Manage parts and supplies vendors"
     },
     "profile": {
       "title": "My profile",

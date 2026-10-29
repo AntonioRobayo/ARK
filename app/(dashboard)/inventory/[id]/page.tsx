@@ -34,7 +34,10 @@ export default async function InventoryItemDetailPage({
 
   const admin = createAdminClient()
 
-  const [{ data: item }, { data: stockRows }, { data: compatRows }, { data: movements }] = await Promise.all([
+  const { data: profile } = await admin.from('user_profile').select('tenant_id').eq('id', user.id).single()
+  const tenantId = profile?.tenant_id ?? ''
+
+  const [{ data: item }, { data: stockRows }, { data: compatRows }, { data: movements }, { data: suppliers }] = await Promise.all([
     admin.from('inventory_item')
       .select('id, name, type, sku, internal_code, barcode, sale_price, cost_price, min_stock, description, is_active, unit_of_measure, created_at')
       .eq('id', id).is('deleted_at', null).single(),
@@ -50,6 +53,11 @@ export default async function InventoryItemDetailPage({
       .eq('item_id', id)
       .order('created_at', { ascending: false })
       .limit(30),
+    admin.from('supplier')
+      .select('id, name')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .order('name'),
   ])
 
   if (!item) notFound()
@@ -368,6 +376,25 @@ export default async function InventoryItemDetailPage({
               Registrar
             </SubmitButton>
           </div>
+          {(suppliers ?? []).length > 0 && (
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Proveedor <span className="text-gray-300">(compras)</span></label>
+                <select name="supplier_id"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-300">
+                  <option value="">Sin proveedor</option>
+                  {suppliers!.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Ref. compra <span className="text-gray-300">(factura / remisión)</span></label>
+                <input name="purchase_reference" placeholder="Factura / remisión nro."
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" />
+              </div>
+            </div>
+          )}
           <div>
             <label className="block text-xs text-gray-400 mb-1">Notas <span className="text-gray-300">(opcional)</span></label>
             <textarea name="notes" rows={2} placeholder="Proveedor, factura, motivo…"

@@ -148,6 +148,8 @@ export async function adjustStock(formData: FormData) {
   const qty = Number(formData.get('quantity'))
   const unitCost = formData.get('unit_cost') ? Number(formData.get('unit_cost')) : null
   const notes = (formData.get('notes') as string) || null
+  const supplierId = (formData.get('supplier_id') as string) || null
+  const purchaseReference = (formData.get('purchase_reference') as string)?.trim() || null
 
   if (!itemId || !qty) return
 
@@ -162,6 +164,8 @@ export async function adjustStock(formData: FormData) {
     unit_cost: unitCost,
     performed_by: user.id,
     notes,
+    supplier_id: supplierId || null,
+    purchase_reference: purchaseReference || null,
   })
 
   // Update stock record

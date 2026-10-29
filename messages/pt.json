@@ -575,7 +575,9 @@
       "users": "Usuários",
       "usersDesc": "Convide, ative e desative membros da oficina",
       "branding": "Marca e identidade",
-      "brandingDesc": "Logo da oficina e termos de orçamento"
+      "brandingDesc": "Logo da oficina e termos de orçamento",
+      "suppliers": "Fornecedores",
+      "suppliersDesc": "Gerenciar fornecedores de peças e insumos"
     },
     "profile": {
       "title": "Meu perfil",

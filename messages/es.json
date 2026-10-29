@@ -597,7 +597,9 @@
       "users": "Usuarios",
       "usersDesc": "Invita, activa y desactiva miembros del taller",
       "branding": "Marca e identidad",
-      "brandingDesc": "Logo del taller y términos de cotización"
+      "brandingDesc": "Logo del taller y términos de cotización",
+      "suppliers": "Proveedores",
+      "suppliersDesc": "Gestionar proveedores de repuestos e insumos"
     },
     "profile": {
       "title": "Mi perfil",
