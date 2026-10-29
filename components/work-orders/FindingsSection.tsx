@@ -133,7 +133,7 @@ export function FindingsSection({ otId, findings, customerEmail, customerName, o
 
       {/* Lista de hallazgos */}
       {hasFindings && (
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2 mb-4 max-h-64 overflow-y-auto pr-1">
           {optimisticFindings.map(f => {
             const isPendingFinding = f.status === 'pending'
             const isEditing = editingId === f.id
