@@ -21,7 +21,7 @@ async function getTenantAndBranch() {
   return { admin, user, tenantId: profile.tenant_id, branchId: profile.branch_id }
 }
 
-async function getOrCreateDefaultLocation(tenantId: string, branchId: string | null) {
+export async function getOrCreateDefaultLocation(tenantId: string, branchId: string | null) {
   const admin = createAdminClient()
 
   // Try to find existing location for this tenant
@@ -74,14 +74,20 @@ export async function createItem(formData: FormData) {
 
   const name = formData.get('name') as string
   const type = (formData.get('type') as string) || 'part'
-  const unit = (formData.get('unit') as string) || 'und'
   const internalCode = (formData.get('internal_code') as string) || null
   const barcode = (formData.get('barcode') as string) || null
+  const sku = (formData.get('sku') as string)?.trim() || null
   const salePrice = formData.get('sale_price') ? Number(formData.get('sale_price')) : null
   const costPrice = formData.get('cost_price') ? Number(formData.get('cost_price')) : null
   const minStock = formData.get('min_stock') ? Number(formData.get('min_stock')) : 0
   const description = (formData.get('description') as string) || null
   const initialStock = formData.get('initial_stock') ? Number(formData.get('initial_stock')) : 0
+
+  // unit_combo = "{unit_id}|{unit_key}" — from unit_catalog select
+  const unitCombo = (formData.get('unit_combo') as string) || ''
+  const unitText = (formData.get('unit_text') as string) || 'und'
+  const [unitId, unitKey] = unitCombo.includes('|') ? unitCombo.split('|') : [null, null]
+  const unitOfMeasure = unitKey || unitText
 
   const { data: item, error } = await admin
     .from('inventory_item')
@@ -89,7 +95,9 @@ export async function createItem(formData: FormData) {
       tenant_id: tenantId,
       name,
       type,
-      unit_of_measure: unit,
+      sku: sku || null,
+      unit_of_measure: unitOfMeasure,
+      unit_id: unitId || null,
       internal_code: internalCode || null,
       barcode: barcode || null,
       sale_price: salePrice,

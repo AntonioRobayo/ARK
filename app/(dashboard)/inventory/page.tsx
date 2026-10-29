@@ -13,9 +13,9 @@ function formatPrice(amount: number | null, currency = 'COP') {
 export default async function InventoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>
+  searchParams: Promise<{ q?: string; type?: string; imported?: string }>
 }) {
-  const { q, type } = await searchParams
+  const { q, type, imported } = await searchParams
   const t = await getTranslations('inventory')
   const supabase = await createClient()
 
@@ -67,13 +67,28 @@ export default async function InventoryPage({
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
           {items && <p className="text-sm text-gray-400 mt-0.5">{t('count', { n: items.length })}</p>}
         </div>
-        <Link
-          href="/inventory/new"
-          className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          {t('newBtn')}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/inventory/import"
+            className="border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            Importar CSV
+          </Link>
+          <Link
+            href="/inventory/new"
+            className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            {t('newBtn')}
+          </Link>
+        </div>
       </div>
+
+      {/* Import success banner */}
+      {imported && (
+        <div className="mb-4 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
+          ✓ Se importaron {imported} ítems correctamente.
+        </div>
+      )}
 
       {/* Filters */}
       <form method="GET" className="flex gap-3 mb-5">
