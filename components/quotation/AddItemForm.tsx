@@ -33,9 +33,9 @@ interface Props {
 export function AddItemForm({ quotationId, workOrderId, currentTotal, services, defaultTaxRate, addItemAction, vehicleBrand, vehicleModel }: Props) {
   const [itemType, setItemType] = useState<'service' | 'part'>('service')
   const [description, setDescription] = useState('')
-  const [unitPrice, setUnitPrice] = useState(0)
-  const [quantity, setQuantity] = useState(1)
-  const [taxRate, setTaxRate] = useState(defaultTaxRate)
+  const [unitPrice, setUnitPrice] = useState<number | ''>('')
+  const [quantity, setQuantity] = useState<number | ''>(1)
+  const [taxRate, setTaxRate] = useState<number | ''>(defaultTaxRate)
   const [inventoryItemId, setInventoryItemId] = useState<string | null>(null)
   const [inventoryUnit, setInventoryUnit] = useState<string | null>(null)
 
@@ -76,7 +76,7 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
 
   function selectInventoryItem(item: InventoryResult) {
     setDescription(item.name)
-    setUnitPrice(item.sale_price ?? 0)
+    setUnitPrice(item.sale_price ?? '')
     setInventoryItemId(item.id)
     setInventoryUnit(item.unit_of_measure)
     setSearchResults([])
@@ -87,7 +87,7 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
     setInventoryItemId(null)
     setInventoryUnit(null)
     setDescription('')
-    setUnitPrice(0)
+    setUnitPrice('')
     setTimeout(() => descRef.current?.focus(), 10)
   }
 
@@ -100,10 +100,10 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
     fd.set('work_order_id', workOrderId)
     fd.set('current_total', String(currentTotal))
     fd.set('description', overrides?.description ?? description)
-    fd.set('quantity', String(overrides?.quantity ?? quantity))
-    fd.set('unit_price', String(overrides?.unitPrice ?? unitPrice))
+    fd.set('quantity', String(overrides?.quantity ?? (quantity || 1)))
+    fd.set('unit_price', String(overrides?.unitPrice ?? (unitPrice || 0)))
     fd.set('item_type', overrides?.itemType ?? itemType)
-    fd.set('tax_rate', String(overrides?.taxRate ?? taxRate))
+    fd.set('tax_rate', String(overrides?.taxRate ?? (taxRate || 0)))
     fd.set('discount_pct', '0')
     const iid = overrides?.inventoryItemId !== undefined ? overrides.inventoryItemId : inventoryItemId
     if (iid) fd.set('inventory_item_id', iid)
@@ -112,7 +112,7 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
 
   function resetForm() {
     setDescription('')
-    setUnitPrice(0)
+    setUnitPrice('')
     setQuantity(1)
     setInventoryItemId(null)
     setInventoryUnit(null)
@@ -260,8 +260,8 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
           <input
             type="number"
             value={unitPrice}
-            onChange={e => setUnitPrice(Number(e.target.value))}
-            onFocus={e => e.target.select()}
+            onChange={e => setUnitPrice(e.target.value === '' ? '' : Number(e.target.value))}
+            placeholder="0"
             min="0"
             step="0.01"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -274,9 +274,9 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
           <input
             type="number"
             value={quantity}
-            onChange={e => setQuantity(Number(e.target.value))}
-            onFocus={e => e.target.select()}
-            min="1"
+            onChange={e => setQuantity(e.target.value === '' ? '' : Number(e.target.value))}
+            placeholder="1"
+            min="0.01"
             step="0.01"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
@@ -289,8 +289,8 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
             <input
               type="number"
               value={taxRate}
-              onChange={e => setTaxRate(Number(e.target.value))}
-              onFocus={e => e.target.select()}
+              onChange={e => setTaxRate(e.target.value === '' ? '' : Number(e.target.value))}
+              placeholder="0"
               min="0"
               max="100"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
