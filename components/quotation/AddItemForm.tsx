@@ -261,6 +261,7 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
             type="number"
             value={unitPrice}
             onChange={e => setUnitPrice(Number(e.target.value))}
+            onFocus={e => e.target.select()}
             min="0"
             step="0.01"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -274,6 +275,7 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
             type="number"
             value={quantity}
             onChange={e => setQuantity(Number(e.target.value))}
+            onFocus={e => e.target.select()}
             min="1"
             step="0.01"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -288,6 +290,7 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
               type="number"
               value={taxRate}
               onChange={e => setTaxRate(Number(e.target.value))}
+              onFocus={e => e.target.select()}
               min="0"
               max="100"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
