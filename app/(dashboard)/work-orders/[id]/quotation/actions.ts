@@ -190,7 +190,7 @@ export async function changeQuotationStatus(formData: FormData) {
         const { data: quotation } = await adminClient
           .from('quotation')
           .select(`number, subtotal, tax_amount, discount_amount, total,
-            quotation_item(id, description, quantity, unit_price, subtotal, item_type),
+            quotation_item(id, description, quantity, unit_price, subtotal, item_type, tax_rate_snapshot),
             work_order:work_order_id(number, tenant_id,
               customer:customer_id(first_name, last_name, email),
               vehicle:vehicle_id(plate, brand, model, year))`)
@@ -223,6 +223,7 @@ export async function changeQuotationStatus(formData: FormData) {
             description: i.description,
             quantity: i.quantity,
             unitPrice: i.unit_price,
+            taxRate: i.tax_rate_snapshot ?? 0,
             subtotal: i.subtotal,
             itemType: i.item_type,
           })),

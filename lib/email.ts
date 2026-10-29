@@ -750,7 +750,7 @@ export async function sendQuotationEmail({
   quotationNumber: string
   vehiclePlate: string
   vehicleLabel: string
-  items: { description: string; quantity: number; unitPrice: number; subtotal: number; itemType: string }[]
+  items: { description: string; quantity: number; unitPrice: number; taxRate: number; subtotal: number; itemType: string }[]
   subtotal: number
   taxAmount: number
   discountAmount: number
@@ -760,11 +760,15 @@ export async function sendQuotationEmail({
 
   const itemRows = items.map(i => `
     <tr style="border-bottom:1px solid #F3F4F6;">
-      <td style="padding:10px 0;font-size:13px;color:#1F2937;">${i.description}</td>
-      <td style="padding:10px 0;font-size:13px;color:#6B7280;text-align:center;">${i.quantity}</td>
-      <td style="padding:10px 0;font-size:13px;color:#6B7280;text-align:right;">${fmt(i.unitPrice)}</td>
-      <td style="padding:10px 0;font-size:13px;font-weight:600;color:#1F2937;text-align:right;">${fmt(i.subtotal)}</td>
+      <td style="padding:10px 12px 10px 0;font-size:13px;color:#1F2937;">${i.description}</td>
+      <td style="padding:10px 8px;font-size:13px;color:#6B7280;text-align:center;">${i.quantity}</td>
+      <td style="padding:10px 8px;font-size:13px;color:#6B7280;text-align:right;">${fmt(i.unitPrice)}</td>
+      <td style="padding:10px 8px;font-size:12px;color:#6B7280;text-align:center;">${i.taxRate > 0 ? `${i.taxRate}%` : '—'}</td>
+      <td style="padding:10px 0 10px 8px;font-size:13px;font-weight:600;color:#1F2937;text-align:right;">${fmt(i.subtotal)}</td>
     </tr>`).join('')
+
+  const baseSum = items.reduce((s, i) => s + i.unitPrice * i.quantity, 0)
+  const ivaSum  = items.reduce((s, i) => s + (i.unitPrice * i.quantity * i.taxRate / 100), 0)
 
   const body = `
     <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
@@ -781,18 +785,19 @@ export async function sendQuotationEmail({
       style="border:1px solid #E5E7EB;border-radius:10px;margin-bottom:24px;overflow:hidden;">
       <thead>
         <tr style="background-color:#F9FAFB;">
-          <th style="padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Descripción</th>
-          <th style="padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-align:center;text-transform:uppercase;letter-spacing:0.05em;">Cant.</th>
-          <th style="padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-align:right;text-transform:uppercase;letter-spacing:0.05em;">Precio</th>
-          <th style="padding:10px 12px;font-size:11px;font-weight:600;color:#6B7280;text-align:right;text-transform:uppercase;letter-spacing:0.05em;">Subtotal</th>
+          <th style="padding:10px 12px 10px 0;font-size:11px;font-weight:600;color:#6B7280;text-align:left;text-transform:uppercase;letter-spacing:0.05em;">Descripción</th>
+          <th style="padding:10px 8px;font-size:11px;font-weight:600;color:#6B7280;text-align:center;text-transform:uppercase;letter-spacing:0.05em;">Cant.</th>
+          <th style="padding:10px 8px;font-size:11px;font-weight:600;color:#6B7280;text-align:right;text-transform:uppercase;letter-spacing:0.05em;">Precio</th>
+          <th style="padding:10px 8px;font-size:11px;font-weight:600;color:#6B7280;text-align:center;text-transform:uppercase;letter-spacing:0.05em;">IVA</th>
+          <th style="padding:10px 0 10px 8px;font-size:11px;font-weight:600;color:#6B7280;text-align:right;text-transform:uppercase;letter-spacing:0.05em;">Subtotal</th>
         </tr>
       </thead>
       <tbody style="padding:0 12px;">${itemRows}</tbody>
     </table>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-      ${discountAmount > 0 ? `<tr><td style="font-size:13px;color:#6B7280;padding:4px 0;">Subtotal</td><td style="font-size:13px;color:#6B7280;text-align:right;padding:4px 0;">${fmt(subtotal)}</td></tr>` : ''}
-      ${taxAmount > 0 ? `<tr><td style="font-size:13px;color:#6B7280;padding:4px 0;">IVA</td><td style="font-size:13px;color:#6B7280;text-align:right;padding:4px 0;">${fmt(taxAmount)}</td></tr>` : ''}
+      <tr><td style="font-size:13px;color:#6B7280;padding:4px 0;">Subtotal (antes de IVA)</td><td style="font-size:13px;color:#6B7280;text-align:right;padding:4px 0;">${fmt(baseSum)}</td></tr>
+      <tr><td style="font-size:13px;color:#6B7280;padding:4px 0;">IVA</td><td style="font-size:13px;color:#6B7280;text-align:right;padding:4px 0;">${fmt(ivaSum)}</td></tr>
       ${discountAmount > 0 ? `<tr><td style="font-size:13px;color:#6B7280;padding:4px 0;">Descuento</td><td style="font-size:13px;color:#6B7280;text-align:right;padding:4px 0;">-${fmt(discountAmount)}</td></tr>` : ''}
       <tr style="border-top:2px solid #1F2937;">
         <td style="font-size:16px;font-weight:700;color:#1F2937;padding-top:8px;">Total</td>
