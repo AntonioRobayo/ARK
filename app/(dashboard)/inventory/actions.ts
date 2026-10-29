@@ -72,7 +72,7 @@ export async function getOrCreateDefaultLocation(tenantId: string, branchId: str
 export async function createItem(formData: FormData) {
   const { admin, tenantId, branchId } = await getTenantAndBranch()
 
-  const name = formData.get('name') as string
+  const name = ((formData.get('name') as string) ?? '').trim().toUpperCase()
   const type = (formData.get('type') as string) || 'part'
   const internalCode = (formData.get('internal_code') as string) || null
   const barcode = (formData.get('barcode') as string) || null

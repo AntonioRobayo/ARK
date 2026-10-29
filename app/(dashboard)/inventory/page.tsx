@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 
@@ -18,26 +19,27 @@ export default async function InventoryPage({
   const { q, type, imported } = await searchParams
   const t = await getTranslations('inventory')
   const supabase = await createClient()
+  const admin = createAdminClient()
 
-  // Get tenant currency
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('user_profile')
     .select('tenant_id')
     .eq('id', user!.id)
     .single()
 
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('currency_code')
-    .eq('id', profile!.tenant_id)
-    .single()
+  const tenantId = profile!.tenant_id
+
+  const [{ data: tenant }] = await Promise.all([
+    admin.from('tenants').select('currency_code').eq('id', tenantId).single(),
+  ])
   const currency = tenant?.currency_code ?? 'COP'
 
   // Build items query
-  let query = supabase
+  let query = admin
     .from('inventory_item')
     .select('id, name, type, internal_code, sale_price, cost_price, min_stock, is_active, unit_of_measure')
+    .eq('tenant_id', tenantId)
     .is('deleted_at', null)
     .order('name', { ascending: true })
 
@@ -47,9 +49,10 @@ export default async function InventoryPage({
   const { data: items } = await query
 
   // Get stock totals
-  const { data: stockRows } = await supabase
+  const { data: stockRows } = await admin
     .from('inventory_stock')
     .select('item_id, quantity_on_hand, quantity_reserved')
+    .eq('tenant_id', tenantId)
 
   const stockMap: Record<string, { on_hand: number; reserved: number }> = {}
   for (const row of stockRows ?? []) {

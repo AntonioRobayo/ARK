@@ -39,7 +39,7 @@ export async function removeCompatibility(compatId: string, itemId: string) {
 export async function updateItem(formData: FormData) {
   const admin = await getAdmin()
   const itemId      = formData.get('item_id') as string
-  const name        = (formData.get('name') as string).trim()
+  const name        = (formData.get('name') as string).trim().toUpperCase()
   const sku         = (formData.get('sku') as string)?.trim() || null
   const internalCode = (formData.get('internal_code') as string)?.trim() || null
   const barcode     = (formData.get('barcode') as string)?.trim() || null
