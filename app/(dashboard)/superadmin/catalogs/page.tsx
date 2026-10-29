@@ -1,8 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getTranslations } from 'next-intl/server'
-import { toggleCountry, addCountry, toggleCurrency, addCurrency, updateCurrencyRate, addCatalogEntry, toggleCatalogEntry, updateCatalogEntry } from './actions'
+import { toggleCountry, addCountry, toggleCurrency, addCurrency, updateCurrencyRate, addCatalogEntry, toggleCatalogEntry, updateCatalogEntry, addUnit, toggleUnit, updateUnit } from './actions'
 
-type SearchParams = Promise<{ tab?: string; add?: string; edit_rate?: string; error?: string; cat?: string; edit?: string }>
+type SearchParams = Promise<{ tab?: string; add?: string; edit_rate?: string; error?: string; cat?: string; edit?: string; edit_unit?: string }>
 
 const CATEGORY_LABELS: Record<string, string> = {
   vehicle_type: 'Tipos de vehículo',
@@ -14,17 +14,18 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 export default async function CatalogsPage({ searchParams }: { searchParams: SearchParams }) {
-  const { tab = 'countries', add, edit_rate, error, cat = 'vehicle_type', edit } = await searchParams
+  const { tab = 'countries', add, edit_rate, error, cat = 'vehicle_type', edit, edit_unit } = await searchParams
   const supabase = createAdminClient()
   const t = await getTranslations('superadmin.catalogs')
 
-  const [{ data: countries }, { data: currencies }, { data: catalogEntries }] = await Promise.all([
+  const [{ data: countries }, { data: currencies }, { data: catalogEntries }, { data: units }] = await Promise.all([
     supabase.from('countries').select('code, name, currency, timezone, is_active').order('name'),
     supabase.from('currencies').select('code, name, is_active, usd_rate').order('sort_order'),
     supabase.from('global_catalog').select('id, category, value, label_es, label_en, sort_order, is_system, is_active').order('sort_order'),
+    supabase.from('unit_catalog').select('id, key, label_es, label_en, label_pt, sort_order, is_active').order('sort_order'),
   ])
 
-  const activeTab = tab === 'currencies' ? 'currencies' : tab === 'app_catalogs' ? 'app_catalogs' : 'countries'
+  const activeTab = tab === 'currencies' ? 'currencies' : tab === 'app_catalogs' ? 'app_catalogs' : tab === 'units' ? 'units' : 'countries'
   const showAdd = add === '1'
   const activeCat = cat in CATEGORY_LABELS ? cat : 'vehicle_type'
   const catEntries = (catalogEntries ?? []).filter(e => e.category === activeCat)
@@ -33,7 +34,7 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
     <div>
       {/* Sub-tabs */}
       <div className="flex gap-1 p-1 rounded-xl bg-white border border-gray-200 w-fit mb-6">
-        {(['countries', 'currencies', 'app_catalogs'] as const).map(k => (
+        {(['countries', 'currencies', 'app_catalogs', 'units'] as const).map(k => (
           <a
             key={k}
             href={`/superadmin/catalogs?tab=${k}`}
@@ -43,7 +44,7 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
-            {k === 'app_catalogs' ? 'Catálogos de app' : t(`tabs.${k}`)}
+            {k === 'app_catalogs' ? 'Catálogos de app' : k === 'units' ? 'Unidades' : t(`tabs.${k}`)}
           </a>
         ))}
       </div>
@@ -272,6 +273,165 @@ export default async function CatalogsPage({ searchParams }: { searchParams: Sea
                   <tr>
                     <td colSpan={4} className="px-5 py-12 text-center text-sm text-gray-400">
                       {t('currencies.empty')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {activeTab === 'units' && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-500">{units?.length ?? 0} unidades de medida</p>
+            <a
+              href="/superadmin/catalogs?tab=units&add=1"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-colors"
+              style={{ backgroundColor: '#FF7316' }}
+            >
+              + Agregar unidad
+            </a>
+          </div>
+
+          {showAdd && (
+            <div className="mb-4 bg-white border border-gray-200 rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Nueva unidad de medida</h3>
+              <form action={addUnit} className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Clave interna</label>
+                  <input name="key" placeholder="ej. unit, liter, kg" required
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Orden</label>
+                  <input name="sort_order" type="number" defaultValue="99"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Etiqueta español</label>
+                  <input name="label_es" placeholder="ej. Litro" required
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Etiqueta inglés</label>
+                  <input name="label_en" placeholder="ej. Liter"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Etiqueta portugués</label>
+                  <input name="label_pt" placeholder="ej. Litro"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                    style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                </div>
+                <div className="col-span-2 flex gap-3 justify-end">
+                  <a href="/superadmin/catalogs?tab=units" className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50 transition-colors">
+                    Cancelar
+                  </a>
+                  <button type="submit" className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors" style={{ backgroundColor: '#FF7316' }}>
+                    Guardar
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Clave</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Español</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Inglés</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Portugués</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Orden</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Estado</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {(units ?? []).map(u => (
+                  <>
+                    <tr key={u.id} className="hover:bg-gray-50 transition-colors" style={{ borderBottom: edit_unit === u.id ? 'none' : '1px solid #F9FAFB' }}>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-700">{u.key}</td>
+                      <td className="px-4 py-3 text-gray-900">{u.label_es}</td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">{u.label_en || '—'}</td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">{u.label_pt || '—'}</td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">{u.sort_order}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          u.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'
+                        }`}>
+                          {u.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center gap-3 justify-end">
+                          <a
+                            href={edit_unit === u.id
+                              ? '/superadmin/catalogs?tab=units'
+                              : `/superadmin/catalogs?tab=units&edit_unit=${u.id}`}
+                            className="text-xs font-medium text-gray-500 hover:underline transition-colors"
+                          >
+                            {edit_unit === u.id ? 'Cancelar' : 'Editar'}
+                          </a>
+                          <form action={toggleUnit.bind(null, u.id, u.is_active)}>
+                            <button type="submit" className="text-xs font-medium transition-colors hover:underline"
+                              style={{ color: u.is_active ? '#EF4444' : '#FF7316' }}>
+                              {u.is_active ? 'Desactivar' : 'Activar'}
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                    {edit_unit === u.id && (
+                      <tr key={`${u.id}-edit`} style={{ borderBottom: '1px solid #F9FAFB' }}>
+                        <td colSpan={7} className="px-4 py-4 bg-orange-50">
+                          <form action={updateUnit} className="grid grid-cols-5 gap-3 items-end">
+                            <input type="hidden" name="id" value={u.id} />
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Español</label>
+                              <input name="label_es" defaultValue={u.label_es} required
+                                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 bg-white"
+                                style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Inglés</label>
+                              <input name="label_en" defaultValue={u.label_en ?? ''}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 bg-white"
+                                style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Portugués</label>
+                              <input name="label_pt" defaultValue={u.label_pt ?? ''}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 bg-white"
+                                style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Orden</label>
+                              <input name="sort_order" type="number" defaultValue={u.sort_order}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 bg-white"
+                                style={{ '--tw-ring-color': '#FF7316' } as React.CSSProperties} />
+                            </div>
+                            <button type="submit" className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-colors"
+                              style={{ backgroundColor: '#FF7316' }}>
+                              Guardar
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+                {(!units || units.length === 0) && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-400">
+                      Sin unidades de medida
                     </td>
                   </tr>
                 )}

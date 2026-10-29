@@ -93,6 +93,41 @@ export async function updateCatalogEntry(formData: FormData) {
   redirect(`/superadmin/catalogs?tab=app_catalogs&cat=${cat}`)
 }
 
+// ── Unit Catalog ──────────────────────────────────────────────────────────────
+
+export async function addUnit(formData: FormData) {
+  const supabase = createAdminClient()
+  const { error } = await supabase.from('unit_catalog').insert({
+    key:        (formData.get('key') as string).toLowerCase().trim().replace(/\s+/g, '_'),
+    label_es:   (formData.get('label_es') as string).trim(),
+    label_en:   (formData.get('label_en') as string)?.trim() || '',
+    label_pt:   (formData.get('label_pt') as string)?.trim() || '',
+    sort_order: Number(formData.get('sort_order') ?? 99),
+    is_active:  true,
+  })
+  if (error) redirect(`/superadmin/catalogs?tab=units&add=1&error=${encodeURIComponent(error.message)}`)
+  redirect('/superadmin/catalogs?tab=units')
+}
+
+export async function toggleUnit(id: string, isActive: boolean) {
+  const supabase = createAdminClient()
+  await supabase.from('unit_catalog').update({ is_active: !isActive }).eq('id', id)
+  redirect('/superadmin/catalogs?tab=units')
+}
+
+export async function updateUnit(formData: FormData) {
+  const supabase = createAdminClient()
+  const id = formData.get('id') as string
+  const { error } = await supabase.from('unit_catalog').update({
+    label_es:   (formData.get('label_es') as string).trim(),
+    label_en:   (formData.get('label_en') as string)?.trim() || '',
+    label_pt:   (formData.get('label_pt') as string)?.trim() || '',
+    sort_order: Number(formData.get('sort_order') ?? 99),
+  }).eq('id', id)
+  if (error) redirect(`/superadmin/catalogs?tab=units&error=${encodeURIComponent(error.message)}`)
+  redirect('/superadmin/catalogs?tab=units')
+}
+
 export async function addCurrency(formData: FormData) {
   const supabase = createAdminClient()
   const code = (formData.get('code') as string).toUpperCase().trim()
