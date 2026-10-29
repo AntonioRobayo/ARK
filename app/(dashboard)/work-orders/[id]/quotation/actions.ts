@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { checkPermission } from '@/lib/permissions'
 
 export async function upsertQuotation(formData: FormData) {
   const supabase = await createClient()
@@ -250,5 +251,70 @@ export async function changeQuotationStatus(formData: FormData) {
 
   revalidatePath(`/work-orders/${workOrderId}`)
   redirect(`/work-orders/${workOrderId}/quotation${newStatus === 'sent' ? '?sent=1' : ''}`)
+}
+
+export async function releaseReservation(formData: FormData) {
+  const canRelease = await checkPermission('inventory.release_reservations')
+  if (!canRelease) return
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const adminClient = createAdminClient()
+  const reservationId = formData.get('reservation_id') as string
+  const workOrderId   = formData.get('work_order_id') as string
+
+  const { data: reservation } = await adminClient
+    .from('inventory_reservation')
+    .select('id, item_id, quantity_reserved, tenant_id, inventory_item:item_id(name)')
+    .eq('id', reservationId)
+    .eq('status', 'active')
+    .single()
+
+  if (!reservation) return
+
+  const itemName = (Array.isArray(reservation.inventory_item)
+    ? reservation.inventory_item[0]
+    : reservation.inventory_item as any)?.name ?? 'ítem'
+  const qty = Number(reservation.quantity_reserved)
+
+  const [{ data: stockRow }] = await Promise.all([
+    adminClient
+      .from('inventory_stock')
+      .select('id, quantity_reserved')
+      .eq('item_id', reservation.item_id)
+      .eq('tenant_id', reservation.tenant_id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single(),
+    adminClient
+      .from('inventory_reservation')
+      .update({ status: 'released' })
+      .eq('id', reservationId),
+  ])
+
+  if (stockRow) {
+    await adminClient
+      .from('inventory_stock')
+      .update({ quantity_reserved: Math.max(0, (stockRow.quantity_reserved ?? 0) - qty) })
+      .eq('id', stockRow.id)
+  }
+
+  await adminClient.from('work_order_event_log').insert({
+    tenant_id:     reservation.tenant_id,
+    work_order_id: workOrderId,
+    event_type:    'reservation_released',
+    description:   `Reserva liberada: ${itemName} × ${qty}`,
+    performed_by:  user.id,
+    metadata: {
+      reservation_id:    reservationId,
+      item_id:           reservation.item_id,
+      quantity_released: qty,
+    },
+  })
+
+  revalidatePath(`/work-orders/${workOrderId}/quotation`)
+  revalidatePath(`/inventory/${reservation.item_id}`)
 }
 

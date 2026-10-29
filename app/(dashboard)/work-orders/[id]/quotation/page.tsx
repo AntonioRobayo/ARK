@@ -3,10 +3,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
-import { addQuotationItem, removeQuotationItem, changeQuotationStatus, upsertQuotation } from './actions'
+import { addQuotationItem, removeQuotationItem, changeQuotationStatus, upsertQuotation, releaseReservation } from './actions'
 import { SubmitButton } from '@/components/ui/SubmitButton'
 import { AddItemForm } from '@/components/quotation/AddItemForm'
 import { getTranslations } from 'next-intl/server'
+import { checkPermission } from '@/lib/permissions'
 
 const STATUS_BADGE: Record<string, string> = {
   approved: 'bg-emerald-50 text-emerald-600',
@@ -36,7 +37,7 @@ export default async function QuotationPage({
   const { data: myProfile } = await adminClient.from('user_profile').select('tenant_id').eq('id', user.id).single()
   if (!myProfile?.tenant_id) redirect('/superadmin')
 
-  const [{ data: ot }, { data: quotations }, { data: services }, { data: taxRates }, { data: customerParts }, { data: approvedFindings }] = await Promise.all([
+  const [{ data: ot }, { data: quotations }, { data: services }, { data: taxRates }, { data: customerParts }, { data: approvedFindings }, canReleaseReservation] = await Promise.all([
     adminClient.from('work_order')
       .select('id, number, customer:customer_id(first_name, last_name), vehicle:vehicle_id(plate, brand, model)')
       .eq('id', id).eq('tenant_id', myProfile.tenant_id).single(),
@@ -50,9 +51,26 @@ export default async function QuotationPage({
     adminClient.from('tax_rate').select('id, name, rate, is_default').eq('tenant_id', myProfile.tenant_id).eq('is_active', true).order('name'),
     adminClient.from('work_order_customer_part').select('id, description, quantity, condition, notes').eq('work_order_id', id).order('created_at', { ascending: true }),
     adminClient.from('work_order_finding').select('id, description, severity').eq('work_order_id', id).eq('customer_response', 'approve_quote').order('created_at', { ascending: true }),
+    checkPermission('inventory.release_reservations'),
   ])
 
   if (!ot) notFound()
+
+  // Fetch active reservations for approved quotation items
+  const approvedItemIds = (quotations ?? [])
+    .filter(q => q.status === 'approved')
+    .flatMap(q => (q.quotation_item ?? []).map((i: any) => i.id))
+  const { data: activeReservations } = approvedItemIds.length
+    ? await adminClient
+        .from('inventory_reservation')
+        .select('id, quotation_item_id, quantity_reserved')
+        .in('quotation_item_id', approvedItemIds)
+        .eq('status', 'active')
+    : { data: [] }
+  const reservationByItem: Record<string, { id: string; quantity_reserved: number }> = {}
+  for (const r of activeReservations ?? []) {
+    reservationByItem[r.quotation_item_id] = { id: r.id, quantity_reserved: r.quantity_reserved }
+  }
 
   // Auto-create quotation if none exists — skip the empty-state click
   if (!quotations || quotations.length === 0) {
@@ -179,30 +197,53 @@ export default async function QuotationPage({
             </div>
             <table className="w-full text-sm">
               <tbody>
-                {qItems.map((item: any) => (
-                  <tr key={item.id} className="border-b border-gray-50 last:border-0">
-                    <td className="px-4 py-2.5 text-gray-700">
-                      <div className="flex items-center gap-2">
-                        {item.description}
-                        {item.customer_response === 'approved' && (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-medium shrink-0">✓ Cliente aprobó</span>
+                {qItems.map((item: any) => {
+                  const reservation = reservationByItem[item.id]
+                  return (
+                    <tr key={item.id} className="border-b border-gray-50 last:border-0">
+                      <td className="px-4 py-2.5 text-gray-700">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {item.description}
+                          {item.customer_response === 'approved' && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-medium shrink-0">✓ Cliente aprobó</span>
+                          )}
+                          {item.customer_response === 'rejected' && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-500 font-medium shrink-0">✗ Cliente rechazó</span>
+                          )}
+                          {reservation && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium shrink-0">
+                              📦 Reservado ×{reservation.quantity_reserved}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                          {item.item_type === 'service' ? t('service') : t('part')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right text-gray-500">{item.quantity}</td>
+                      <td className="px-4 py-2.5 text-right text-gray-500">${(item.unit_price ?? 0).toLocaleString('es-CO')}</td>
+                      <td className="px-4 py-2.5 text-right text-gray-400">{item.tax_rate_snapshot ?? 0}%</td>
+                      <td className="px-4 py-2.5 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        {reservation && canReleaseReservation && (
+                          <form action={releaseReservation}>
+                            <input type="hidden" name="reservation_id" value={reservation.id} />
+                            <input type="hidden" name="work_order_id" value={id} />
+                            <button
+                              type="submit"
+                              title="Liberar reserva"
+                              className="text-xs text-amber-600 hover:text-amber-800 border border-amber-200 hover:border-amber-400 rounded px-1.5 py-0.5 transition-colors"
+                            >
+                              Liberar
+                            </button>
+                          </form>
                         )}
-                        {item.customer_response === 'rejected' && (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-500 font-medium shrink-0">✗ Cliente rechazó</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${item.item_type === 'service' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
-                        {item.item_type === 'service' ? t('service') : t('part')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-gray-500">{item.quantity}</td>
-                    <td className="px-4 py-2.5 text-right text-gray-500">${(item.unit_price ?? 0).toLocaleString('es-CO')}</td>
-                    <td className="px-4 py-2.5 text-right text-gray-400">{item.tax_rate_snapshot ?? 0}%</td>
-                    <td className="px-4 py-2.5 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

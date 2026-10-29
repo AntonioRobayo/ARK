@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { SubmitButton } from '@/components/ui/SubmitButton'
 import { addCompatibility, removeCompatibility, updateItem } from './actions'
 import { toggleItemActive, adjustStock } from '../actions'
+import { checkPermission } from '@/lib/permissions'
+import { releaseReservation } from '@/app/(dashboard)/work-orders/[id]/quotation/actions'
 
 const TYPE_LABEL: Record<string, string> = {
   part: 'Repuesto', consumable: 'Consumible', accessory: 'Accesorio',
@@ -37,7 +39,7 @@ export default async function InventoryItemDetailPage({
   const { data: profile } = await admin.from('user_profile').select('tenant_id').eq('id', user.id).single()
   const tenantId = profile?.tenant_id ?? ''
 
-  const [{ data: item }, { data: stockRows }, { data: compatRows }, { data: movements }, { data: suppliers }] = await Promise.all([
+  const [{ data: item }, { data: stockRows }, { data: compatRows }, { data: movements }, { data: suppliers }, { data: activeReservations }, canReleaseReservation] = await Promise.all([
     admin.from('inventory_item')
       .select('id, name, type, sku, internal_code, barcode, sale_price, cost_price, min_stock, description, is_active, unit_of_measure, created_at')
       .eq('id', id).is('deleted_at', null).single(),
@@ -58,6 +60,12 @@ export default async function InventoryItemDetailPage({
       .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .order('name'),
+    admin.from('inventory_reservation')
+      .select('id, quantity_reserved, created_at, quotation_item:quotation_item_id(quotation:quotation_id(number, work_order:work_order_id(id, number)))')
+      .eq('item_id', id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false }),
+    checkPermission('inventory.release_reservations'),
   ])
 
   if (!item) notFound()
@@ -400,6 +408,57 @@ export default async function InventoryItemDetailPage({
           </div>
         </form>
       </div>
+
+      {/* Reservas activas */}
+      {(activeReservations ?? []).length > 0 && (
+        <div className="bg-white border border-amber-200 rounded-xl overflow-hidden mb-5">
+          <div className="px-5 py-3 border-b border-amber-100 bg-amber-50 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-amber-800">Reservas activas</h2>
+              <p className="text-xs text-amber-600 mt-0.5">{(activeReservations ?? []).length} reserva{(activeReservations ?? []).length !== 1 ? 's' : ''} en cotizaciones aprobadas</p>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {(activeReservations ?? []).map((r: any) => {
+              const qItem = Array.isArray(r.quotation_item) ? r.quotation_item[0] : r.quotation_item
+              const quot  = Array.isArray(qItem?.quotation) ? qItem?.quotation[0] : qItem?.quotation
+              const wo    = Array.isArray(quot?.work_order) ? quot?.work_order[0] : quot?.work_order
+              return (
+                <div key={r.id} className="flex items-center gap-3 px-5 py-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-medium text-gray-800">×{r.quantity_reserved}</span>
+                      {quot?.number && (
+                        <span className="text-gray-500">· {quot.number}</span>
+                      )}
+                      {wo?.number && wo?.id && (
+                        <Link href={`/work-orders/${wo.id}/quotation`} className="text-xs text-slate-500 hover:text-slate-700 hover:underline">
+                          OT-{wo.number}
+                        </Link>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {new Date(r.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                  </div>
+                  {canReleaseReservation && wo?.id && (
+                    <form action={releaseReservation}>
+                      <input type="hidden" name="reservation_id" value={r.id} />
+                      <input type="hidden" name="work_order_id" value={wo.id} />
+                      <button
+                        type="submit"
+                        className="text-xs text-amber-600 hover:text-amber-800 border border-amber-200 hover:border-amber-400 rounded px-2 py-1 transition-colors"
+                      >
+                        Liberar
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Historial de movimientos */}
       {(movements ?? []).length > 0 && (

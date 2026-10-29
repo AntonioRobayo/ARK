@@ -23,6 +23,7 @@ export type PermissionCode =
   | 'inventory.adjust'
   | 'inventory.transfer'
   | 'inventory.manage_suppliers'
+  | 'inventory.release_reservations'
   // billing
   | 'billing.view'
   | 'billing.create_invoice'
@@ -103,7 +104,7 @@ function legacyRoleHasPermission(role: string, code: PermissionCode): boolean {
     'users.invite','users.deactivate','users.manage_roles',
     'ot.view','ot.create','ot.edit','ot.cancel','ot.change_status','ot.approve_discount',
     'inventory.view','inventory.view_costs','inventory.receive','inventory.approve_purchases',
-    'inventory.adjust','inventory.transfer','inventory.manage_suppliers',
+    'inventory.adjust','inventory.transfer','inventory.manage_suppliers','inventory.release_reservations',
     'billing.view','billing.create_invoice','billing.receive_payment','billing.close_register',
     'billing.approve_register_close','billing.approve_credit','billing.approve_delivery_with_balance',
     'customers.view','customers.create','customers.edit','customers.manage_credit',
@@ -115,7 +116,7 @@ function legacyRoleHasPermission(role: string, code: PermissionCode): boolean {
     shop_manager: all.filter(c => c !== 'users.manage_roles' && c !== 'config.manage'),
     mechanic:     ['ot.view','ot.create','ot.edit','ot.change_status','inventory.view','customers.view'],
     receptionist: ['ot.view','ot.create','ot.edit','ot.change_status','customers.view','customers.create','customers.edit','billing.view','billing.receive_payment'],
-    parts_manager:['inventory.view','inventory.view_costs','inventory.receive','inventory.approve_purchases','inventory.adjust','inventory.transfer','inventory.manage_suppliers','ot.view','ot.change_status','customers.view'],
+    parts_manager:['inventory.view','inventory.view_costs','inventory.receive','inventory.approve_purchases','inventory.adjust','inventory.transfer','inventory.manage_suppliers','inventory.release_reservations','ot.view','ot.change_status','customers.view'],
     accountant:   ['billing.view','billing.create_invoice','billing.receive_payment','billing.close_register','billing.approve_register_close','billing.approve_credit','billing.approve_delivery_with_balance','customers.view','customers.create','customers.edit','customers.manage_credit','reports.view','reports.export'],
   }
   return (perRole[role] ?? []).includes(code)
