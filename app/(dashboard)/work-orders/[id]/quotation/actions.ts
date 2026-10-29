@@ -277,40 +277,45 @@ export async function releaseReservation(formData: FormData) {
   const itemName = (Array.isArray(reservation.inventory_item)
     ? reservation.inventory_item[0]
     : reservation.inventory_item as any)?.name ?? 'ítem'
-  const qty = Number(reservation.quantity_reserved)
+  const totalReserved = Number(reservation.quantity_reserved)
+  const releaseQtyRaw = Number(formData.get('release_qty') || totalReserved)
+  const releaseQty = Math.min(Math.max(releaseQtyRaw, 0.01), totalReserved)
+  const isFullRelease = releaseQty >= totalReserved
 
-  const [{ data: stockRow }] = await Promise.all([
-    adminClient
-      .from('inventory_stock')
-      .select('id, quantity_reserved')
-      .eq('item_id', reservation.item_id)
-      .eq('tenant_id', reservation.tenant_id)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .single(),
-    adminClient
-      .from('inventory_reservation')
-      .update({ status: 'released' })
-      .eq('id', reservationId),
+  const { data: stockRow } = await adminClient
+    .from('inventory_stock')
+    .select('id, quantity_reserved')
+    .eq('item_id', reservation.item_id)
+    .eq('tenant_id', reservation.tenant_id)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single()
+
+  await Promise.all([
+    isFullRelease
+      ? adminClient.from('inventory_reservation').update({ status: 'released' }).eq('id', reservationId)
+      : adminClient.from('inventory_reservation').update({ quantity_reserved: totalReserved - releaseQty }).eq('id', reservationId),
+    stockRow
+      ? adminClient.from('inventory_stock')
+          .update({ quantity_reserved: Math.max(0, (stockRow.quantity_reserved ?? 0) - releaseQty) })
+          .eq('id', stockRow.id)
+      : Promise.resolve(),
   ])
-
-  if (stockRow) {
-    await adminClient
-      .from('inventory_stock')
-      .update({ quantity_reserved: Math.max(0, (stockRow.quantity_reserved ?? 0) - qty) })
-      .eq('id', stockRow.id)
-  }
 
   await adminClient.from('work_order_event_log').insert({
     tenant_id:     reservation.tenant_id,
     work_order_id: workOrderId,
     event_type:    'reservation_released',
-    description:   `Reserva liberada: ${itemName} × ${qty}`,
+    description:   isFullRelease
+      ? `Reserva liberada: ${itemName} × ${releaseQty}`
+      : `Reserva parcialmente liberada: ${itemName} × ${releaseQty} (quedan ${totalReserved - releaseQty})`,
     performed_by:  user.id,
     metadata: {
       reservation_id:    reservationId,
       item_id:           reservation.item_id,
-      quantity_released: qty,
+      quantity_released: releaseQty,
+      quantity_remaining: isFullRelease ? 0 : totalReserved - releaseQty,
+      partial: !isFullRelease,
     },
   })
 

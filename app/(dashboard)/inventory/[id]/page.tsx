@@ -442,15 +442,24 @@ export default async function InventoryItemDetailPage({
                     </p>
                   </div>
                   {canReleaseReservation && wo?.id && (
-                    <form action={releaseReservation}>
+                    <form action={releaseReservation} className="flex items-center gap-1.5">
                       <input type="hidden" name="reservation_id" value={r.id} />
                       <input type="hidden" name="work_order_id" value={wo.id} />
-                      <button
-                        type="submit"
-                        className="text-xs text-amber-600 hover:text-amber-800 border border-amber-200 hover:border-amber-400 rounded px-2 py-1 transition-colors"
+                      <input
+                        type="number"
+                        name="release_qty"
+                        defaultValue={r.quantity_reserved}
+                        min="0.01"
+                        max={r.quantity_reserved}
+                        step="0.01"
+                        className="w-16 text-xs border border-amber-200 rounded px-2 py-1 text-center focus:outline-none focus:ring-1 focus:ring-amber-400"
+                      />
+                      <SubmitButton
+                        pendingLabel="…"
+                        className="text-xs text-amber-600 hover:text-amber-800 border border-amber-200 hover:border-amber-400 rounded px-2 py-1 transition-colors disabled:opacity-50"
                       >
                         Liberar
-                      </button>
+                      </SubmitButton>
                     </form>
                   )}
                 </div>

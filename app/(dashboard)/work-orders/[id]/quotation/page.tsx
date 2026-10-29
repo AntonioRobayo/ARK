@@ -228,16 +228,24 @@ export default async function QuotationPage({
                       <td className="px-4 py-2.5 text-right font-medium text-gray-800">${(item.subtotal ?? 0).toLocaleString('es-CO')}</td>
                       <td className="px-4 py-2.5 text-center">
                         {reservation && canReleaseReservation && (
-                          <form action={releaseReservation}>
+                          <form action={releaseReservation} className="flex items-center gap-1 justify-center">
                             <input type="hidden" name="reservation_id" value={reservation.id} />
                             <input type="hidden" name="work_order_id" value={id} />
-                            <button
-                              type="submit"
-                              title="Liberar reserva"
-                              className="text-xs text-amber-600 hover:text-amber-800 border border-amber-200 hover:border-amber-400 rounded px-1.5 py-0.5 transition-colors"
+                            <input
+                              type="number"
+                              name="release_qty"
+                              defaultValue={reservation.quantity_reserved}
+                              min="0.01"
+                              max={reservation.quantity_reserved}
+                              step="0.01"
+                              className="w-14 text-xs border border-amber-200 rounded px-1.5 py-0.5 text-center focus:outline-none focus:ring-1 focus:ring-amber-400"
+                            />
+                            <SubmitButton
+                              pendingLabel="…"
+                              className="text-xs text-amber-600 hover:text-amber-800 border border-amber-200 hover:border-amber-400 rounded px-1.5 py-0.5 transition-colors disabled:opacity-50"
                             >
                               Liberar
-                            </button>
+                            </SubmitButton>
                           </form>
                         )}
                       </td>
