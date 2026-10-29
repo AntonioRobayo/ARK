@@ -42,7 +42,7 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
   const [searchResults, setSearchResults] = useState<InventoryResult[]>([])
   const [searchOpen, setSearchOpen] = useState(false)
   const [searching, setSearching] = useState(false)
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>()
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const descRef = useRef<HTMLInputElement>(null)
 
   const [isPending, startTransition] = useTransition()

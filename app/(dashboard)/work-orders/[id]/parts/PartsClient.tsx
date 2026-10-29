@@ -31,7 +31,7 @@ export function PartsClient({ workOrderId, otNumber, vehicleBrand, vehicleModel,
   const [forced, setForced] = useState(false)
   const [recentConsumptions, setRecentConsumptions] = useState<{ name: string; qty: number; unit: string }[]>([])
   const [isPending, startTransition] = useTransition()
-  const timer = useRef<ReturnType<typeof setTimeout>>()
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     clearTimeout(timer.current)
