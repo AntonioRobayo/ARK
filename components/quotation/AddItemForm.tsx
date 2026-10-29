@@ -42,6 +42,7 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
   const [searchResults, setSearchResults] = useState<InventoryResult[]>([])
   const [searchOpen, setSearchOpen] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [incompatiblePending, setIncompatiblePending] = useState<InventoryResult | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const descRef = useRef<HTMLInputElement>(null)
 
@@ -74,13 +75,24 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
     return () => clearTimeout(searchTimer.current)
   }, [description, itemType, inventoryItemId])
 
-  function selectInventoryItem(item: InventoryResult) {
+  function confirmSelectInventoryItem(item: InventoryResult) {
     setDescription(item.name)
     setUnitPrice(item.sale_price ?? '')
     setInventoryItemId(item.id)
     setInventoryUnit(item.unit_of_measure)
     setSearchResults([])
     setSearchOpen(false)
+    setIncompatiblePending(null)
+  }
+
+  function selectInventoryItem(item: InventoryResult) {
+    if (item.is_compatible === false && (vehicleBrand || vehicleModel)) {
+      setSearchResults([])
+      setSearchOpen(false)
+      setIncompatiblePending(item)
+      return
+    }
+    confirmSelectInventoryItem(item)
   }
 
   function clearInventorySelection() {
@@ -159,6 +171,35 @@ export function AddItemForm({ quotationId, workOrderId, currentTotal, services, 
                 + {svc.name}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Incompatibility warning */}
+      {incompatiblePending && (
+        <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-800 mb-0.5">
+            ⚠ Repuesto no homologado para este vehículo
+          </p>
+          <p className="text-xs text-amber-700 mb-3">
+            <span className="font-semibold">{incompatiblePending.name}</span> no tiene registro de compatibilidad con{' '}
+            {[vehicleBrand, vehicleModel].filter(Boolean).join(' ')}. ¿Deseas agregarlo de todas formas?
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => confirmSelectInventoryItem(incompatiblePending)}
+              className="text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg px-3 py-1.5 transition-colors"
+            >
+              Sí, agregar de todas formas
+            </button>
+            <button
+              type="button"
+              onClick={() => setIncompatiblePending(null)}
+              className="text-xs font-medium border border-amber-300 text-amber-700 hover:bg-amber-100 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       )}
