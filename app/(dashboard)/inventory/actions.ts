@@ -155,15 +155,16 @@ export async function adjustStock(formData: FormData) {
 
   if (!itemId || !qty) return
 
-  const delta = movementType === 'consumption' || movementType === 'write_off' ? -Math.abs(qty) : Math.abs(qty)
+  const NEGATIVE_TYPES = ['consumption', 'write_off', 'return_to_stock']
+  const delta = NEGATIVE_TYPES.includes(movementType) ? -Math.abs(qty) : Math.abs(qty)
 
   const [locationId, { data: existing }] = await Promise.all([
     getOrCreateDefaultLocation(tenantId, branchId),
     admin
       .from('inventory_stock')
-      .select('quantity_on_hand')
+      .select('quantity_on_hand, quantity_reserved')
       .eq('item_id', itemId)
-      .order('created_at', { ascending: true })
+      .eq('tenant_id', tenantId)
       .limit(1)
       .single(),
   ])
@@ -183,13 +184,18 @@ export async function adjustStock(formData: FormData) {
       supplier_id: supplierId || null,
       purchase_reference: purchaseReference || null,
     }),
-    admin.from('inventory_stock').upsert({
-      tenant_id: tenantId,
-      item_id: itemId,
-      location_id: locationId,
-      quantity_on_hand: newQty,
-      quantity_reserved: 0,
-    }, { onConflict: 'item_id,location_id' }),
+    existing
+      ? admin.from('inventory_stock')
+          .update({ quantity_on_hand: newQty })
+          .eq('item_id', itemId)
+          .eq('tenant_id', tenantId)
+      : admin.from('inventory_stock').insert({
+          tenant_id: tenantId,
+          item_id: itemId,
+          location_id: locationId,
+          quantity_on_hand: newQty,
+          quantity_reserved: 0,
+        }),
   ])
 
   revalidatePath(`/inventory/${itemId}`)
