@@ -377,7 +377,9 @@ export default async function InventoryItemDetailPage({
             </div>
             <div>
               <label className="block text-xs text-gray-400 mb-1">Costo unitario <span className="text-gray-300">(compras)</span></label>
-              <input name="unit_cost" type="number" min="0" step="0.01" placeholder="0"
+              <input name="unit_cost" type="number" min="0" step="0.01"
+                defaultValue={item.cost_price ?? ''}
+                placeholder="0"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" />
             </div>
             <SubmitButton pendingLabel="Registrando…" className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50">
