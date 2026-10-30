@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
+import * as XLSX from 'xlsx'
 import { bulkImportItems, type ImportRow } from './actions'
 
 interface UnitOption {
@@ -68,12 +69,25 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
     const file = e.target.files?.[0]
     if (!file) return
     setFileName(file.name)
+    const isXlsx = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     const reader = new FileReader()
-    reader.onload = ev => {
-      const text = ev.target?.result as string
-      processCSV(text)
+    if (isXlsx) {
+      reader.onload = ev => {
+        const data = ev.target?.result as ArrayBuffer
+        const wb = XLSX.read(data, { type: 'array' })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        const csv = XLSX.utils.sheet_to_csv(ws)
+        processCSV(csv)
+      }
+      reader.readAsArrayBuffer(file)
+    } else {
+      reader.onload = ev => {
+        const text = ev.target?.result as string
+        processCSV(text)
+      }
+      reader.readAsText(file, 'utf-8')
     }
-    reader.readAsText(file, 'utf-8')
     e.target.value = ''
   }
 
@@ -178,21 +192,63 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
     startTransition(() => bulkImportItems(fd))
   }
 
-  const templateCsv = [
-    'name,sku,internal_code,type,unit,sale_price,cost_price,min_stock,initial_stock,description,bin_location',
-    'Filtro de aceite Honda,FILT-001,REP-001,part,unit,25000,15000,2,5,Filtro estándar,Góndola 1 nivel 2',
-    'Aceite 20W-50 1L,,,,liter,18000,12000,3,10,,',
-    'Kit de frenos delanteros,FREN-KIT-001,,part,set,85000,55000,1,2,,',
-  ].join('\n')
-
   function downloadTemplate() {
-    const blob = new Blob([templateCsv], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'plantilla_inventario.csv'
-    a.click()
-    URL.revokeObjectURL(url)
+    const wb = XLSX.utils.book_new()
+
+    // --- Sheet 1: Template ---
+    const headers = ['name', 'sku', 'internal_code', 'type', 'unit', 'sale_price', 'cost_price', 'min_stock', 'initial_stock', 'description', 'bin_location']
+    const headerLabels = ['Nombre *', 'SKU', 'Código interno', 'Tipo', 'Unidad', 'Precio venta', 'Costo', 'Stock mínimo', 'Stock inicial', 'Descripción', 'Ubicación']
+    const examples = [
+      ['Filtro de aceite Honda', 'FILT-001', 'REP-001', 'part', 'unit', 25000, 15000, 2, 5, 'Filtro estándar', 'Góndola 1 nivel 2'],
+      ['Aceite 20W-50 1L', '', '', 'consumable', 'liter', 18000, 12000, 3, 10, '', ''],
+      ['Kit de frenos delanteros', 'FREN-KIT-001', '', 'part', 'set', 85000, 55000, 1, 2, '', ''],
+    ]
+
+    const wsData = [headers, headerLabels, ...examples]
+    const ws = XLSX.utils.aoa_to_sheet(wsData)
+
+    // Hide row 1 (machine headers) and style row 2 (human labels)
+    ws['!rows'] = [{ hidden: true }, { hpt: 20 }]
+
+    // Column widths
+    ws['!cols'] = [
+      { wch: 30 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 10 },
+      { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 30 }, { wch: 20 },
+    ]
+
+    // Style header row (row 2 = index 1)
+    const headerStyle = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E293B' } }, alignment: { horizontal: 'center' } }
+    for (let c = 0; c < headers.length; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 1, c })
+      if (ws[cellRef]) ws[cellRef].s = headerStyle
+    }
+
+    // Freeze header row
+    ws['!freeze'] = { xSplit: 0, ySplit: 2 }
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Plantilla')
+
+    // --- Sheet 2: Reference ---
+    const refData = [
+      ['TIPOS VÁLIDOS', '', 'UNIDADES VÁLIDAS', ''],
+      ['Código', 'Descripción', 'Código', 'Descripción'],
+      ['part', 'Repuesto', 'unit', 'Unidad'],
+      ['consumable', 'Consumible', 'liter', 'Litro'],
+      ['accessory', 'Accesorio', 'ml', 'Mililitro'],
+      ['tool', 'Herramienta', 'kg', 'Kilogramo'],
+      ['other', 'Otro', 'gram', 'Gramo'],
+      ['', '', 'set', 'Set / Kit'],
+      ['', '', 'pair', 'Par'],
+      ['', '', 'box', 'Caja'],
+      ['', '', 'meter', 'Metro'],
+      ['', '', 'roll', 'Rollo'],
+      ...units.slice(0, 20).map(u => ['', '', u.key, u.label_es]),
+    ]
+    const wsRef = XLSX.utils.aoa_to_sheet(refData)
+    wsRef['!cols'] = [{ wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 16 }]
+    XLSX.utils.book_append_sheet(wb, wsRef, 'Referencia')
+
+    XLSX.writeFile(wb, 'plantilla_inventario.xlsx')
   }
 
   return (
@@ -211,35 +267,27 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
       <div className="bg-white border border-gray-200 rounded-xl p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">1. Descarga la plantilla</h2>
         <p className="text-sm text-gray-500 mb-3">
-          El CSV debe tener las columnas: <code className="bg-gray-100 px-1 rounded text-xs">name</code>, <code className="bg-gray-100 px-1 rounded text-xs">sku</code>, <code className="bg-gray-100 px-1 rounded text-xs">type</code>, <code className="bg-gray-100 px-1 rounded text-xs">unit</code>, <code className="bg-gray-100 px-1 rounded text-xs">sale_price</code>, <code className="bg-gray-100 px-1 rounded text-xs">cost_price</code>, <code className="bg-gray-100 px-1 rounded text-xs">min_stock</code>, <code className="bg-gray-100 px-1 rounded text-xs">initial_stock</code>.
-          Solo <strong>name</strong> es obligatorio.
+          Descarga el archivo Excel con los campos y ejemplos precargados. Solo <strong>Nombre</strong> es obligatorio.
+          La hoja <em>Referencia</em> tiene los valores válidos de Tipo y Unidad.
         </p>
 
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={downloadTemplate}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700 border border-gray-200 hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Descargar plantilla CSV
-          </button>
-
-          <div className="text-xs text-gray-400">
-            Tipos válidos: {VALID_TYPES.map(t => TYPE_LABELS[t]).join(', ')}
-            <br />
-            Unidades válidas: {units.map(u => u.key).join(', ')}
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          className="flex items-center gap-2 text-sm font-medium text-emerald-700 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Descargar plantilla Excel (.xlsx)
+        </button>
       </div>
 
       {/* Step 2: Upload */}
       <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">2. Sube tu archivo CSV</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">2. Sube tu archivo</h2>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -250,9 +298,9 @@ export function CsvImportClient({ units, existingSkus, importError, duplicateSku
             <polyline points="17 8 12 3 7 8"/>
             <line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
-          {fileName ? `Cambiar archivo (${fileName})` : 'Seleccionar archivo .csv'}
+          {fileName ? `Cambiar archivo (${fileName})` : 'Seleccionar archivo .xlsx o .csv'}
         </button>
-        <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
+        <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={handleFile} />
       </div>
 
       {/* Step 3: Preview */}

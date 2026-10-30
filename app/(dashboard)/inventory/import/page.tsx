@@ -30,7 +30,7 @@ export default async function InventoryImportPage({ searchParams }: { searchPara
     <div className="max-w-4xl">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/inventory" className="text-gray-400 hover:text-gray-600 text-sm">← Inventario</Link>
-        <h1 className="text-2xl font-bold text-gray-900">Importar inventario desde CSV</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Importar inventario</h1>
       </div>
 
       <CsvImportClient

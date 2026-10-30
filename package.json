@@ -18,7 +18,8 @@
     "nodemailer": "^10.0.14",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "resend": "^6.32.1"
+    "resend": "^6.32.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
