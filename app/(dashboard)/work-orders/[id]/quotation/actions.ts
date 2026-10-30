@@ -160,35 +160,81 @@ export async function changeQuotationStatus(formData: FormData) {
             .from('inventory_location')
             .select('id')
             .eq('tenant_id', tenantId)
-            .order('created_at', { ascending: true })
             .limit(1)
             .single()
           const locationId = locationRow?.id
           if (!locationId) return
-          const reservations = itemsWithInventory.map(i => ({
-            tenant_id: tenantId,
-            item_id: i.inventory_item_id!,
-            location_id: locationId,
-            work_order_id: workOrderId,
-            quotation_item_id: i.id,
-            quantity_reserved: i.quantity,
-            forced: false,
-            status: 'active',
-          }))
-          await adminClient.from('inventory_reservation').insert(reservations)
-          for (const i of itemsWithInventory) {
-            const { data: stockRow } = await adminClient
+
+          // Fetch item names + stock for all items in parallel
+          const itemIds = itemsWithInventory.map(i => i.inventory_item_id!)
+          const [{ data: stockRows }, { data: itemNames }] = await Promise.all([
+            adminClient
               .from('inventory_stock')
-              .select('id, quantity_reserved')
-              .eq('item_id', i.inventory_item_id!)
-              .limit(1)
-              .single()
-            if (stockRow) {
-              await adminClient
-                .from('inventory_stock')
-                .update({ quantity_reserved: (stockRow.quantity_reserved ?? 0) + Number(i.quantity) })
-                .eq('id', stockRow.id)
+              .select('item_id, id, quantity_on_hand, quantity_reserved')
+              .in('item_id', itemIds)
+              .eq('tenant_id', tenantId),
+            adminClient
+              .from('inventory_item')
+              .select('id, name')
+              .in('id', itemIds),
+          ])
+          const stockByItem = Object.fromEntries((stockRows ?? []).map(s => [s.item_id, s]))
+          const nameByItem = Object.fromEntries((itemNames ?? []).map(n => [n.id, n.name]))
+
+          // Build reservations, marking forced when available stock < requested qty
+          const reservations = itemsWithInventory.map(i => {
+            const stock = stockByItem[i.inventory_item_id!]
+            const available = stock ? Number(stock.quantity_on_hand) - Number(stock.quantity_reserved) : 0
+            const forced = available < Number(i.quantity)
+            return {
+              tenant_id: tenantId,
+              item_id: i.inventory_item_id!,
+              location_id: locationId,
+              work_order_id: workOrderId,
+              quotation_item_id: i.id,
+              quantity_reserved: i.quantity,
+              forced,
+              status: 'active',
             }
+          })
+
+          const { data: insertedReservations } = await adminClient
+            .from('inventory_reservation')
+            .insert(reservations)
+            .select('id, item_id, quantity_reserved, forced')
+
+          // Update quantity_reserved in stock + log each reservation
+          for (const i of itemsWithInventory) {
+            const stock = stockByItem[i.inventory_item_id!]
+            const reservation = insertedReservations?.find(r => r.item_id === i.inventory_item_id)
+            const itemName = nameByItem[i.inventory_item_id!] ?? 'ítem'
+            const available = stock ? Number(stock.quantity_on_hand) - Number(stock.quantity_reserved) : 0
+            const isForced = available < Number(i.quantity)
+
+            await Promise.all([
+              stock
+                ? adminClient
+                    .from('inventory_stock')
+                    .update({ quantity_reserved: Number(stock.quantity_reserved) + Number(i.quantity) })
+                    .eq('id', stock.id)
+                : Promise.resolve(),
+              adminClient.from('work_order_event_log').insert({
+                tenant_id: tenantId,
+                work_order_id: workOrderId,
+                event_type: isForced ? 'reservation_forced' : 'reservation_created',
+                description: isForced
+                  ? `Reserva forzada (sin stock suficiente): ${itemName} × ${i.quantity} (disponible: ${Math.max(0, available)})`
+                  : `Repuesto reservado: ${itemName} × ${i.quantity}`,
+                performed_by: user.id,
+                metadata: {
+                  reservation_id: reservation?.id ?? null,
+                  item_id: i.inventory_item_id,
+                  quantity_reserved: Number(i.quantity),
+                  quantity_available: Math.max(0, available),
+                  forced: isForced,
+                },
+              }),
+            ])
           }
         }
       } catch { /* reservation failure should not block status change */ }
