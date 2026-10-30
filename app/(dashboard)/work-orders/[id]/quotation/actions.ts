@@ -47,7 +47,7 @@ export async function upsertQuotation(formData: FormData) {
   }
 
   revalidatePath(`/work-orders/${workOrderId}`)
-  redirect(`/work-orders/${workOrderId}/quotation`)
+  revalidatePath(`/work-orders/${workOrderId}/quotation`)
 }
 
 export async function addQuotationItem(formData: FormData) {
@@ -181,7 +181,6 @@ export async function changeQuotationStatus(formData: FormData) {
               .from('inventory_stock')
               .select('id, quantity_reserved')
               .eq('item_id', i.inventory_item_id!)
-              .order('created_at', { ascending: true })
               .limit(1)
               .single()
             if (stockRow) {
@@ -287,7 +286,6 @@ export async function releaseReservation(formData: FormData) {
     .select('id, quantity_reserved')
     .eq('item_id', reservation.item_id)
     .eq('tenant_id', reservation.tenant_id)
-    .order('created_at', { ascending: true })
     .limit(1)
     .single()
 
