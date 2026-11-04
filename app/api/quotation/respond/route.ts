@@ -88,11 +88,18 @@ export async function POST(request: NextRequest) {
   )
   await Promise.all(updates)
 
-  // If at least one item approved → mark quotation as approved
-  const hasApproval = Object.values(decisions).some(d => d === 'approved')
+  // Determine new quotation status based on item decisions
+  const values = Object.values(decisions)
+  const hasApproval = values.some(d => d === 'approved')
+  const allRejected = values.length > 0 && values.every(d => d === 'rejected')
+
   if (hasApproval) {
     await admin.from('quotation')
       .update({ status: 'approved', approved_at: new Date().toISOString() })
+      .eq('id', quotation.id)
+  } else if (allRejected) {
+    await admin.from('quotation')
+      .update({ status: 'rejected' })
       .eq('id', quotation.id)
   }
 
