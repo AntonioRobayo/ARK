@@ -295,7 +295,8 @@ export async function changeQuotationStatus(formData: FormData) {
   }
 
   revalidatePath(`/work-orders/${workOrderId}`)
-  redirect(`/work-orders/${workOrderId}/quotation${newStatus === 'sent' ? '?sent=1' : ''}`)
+  revalidatePath(`/work-orders/${workOrderId}/quotation`)
+  if (newStatus === 'sent') redirect(`/work-orders/${workOrderId}/quotation?sent=1`)
 }
 
 export async function releaseReservation(formData: FormData) {
